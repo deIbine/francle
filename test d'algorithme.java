@@ -62,6 +62,7 @@ class Parametres{
 	private int unite (0 = km, 1 = miles)
 	private int theme (0 = light, 1 = dark)
 	private int langage (a voir en fontion de notre ambition)
+	private int modedejeu (choix possible entre les anciennes et les nouvelles régions par exemple, 0  = ancienne, 1 = nouvelle (pourquoi pas mettre les départements ?)
 
 
 	public proximitecontretaille(){
