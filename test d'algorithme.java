@@ -1,6 +1,8 @@
 test d'algorithme 
 
 class main{
+	
+	//commentaire test 
 
 	public possibilitedelutilisateur (){
 		tu connais, on lui donne des possibilites entre commentjouer, parametres, statistiques, faire des guess, ça me paraît bien 
