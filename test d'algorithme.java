@@ -65,6 +65,40 @@ class Region{
 		this.longitude = 0;
 		this.latitude = 0;
 		// faire le calcul avec la méthode des sinus pour trouver le km à partir de longitude et latitude ? 
+		
+	public double verifdistance(){
+        //donc soit on récupère le fichier en .csv, soit on admet un tableau avec les infos dedans
+        //le calcul dans tous les cas
+        double distance;
+        int r;
+        r = 6371;
+
+        double longitude1;
+        double latitude1;
+        double longitude2;
+        double latitude2;
+
+        //Test entre Lille et Amiens, distance réelle de 131 km
+
+        longitude1 = 50.62925;
+        latitude1 = 3.057256;
+        longitude2 = 49.894067;
+        latitude2 = 2.295753;
+        distance = Math.acos(Math.sin(degresversradian(longitude1))*Math.sin(degresversradian(longitude2))+Math.cos(degresversradian(longitude1))*Math.cos(degresversradian(longitude2))*Math.cos(degresversradian((latitude1-latitude2)))) * r;
+        return distance;
+    }
+
+    public double degresversradian(double latoulon){
+        double pi;
+        pi = Math.PI;
+
+        double degre;
+        degre = latoulon *(pi/180);
+
+        return degre;
+
+    }
+
 	}
 
 }
