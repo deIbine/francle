@@ -21,6 +21,7 @@ class main{
 	public verifdistance(){
 	normalement un simple calcul avec la latitude et la longitude 
 	d'ailleurs, c'est fort possible qu'on doit mettre ses fonctions dans la class Region
+		
 	}
 
 	public verifpourcentage(){
@@ -29,15 +30,42 @@ class main{
 }
 
 class Region{
-	private String villeprincipale
-	private int longitude
-	private int latitude
-	private int serie
-	private int seriemax
-	private moyennedistance
-
-
-
+	private String villeprincipale;
+	private int longitude;
+	private int latitude;
+	private int serie;
+	private int seriemax;
+	private double moyennedistance;
+	
+	Region(){
+		this.villeprincipale = "";
+		this.longitude = 0;
+		this.latitude = 0;
+		this.serie = 0;
+		this.seriemax = 0;
+		this.moyennedistance = 0;
+	}
+	
+	Region (String nom, int longitude, int latitude, int serie, int seriemax, int moyennedistance){
+		this.villeprincipale = villeprincipale;
+		this.longitude = longitude;
+		this.latitude = latitude;
+		this.serie = serie;
+		this.seriemax = seriemax;
+		this.moyennedistance = moyennedistance;
+	}
+	public String getvilleprincipale() { return villeprincipale; }
+	public int getlongitude () { return longitude; }
+	public int getlatitude () { return latitude; }
+	public int getserie () { return serie; }
+	public int getseriemax () { return seriemax; }
+	public double getmoyennedistance () { return moyennedistance; }
+	
+	Region(double moyennedistance){
+		this.longitude = 0;
+		this.latitude = 0;
+		// faire le calcul avec la méthode des sinus pour trouver le km à partir de longitude et latitude ? 
+	}
 
 }
 
