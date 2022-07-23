@@ -35,7 +35,7 @@ class Region{
 	private int latitude;
 	private int serie;
 	private int seriemax;
-	private double moyennedistance;
+	private double moyennedistance; // peut etre mettre un int en fait... 
 	
 	Region(){
 		this.villeprincipale = "";
