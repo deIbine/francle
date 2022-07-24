@@ -101,6 +101,25 @@ class Region{
 
 	}
 
+    public int verifpourcentage(){
+        //l'idée est d'envoyer un pourcentage en fonction de la distance du joueur
+
+        Region Lille = new Region();
+        double distance;
+        distance = Lille.verifdistance();
+        int pourcentage;
+        pourcentage = 2;
+        return pourcentage;
+
+        /*
+        Pour le moment, je n'ai pas d'idées de comment faire le calcul pour avoir le pourcentage autre 
+        qu'avec des potentiels switch et case partout, ce qui n'est pas optimisé
+        il y a forcément la possibilité de faire un calcul de pourcentage avec un facteur de distance
+        mais je ne le connais pas encore
+         */
+    }
+
+
 }
 
 class Statistiques{
