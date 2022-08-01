@@ -1,16 +1,19 @@
 import java.lang.Math;
 import java.util.Scanner;
+import java.util.Arrays;
 
 public class main{
 
 
     public static void main (String[] args){
 
+        Parametres lesparametres = new Parametres();
+        lesparametres.setChoixdelaregion(0);
         int findujeu;
         findujeu = -1;
         while(findujeu !=0){
             Scanner scanner = new Scanner(System.in);
-            System.out.println("0 = arret, 1 = jeu");
+            System.out.println("0 = arret, 1 = jeu, 2 = parametres");
             System.out.println("Faites votre choix : ");
             findujeu = scanner.nextInt();
             switch(findujeu){
@@ -28,6 +31,28 @@ public class main{
                         compteur=Francaise.jeu(region, compteur);
                     }
                     break;
+                case 2 :
+                    //continuer la configuration des parametres, le mode nouvelle region et revoir la sécurité pour les variables
+                    // c'est a dire rajouter des private et des getter et des setter dans l'ensemble du code
+                    Parametres lesParametres = new Parametres();
+                    System.out.println("Que voulez vous-modifier ?");
+                    System.out.println("0 = retour, 1 = anciennes ou nouvelles regions");
+                    int choixparam = -1;
+                    choixparam = scanner.nextInt();
+                    switch(choixparam){
+                        case 0 :
+                            System.out.println("Retour au menu");
+                            break;
+                        case 1 :
+                            System.out.println("0 = anciennes regions, 1 = nouvelles regions, 2 = toutes les regions");
+                            int choixregion = -1;
+                            choixregion = scanner.nextInt();
+                            //probleme : il faut qu'on ait sauvegardé les modifications en fonction de l'utilisateur, on doit garder la même classe
+                            //donc peut-être une nécessité de créer les classes paramètres et régions AVANT le traitement du jeu!
+                            //soit créer une varibale en mémoire qui retient l'info et mettre des conditions partout
+                            //soit créer une nouvelle instance de paramètres qui contiendra l'info, c'est possible ça ?
+                            choixregion = lesparametres.ancienneounouvelle(choixregion);
+                    }
                 default :
                     System.out.println("Essaie encore");
         }
@@ -73,6 +98,62 @@ public class main{
 
      */
 }
+class Parametres{
+
+    private int modedejeu = 0;
+    private int choixdelaregion;
+
+    public int getChoixdelaregion() {
+        return choixdelaregion;
+    }
+
+    public void setChoixdelaregion(int choixdelaregion) {
+        this.choixdelaregion = choixdelaregion;
+    }
+
+    public int ancienneounouvelle(int choixregion){
+        if (choixregion == 0)
+        {
+            //tour de magie pour permettre le fonctionnement avec les anciennes régions, probablement avec des booleebs
+            System.out.println("Tout est ok, les anciennes regions sont maintenant jouables");
+            this.setChoixdelaregion(0);
+        }
+        else if (choixregion == 1){
+            //même tour de magie
+            System.out.println("Tout est ok, les nouvelles regions sont maintenant jouables");
+            this.setChoixdelaregion(1);
+            //donner la possibilite de jouer avec toutes les regions en meme temps ?
+        }
+        else if (choixregion == 2){
+            System.out.println("Tout est ok, les anciennes et nouvelles regions sont maintenant jouables");
+            this.setChoixdelaregion(2);
+        }
+        else {
+            System.out.println("Rien n'a été modifié");
+        }
+        return choixregion;
+    }
+    /*
+    private int unite (0 = km, 1 = miles)
+    private int theme (0 = light, 1 = dark)
+    private int langage (a voir en fontion de notre ambition)
+    private int modedejeu (choix possible entre les anciennes et les nouvelles régions par exemple, 0  = ancienne, 1 = nouvelle (pourquoi pas mettre les départements ?)
+
+
+    public proximitecontretaille(){
+        verifier ce que ça fait dans le jeu
+    }
+
+    public supprimerimage(){
+        possibilite de supprimer l'image pour faire des guess plus dur
+    }
+
+    public sensimage(){
+        possibilite de aleatoirement modifier le sens de l'image
+    }
+
+     */
+}
 
 class Region{
     private String villeprincipale;
@@ -86,7 +167,7 @@ class Region{
 
         chiffre = Math.floor(Math.random()*26);
         int valeur = (int)chiffre;
-
+        //au niveau de ce switch que le paraletres des régions
         switch(valeur){
             case 0 :
                 aleatoire = "Nord-Pas-de-Calais";
@@ -197,6 +278,8 @@ class Region{
             }
             else {
                 System.out.println("Vous etes a " + distance + " km");
+                String fleche = this.veriffleche(region,supposition);
+                System.out.println(fleche);
                 compteur = compteur + 1;
             }
             if (compteur == 5 ){
@@ -215,7 +298,6 @@ class Region{
 
 
 
-
     public double verifdistance(String region, String supposition){
         //donc soit on récupère le fichier en .csv, soit on admet un tableau avec les infos dedans
         //le calcul dans tous les cas
@@ -223,21 +305,373 @@ class Region{
         int r;
         r = 6371;
 
+        double[] lasupposition;
+        double[] laregion;
+        lasupposition = veriflatlon(supposition);
+        laregion = veriflatlon(region);
+        distance = Math.acos(Math.sin(degresversradian(laregion[1]))*Math.sin(degresversradian(lasupposition[1]))+Math.cos(degresversradian(laregion[1]))*Math.cos(degresversradian(lasupposition[1]))*Math.cos(degresversradian((laregion[0]-lasupposition[0])))) * r;
+
+        //distance = Math.acos(Math.sin(degresversradian(longitude1))*Math.sin(degresversradian(longitude2))+Math.cos(degresversradian(longitude1))*Math.cos(degresversradian(longitude2))*Math.cos(degresversradian((latitude1-latitude2)))) * r;
+        /*
+        =ACOS(SIN(RADIANS(B2))*SIN(RADIANS(B3))+COS(RADIANS(B2))*COS(RADIANS(B3))*COS(RADIANS(C2-C3)))*6371.
+        normalement un simple calcul avec la latitude et la longitude
+        d'ailleurs, c'est fort possible qu'on doit mettre ses fonctions dans la class Region
+        */
+        if ((laregion[0] == 0) || (lasupposition[0] == 0)){
+            distance = 0;
+        }
+        return distance;
+    }
+
+    public double degresversradian(double latoulon){
+        double pi;
+        pi = Math.PI;
+
+        double degre;
+        degre = latoulon *(pi/180);
+
+        return degre;
+
+    }
+    double latitude;
+    double longitude;
+    public double[] veriflatlon(String region) {
+        switch (region) {
+            case "Nord-Pas-de-Calais":
+                latitude = 50.62925;
+                longitude = 3.057256;
+                break;
+            case "Picardie":
+                latitude = 49.844067;
+                longitude = 2.295753;
+                break;
+            case "Haute-Normandie":
+                latitude = 49.443232;
+                longitude = 1.099971;
+                break;
+            case "Basse-Normandie":
+                latitude = 49.182863;
+                longitude = -0.370679;
+                break;
+            case "Bretagne":
+                latitude = 48.117266;
+                longitude = -1.6777926;
+                break;
+            case "Pays de la Loire":
+                latitude = 47.218371;
+                longitude = -1.553621;
+                break;
+            case "Poitou-Charentes":
+                latitude = 46.580224;
+                longitude = 0.340375;
+                break;
+            case "Ile-de-France":
+                latitude = 48.856614;
+                longitude = 2.3522219;
+                break;
+            case "Centre":
+                latitude = 47.902964;
+                longitude = 1.909251;
+                break;
+            case "Champagne-Ardenne":
+                latitude = 48.956682;
+                longitude = 4.363073;
+                break;
+            case "Lorraine":
+                latitude = 49.1193089;
+                longitude = 6.1757156;
+                break;
+            case "Alsace":
+                latitude = 48.5734053;
+                longitude = 7.7521113;
+                break;
+            case "Bourgogne":
+                latitude = 47.322047;
+                longitude = 5.04148;
+                break;
+            case "Franche-Comte":
+                latitude = 47.237829;
+                longitude = 6.0240539;
+                break;
+            case "Rhone-Alpes":
+                latitude = 45.764043;
+                longitude = 4.835659;
+                break;
+            case "Auvergne":
+                latitude = 45.777222;
+                longitude = 3.087025;
+                break;
+            case "Limousin":
+                latitude = 45.833619;
+                longitude = 1.261105;
+                break;
+            case "Aquitaine":
+                latitude = 44.837789;
+                longitude = -0.57918;
+                break;
+            case "Midi-Pyrenees":
+                latitude = 43.604652;
+                longitude = 1.444209;
+                break;
+            case "Languedoc-Roussillon":
+                latitude = 43.610769;
+                longitude = 3.876716;
+                break;
+            case "Provence-Alpes-Cote d'Azur":
+                latitude = 43.296482;
+                longitude = 5.36978;
+                break;
+            case "Corse":
+                latitude = 41.919229;
+                longitude = 8.738635;
+                break;
+            case "Mayotte":
+                latitude = -12.780600;
+                longitude = 45.227800;
+                break;
+            case "La Reunion":
+                latitude = -20.882057;
+                longitude = 55.450675;
+                break;
+            case "Guyane":
+                latitude = 4.9227;
+                longitude = -52.3269;
+                break;
+            case "Martinique":
+                latitude = 14.6160647;
+                longitude = -61.0587804;
+                break;
+            case "Guadeloupe":
+                latitude = 17.302606;
+                longitude = -62.717692;
+                break;
+            default:
+                latitude = 0;
+                longitude = 0;
+                break;
+
+        }
+        double[] latlon = {latitude,longitude};
+        return latlon;
+    }
+    public int verifpourcentage(){
+        //l'idée est d'envoyer un pourcentage en fonction de la distance du joueur
+
+        Region Lille = new Region();
+        double distance;
+        //distance = Lille.verifdistance();
+        int pourcentage;
+        pourcentage = 2;
+        return pourcentage;
+
+        /*
+        Pour le moment, je n'ai pas d'idées de comment faire le calcul pour avoir le pourcentage autre
+        qu'avec des potentiels switch et case partout, ce qui n'est pas optimisé
+        il y a forcément la possibilité de faire un calcul de pourcentage avec un facteur de distance
+        mais je ne le connais pas encore
+         */
+
+
+    }
+
+    public String veriffleche(String region, String supposition) {
+        //soustraire la latitude et la longitude de chacun pourrait nous donner un chiffre ?
+        double besoin;
+        double[] lasupposition;
+        double[] laregion;
+        lasupposition = veriflatlon(supposition);
+        laregion = veriflatlon(region);
+        double soustraction1;
+        double soustraction2;
+        String fleche;
+        /*
+
+        if (laregion[0] < lasupposition[0]){
+            besoin = laregion[0];
+            laregion[0] = lasupposition[0];
+            lasupposition[0] = besoin;
+            soustraction1 = laregion[0] - lasupposition[0];
+        }
+        else if (laregion[0] == lasupposition[0]){
+            soustraction1 = 0;
+        }
+        else {
+            soustraction1 = laregion[0] - lasupposition[0];
+        }
+
+        if (laregion[1] < lasupposition[1]){
+            besoin = laregion[1];
+            laregion[1] = lasupposition[1];
+            lasupposition[1] = besoin;
+            soustraction2 = laregion[1] - lasupposition[1];
+        }
+        else if (laregion[1] == lasupposition[1]){
+            soustraction2 = 0;
+        }
+        else {
+            soustraction2 = laregion[1] - lasupposition[1];
+        }
+
+         */
+        /*
+        int nordousud = 1;
+        int estououest = 1;
+        if (laregion[0] > lasupposition[0]){
+            nordousud = 0;
+        }
+
+        if (laregion[1] > lasupposition[1]){
+            estououest = 0;
+        }
+
+        if ((nordousud == 0) && (estououest == 0)){
+            fleche = ("Sud-Est");
+        }
+        else if((nordousud == 0) && (estououest == 1)){
+            fleche = ("Sud-Ouest");
+        }
+        else if ((nordousud == 1) && (estououest == 0)){
+            fleche = ("Nord-Est");
+        }
+        else if ((nordousud == 1) && (estououest == 1)){
+            fleche = ("Nord-Ouest");
+        }
+        else {
+            fleche = ("Felicitations");
+        }
+
+        soustraction1 = laregion[0] - lasupposition[0];
+        soustraction2 = laregion[1] - lasupposition[1];
+
+        if (laregion[1] < lasupposition[1]){
+            besoin = laregion[1];
+            laregion[1] = lasupposition[1];
+            lasupposition[1] = besoin;
+            soustraction2 = laregion[1] - lasupposition[1];
+        }
+        else {
+            soustraction2 = laregion[1] - lasupposition[1];
+        }
+
+         */
+
+        double carotte;
+        double x;
+        double y;
+        y = Math.sin(degresversradian(lasupposition[1])-degresversradian(laregion[1]))*Math.cos(degresversradian(lasupposition[0]));
+        x = Math.cos(degresversradian(laregion[0]))*Math.sin(degresversradian(lasupposition[0]))-Math.sin(degresversradian(laregion[0]))-Math.cos(degresversradian(lasupposition[0]))*Math.cos(degresversradian(lasupposition[1])-degresversradian(laregion[1]));
+        carotte = Math.atan2(y,x);
+        carotte = (carotte * 180/Math.PI+360)%360;
+
+        //9 éléments possibles, pour le moment on ne va mettre que 5 fleches
+        /*
+        if ((soustraction1 > 0) && (soustraction2 > 0)){
+            fleche = ("Fleche vers la droite");
+        }
+        else if ((soustraction1 > 0) && (soustraction2 < 0)){
+            fleche = ("Fleche vers le haut");
+        }
+        else if ((soustraction1 < 0) && (soustraction2 > 0)){
+            fleche = ("Fleche vers la gauche");
+        }
+        else if ((soustraction1 < 0) && (soustraction2 < 0)){
+            fleche = ("Fleche vers le bas");
+        }
+        else {
+            fleche = ("Felicitations !");
+        }
+        if (soustraction1 == soustraction2){
+            fleche = ("Felicitations !");
+        }
+
+         */
+
+        if ((carotte > 179.5) && (carotte < 182)){
+            fleche = ("Le degre est de " + carotte + " la fleche est probablement au Nord");
+        }
+        else if ((carotte > 175) && (carotte < 179.5)){
+            fleche = ("Le degre est de " + carotte + " la fleche est probablement a l'Est");
+        }
+        else if ((carotte > 182) && (carotte < 190)){
+            fleche = ("Le degre est de " + carotte + " la fleche est probablement a l'Ouest");
+        }
+        else {
+            fleche = ("Le degre est de " + carotte + " la fleche est probablement au Sud");
+        }
+
+        return fleche;
+    }
+}
+/*
+class Statistiques{
+    ok donc c'est en bonus avec des stats à modifier en fonction des tests
+    inspiration de wordle
+    private int nombreparties
+    private int nombresdepartiesgagnées
+
+
+    public calculpourcentagevictoire(){
+        calcul simple du pourcentage de victoire à envoyer si l'utilisateur demande des statistiques
+    }
+
+    public repartitionvictoire(){
+        se débrouiller pour sauvegarder un tableau avec les victoires de l'utilisateur, il pourra savoir, quand il a gagné, s'il a gagné en un guess, deux guess, trois guess, etc... jusqu'à 6
+    }
+
+    possibilité de faire un reset ?
+    possibilité d'avoir des utilisateurs différents ?
+}
+
+
+
+class commentjouer{
+
+    si l'utilisateur utilise cette fonction, on lui donne une image qui expkique ce qu'il doit faire, s'inspirer du screen
+}
+
+class reussirafairelesgraphismesmagnifique{
+
+}
+
+class internet ?{
+
+        }*/
+/*
+Obligation de faire une classe convertisseur pour essayer de prendre les suppositions des utilisateurs ratées ou vérifier les accents et les tirets ?
+ */
+
+/*
+
+ */
+
+/*
         double longitude1;
         double latitude1;
         double longitude2;
         double latitude2;
 
-        //Test entre Lille et Amiens, distance réelle de 131 km
+         */
+
+//Test entre Lille et Amiens, distance réelle de 131 km
         /*
         latitude1 = 48.117266;
         longitude1 = 1.6777926;
         latitude2 = 49.894067;
         longitude2 = 2.295753;
         */
+        /*
+        double[] coordoregion = veriflatlon(region);
+        latitude1 = coordoregion[0];
+        longitude1 = coordoregion[1];
+        double[] coordosupposition = veriflatlon(region);
+        latitude2 = coordosupposition[0];
+        longitude2 = coordosupposition[1];
+        //System.out.println(latitude1); y'a bien un problème
 
+         */
+
+        /*
         //https://www.gps-longitude-latitude.net/longitude-latitude-coordonnees-gps-du-lieu
-
         switch (region){
             case "Nord-Pas-de-Calais":
                 latitude1 = 50.62925;
@@ -470,6 +904,10 @@ class Region{
                 break;
         }
 
+         */
+
+
+
 
         /*
         B2 = longitude1;
@@ -477,102 +915,3 @@ class Region{
         B3 = longitude2;
         C3 = latitude2;
         */
-
-
-        distance = Math.acos(Math.sin(degresversradian(longitude1))*Math.sin(degresversradian(longitude2))+Math.cos(degresversradian(longitude1))*Math.cos(degresversradian(longitude2))*Math.cos(degresversradian((latitude1-latitude2)))) * r;
-        /*
-        =ACOS(SIN(RADIANS(B2))*SIN(RADIANS(B3))+COS(RADIANS(B2))*COS(RADIANS(B3))*COS(RADIANS(C2-C3)))*6371.
-        normalement un simple calcul avec la latitude et la longitude
-        d'ailleurs, c'est fort possible qu'on doit mettre ses fonctions dans la class Region
-        */
-        if ((latitude1 == 0) || (latitude2 == 0)){
-            distance = 0;
-        }
-        return distance;
-    }
-
-    public double degresversradian(double latoulon){
-        double pi;
-        pi = Math.PI;
-
-        double degre;
-        degre = latoulon *(pi/180);
-
-        return degre;
-
-    }
-    public int verifpourcentage(){
-        //l'idée est d'envoyer un pourcentage en fonction de la distance du joueur
-
-        Region Lille = new Region();
-        double distance;
-        //distance = Lille.verifdistance();
-        int pourcentage;
-        pourcentage = 2;
-        return pourcentage;
-
-        /*
-        Pour le moment, je n'ai pas d'idées de comment faire le calcul pour avoir le pourcentage autre
-        qu'avec des potentiels switch et case partout, ce qui n'est pas optimisé
-        il y a forcément la possibilité de faire un calcul de pourcentage avec un facteur de distance
-        mais je ne le connais pas encore
-         */
-    }
-
-
-}
-/*
-class Statistiques{
-    ok donc c'est en bonus avec des stats à modifier en fonction des tests
-    inspiration de wordle
-    private int nombreparties
-    private int nombresdepartiesgagnées
-
-
-    public calculpourcentagevictoire(){
-        calcul simple du pourcentage de victoire à envoyer si l'utilisateur demande des statistiques
-    }
-
-    public repartitionvictoire(){
-        se débrouiller pour sauvegarder un tableau avec les victoires de l'utilisateur, il pourra savoir, quand il a gagné, s'il a gagné en un guess, deux guess, trois guess, etc... jusqu'à 6
-    }
-
-    possibilité de faire un reset ?
-    possibilité d'avoir des utilisateurs différents ?
-}
-
-class Parametres{
-    private int unite (0 = km, 1 = miles)
-    private int theme (0 = light, 1 = dark)
-    private int langage (a voir en fontion de notre ambition)
-    private int modedejeu (choix possible entre les anciennes et les nouvelles régions par exemple, 0  = ancienne, 1 = nouvelle (pourquoi pas mettre les départements ?)
-
-
-    public proximitecontretaille(){
-        verifier ce que ça fait dans le jeu
-    }
-
-    public supprimerimage(){
-        possibilite de supprimer l'image pour faire des guess plus dur
-    }
-
-    public sensimage(){
-        possibilite de aleatoirement modifier le sens de l'image
-    }
-}
-
-class commentjouer{
-
-    si l'utilisateur utilise cette fonction, on lui donne une image qui expkique ce qu'il doit faire, s'inspirer du screen
-}
-
-class reussirafairelesgraphismesmagnifique{
-
-}
-
-class internet ?{
-
-        }*/
-/*
-Obligation de faire une classe convertisseur pour essayer de prendre les suppositions des utilisateurs ratées ou vérifier les accents et les tirets ?
- */
