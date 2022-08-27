@@ -227,7 +227,7 @@ class Region{
                 break;
             case 14:
                 aleatoire = "Rhone-Alpes";
-                if (mode == 1){aleatoire = "Auvergne-Rhône-Alpes";}
+                if (mode == 1){aleatoire = "Auvergne-Rhone-Alpes";}
                 break;
             case 15:
                 aleatoire = "Corse";
@@ -271,7 +271,9 @@ class Region{
                 if (mode == 1){aleatoire = "Hauts-de-France";}
                 break;
         }
+        return aleatoire;
 
+        /*
         if ((mode == 1) || (mode == 2))
         {
             if ((de == 0) && (valeur < 18))
@@ -338,6 +340,8 @@ class Region{
             }
         }
         return aleatoire;
+
+         */
     }
 
 
@@ -423,11 +427,19 @@ class Region{
                 latitude = 50.62925;
                 longitude = 3.057256;
                 break;
+            case "Hauts-de-France":
+                latitude = 50.62925;
+                longitude = 3.057256;
+                break;
             case "Picardie":
                 latitude = 49.844067;
                 longitude = 2.295753;
                 break;
             case "Haute-Normandie":
+                latitude = 49.443232;
+                longitude = 1.099971;
+                break;
+            case "Normandie" :
                 latitude = 49.443232;
                 longitude = 1.099971;
                 break;
@@ -455,6 +467,10 @@ class Region{
                 latitude = 47.902964;
                 longitude = 1.909251;
                 break;
+            case "Centre-Val de Loire" :
+                latitude = 47.902964;
+                longitude = 1.909251;
+                break;
             case "Champagne-Ardenne":
                 latitude = 48.956682;
                 longitude = 4.363073;
@@ -467,7 +483,15 @@ class Region{
                 latitude = 48.5734053;
                 longitude = 7.7521113;
                 break;
+            case "Grand Est" :
+                latitude = 48.5734053;
+                longitude = 7.7521113;
+                break;
             case "Bourgogne":
+                latitude = 47.322047;
+                longitude = 5.04148;
+                break;
+            case "Bourgogne-Franche-Comte":
                 latitude = 47.322047;
                 longitude = 5.04148;
                 break;
@@ -476,6 +500,10 @@ class Region{
                 longitude = 6.0240539;
                 break;
             case "Rhone-Alpes":
+                latitude = 45.764043;
+                longitude = 4.835659;
+                break;
+            case "Auvergne-Rhone-Alpes" :
                 latitude = 45.764043;
                 longitude = 4.835659;
                 break;
@@ -491,7 +519,15 @@ class Region{
                 latitude = 44.837789;
                 longitude = -0.57918;
                 break;
+            case "Nouvelle-Aquitaine" :
+                latitude = 44.837789;
+                longitude = -0.57918;
+                break;
             case "Midi-Pyrenees":
+                latitude = 43.604652;
+                longitude = 1.444209;
+                break;
+            case "Occitanie" :
                 latitude = 43.604652;
                 longitude = 1.444209;
                 break;
