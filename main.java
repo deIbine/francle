@@ -915,3 +915,164 @@ Obligation de faire une classe convertisseur pour essayer de prendre les supposi
         B3 = longitude2;
         C3 = latitude2;
         */
+
+
+
+
+
+        chiffre = Math.floor(Math.random()*17);
+        int valeur = (int)chiffre;
+        //au niveau de ce switch que le paraletres des régions
+        switch(valeur){
+            case 0 :
+                aleatoire = "Hauts-de-France";
+                break;
+            case 1 :
+                aleatoire = "Normandie";
+                break;
+            case 2 :
+                aleatoire = "Bretagne";
+                break;
+            case 3 :
+                aleatoire = "Nouvelle-Aquitaine";
+                break;
+            case 4 :
+                aleatoire = "Occitanie";
+                break;
+            case 5 :
+                aleatoire = "Pays de la Loire";
+                break;
+            case 6 :
+                aleatoire = "Ile-de-France";
+                break;
+            case 7 :
+                aleatoire = "Centre-Val de Loire";
+                break;
+            case 8 :
+                aleatoire = "Bourgogne-Franche-Comté";
+                break;
+            case 9 :
+                aleatoire = "Auvergne-Rhone-Alpes";
+                break;
+            case 10 :
+                aleatoire = "Grand Est";
+                break;
+            case 11 :
+                aleatoire = "Provence-Alpes-Cote d'Azur";
+                break;
+            case 12 :
+                aleatoire = "Corse";
+                break;
+            case 13 :
+                aleatoire = "Mayotte";
+                break;
+            case 14 :
+                aleatoire = "La Reunion";
+                break;
+            case 15 :
+                aleatoire = "Guyane";
+                break;
+            case 16 :
+                aleatoire = "Martinique";
+                break;
+            case 17 :
+                aleatoire = "Guadeloupe";
+                break;
+            default :
+                aleatoire = "Nord-Pas-de-Calais";
+                break;
+        }
+
+        return aleatoire;
+    }
+
+
+
+    double latitude;
+    double longitude;
+    public double[] veriflatlon(String region) {
+        switch (region) {
+            case "Hauts-de-France":
+                latitude = 50.62925;
+                longitude = 3.057256;
+                break;
+
+            case "Normandie":
+                latitude = 49.443232;
+                longitude = 1.099971;
+                break;
+            case "Bretagne":
+                latitude = 48.117266;
+                longitude = -1.6777926;
+                break;
+            case "Pays de la Loire":
+                latitude = 47.218371;
+                longitude = -1.553621;
+                break;
+            case "Ile-de-France":
+                latitude = 48.856614;
+                longitude = 2.3522219;
+                break;
+            case "Centre-val-de-Loire":
+                latitude = 47.902964;
+                longitude = 1.909251;
+                break;
+            case "Grand Est":
+                latitude = 48.5734053;
+                longitude = 7.7521113;
+                break;
+            case "Bourgogne Franche-Comté":
+                latitude = 47.322047;
+                longitude = 5.04148;
+                break;
+
+            case "Auvergne Rhone-Alpes":
+                latitude = 45.764043;
+                longitude = 4.835659;
+                break;
+
+            case "Nouvelle-Aquitaine":
+                latitude = 44.837789;
+                longitude = -0.57918;
+                break;
+            case "Occitanie":
+                latitude = 43.604652;
+                longitude = 1.444209;
+                break;
+            case "Provence-Alpes-Cote d'Azur":
+                latitude = 43.296482;
+                longitude = 5.36978;
+                break;
+            case "Corse":
+                latitude = 41.919229;
+                longitude = 8.738635;
+                break;
+            case "Mayotte":
+                latitude = -12.780600;
+                longitude = 45.227800;
+                break;
+            case "La Reunion":
+                latitude = -20.882057;
+                longitude = 55.450675;
+                break;
+            case "Guyane":
+                latitude = 4.9227;
+                longitude = -52.3269;
+                break;
+            case "Martinique":
+                latitude = 14.6160647;
+                longitude = -61.0587804;
+                break;
+            case "Guadeloupe":
+                latitude = 17.302606;
+                longitude = -62.717692;
+                break;
+            default:
+                latitude = 0;
+                longitude = 0;
+                break;
+
+        }
+        double[] latlon = {latitude,longitude};
+        return latlon;
+    }
