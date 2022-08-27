@@ -351,8 +351,9 @@ class Region{
         System.out.println("Noter votre choix : ");
         String supposition = scanner.nextLine();
         double distance;
-        if (supposition.equals(region)){
+       if (supposition.equals(region)){
             System.out.println("C'est trouve, bravo ! ");
+            System.out.println("Vous etes a " + distance + "km");
             compteur = 5;
             return compteur;
         }
