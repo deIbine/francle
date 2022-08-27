@@ -23,18 +23,15 @@ public class main{
                 case 1 :
                     Region Francaise = new Region();
                     int compteur=0;
-                    System.out.println("Quel est cette region francaise ?");
+                    System.out.println("Quelle est cette region francaise ?");
                     String region;
-                    region = Francaise.aleatoire();
+                    region = Francaise.aleatoire(lesparametres.getChoixdelaregion());
                     System.out.println((region));
                     while (compteur !=5){
-                        compteur=Francaise.jeu(region, compteur);
+                        compteur=Francaise.jeu(region, compteur,lesparametres.getChoixdelaregion());
                     }
                     break;
                 case 2 :
-                    //continuer la configuration des parametres, le mode nouvelle region et revoir la sécurité pour les variables
-                    // c'est a dire rajouter des private et des getter et des setter dans l'ensemble du code
-                    Parametres lesParametres = new Parametres();
                     System.out.println("Que voulez vous-modifier ?");
                     System.out.println("0 = retour, 1 = anciennes ou nouvelles regions");
                     int choixparam = -1;
@@ -47,31 +44,13 @@ public class main{
                             System.out.println("0 = anciennes regions, 1 = nouvelles regions, 2 = toutes les regions");
                             int choixregion = -1;
                             choixregion = scanner.nextInt();
-                            //probleme : il faut qu'on ait sauvegardé les modifications en fonction de l'utilisateur, on doit garder la même classe
-                            //donc peut-être une nécessité de créer les classes paramètres et régions AVANT le traitement du jeu!
-                            //soit créer une varibale en mémoire qui retient l'info et mettre des conditions partout
-                            //soit créer une nouvelle instance de paramètres qui contiendra l'info, c'est possible ça ?
                             choixregion = lesparametres.ancienneounouvelle(choixregion);
                     }
                 default :
                     System.out.println("Essaie encore");
         }
 
-        //double distance;
-        //distance = Lille.verifdistance();
-        //System.out.println(distance);
 
-        /*
-        test de code classique
-        imaginons que la région à trouver soit le NPDC :)
-        Comment fonctionne un code classique le plus simple possible
-        L'utilisateur fait un guess d'une éventuelle représentation
-        on lui calcule sa distance
-        si la distance est = à 0, on arrête et on dit bravo
-        si ce n'est pas le cas, on continue jusqu'à 6 essais
-        essayons de coder ça
-         */
-        //creer de l'aleatoire pour le nom de la region a trouver
 
         }
 
@@ -161,105 +140,208 @@ class Region{
     private int seriemax;
     private int moyennedistance;
 
-    public String aleatoire(){
+    public String aleatoire(int mode){
         String aleatoire;
         double chiffre;
 
-        chiffre = Math.floor(Math.random()*26);
-        int valeur = (int)chiffre;
-        //au niveau de ce switch que le paraletres des régions
-        switch(valeur){
-            case 0 :
-                aleatoire = "Nord-Pas-de-Calais";
-                break;
-            case 1 :
-                aleatoire = "Picardie";
-                break;
-            case 2 :
-                aleatoire = "Haute-Normandie";
-                break;
-            case 3 :
-                aleatoire = "Basse-Normandie";
-                break;
-            case 4 :
-                aleatoire = "Bretagne";
-                break;
-            case 5 :
-                aleatoire = "Pays de la Loire";
-                break;
-            case 6 :
-                aleatoire = "Poitou-Charentes";
-                break;
-            case 7 :
-                aleatoire = "Ile-de-France";
-                break;
-            case 8 :
-                aleatoire = "Centre";
-                break;
-            case 9 :
-                aleatoire = "Champagne-Ardenne";
-                break;
-            case 10 :
-                aleatoire = "Lorraine";
-                break;
-            case 11 :
-                aleatoire = "Alsace";
-                break;
-            case 12 :
-                aleatoire = "Bourgogne";
-                break;
-            case 13 :
-                aleatoire = "Franche-Comte";
-                break;
-            case 14 :
-                aleatoire = "Rhone-Alpes";
-                break;
-            case 15 :
-                aleatoire = "Auvergne";
-                break;
-            case 16 :
-                aleatoire = "Limousin";
-                break;
-            case 17 :
-                aleatoire = "Aquitaine";
-                break;
-            case 18 :
-                aleatoire = "Midi-Pyrenees";
-                break;
-            case 19 :
-                aleatoire = "Languedoc-Roussillon";
-                break;
-            case 20 :
-                aleatoire = "Provence-Alpes-Cote d'Azur";
-                break;
-            case 21 :
-                aleatoire = "Corse";
-                break;
-            case 22 :
-                aleatoire = "Mayotte";
-                break;
-            case 23 :
-                aleatoire = "La Reunion";
-                break;
-            case 24 :
-                aleatoire = "Guyane";
-                break;
-            case 25 :
-                aleatoire = "Martinique";
-                break;
-            case 26 :
-                aleatoire = "Guadeloupe";
-                break;
-            default :
-                aleatoire = "Nord-Pas-de-Calais";
-                break;
+        if (mode==0){
+            chiffre = Math.floor(Math.random()*26);
+            int valeur = (int)chiffre;
+            aleatoire = choixpossible(mode, valeur);
+        }
+        else if (mode==1)
+        {
+            chiffre = Math.floor(Math.random()*18);
+            int valeur = (int)chiffre;
+            aleatoire = choixpossible(mode, valeur);
+        }
+        else
+        {
+            chiffre = Math.floor(Math.random()*26);
+            int valeur = (int)chiffre;
+            aleatoire = choixpossible(mode, valeur);
         }
 
         return aleatoire;
     }
 
+    public String choixpossible(int mode, int valeur){
+        String aleatoire;
 
-    public int jeu(String region, int compteur){
+        if (mode == 2){
+            int de = 0;
+            double lareponse = Math.floor(Math.random()*1);
+            de = (int)lareponse;
+            if (de == 0) {mode = 0;}
+            else if (de == 1){mode = 1;}
+        }
+
+        switch(valeur) {
+            case 0:
+                aleatoire = "Nord-Pas-de-Calais";
+                if (mode == 1) {aleatoire = "Hauts-de-France";}
+                break;
+            case 1:
+                aleatoire = "Guyane";
+                break;
+            case 2:
+                aleatoire = "Haute-Normandie";
+                if (mode == 1) {aleatoire = "Normandie";}
+                break;
+            case 3:
+                aleatoire = "Martinique";
+                break;
+            case 4:
+                aleatoire = "Bretagne";
+                break;
+            case 5:
+                aleatoire = "Aquitaine";
+                if (mode == 1){aleatoire ="Nouvelle-Aquitaine";}
+                break;
+            case 6:
+                aleatoire = "Pays de la Loire";
+                break;
+            case 7:
+                aleatoire = "Ile-de-France";
+                break;
+            case 8:
+                aleatoire = "Centre";
+                if (mode == 1){aleatoire = "Centre-Val de Loire";}
+                break;
+            case 9:
+                aleatoire = "Mayotte";
+                break;
+            case 10:
+                aleatoire = "Provence-Alpes-Cote d'Azur";
+                break;
+            case 11:
+                aleatoire = "Alsace";
+                if (mode == 1){aleatoire = "Grand Est";}
+                break;
+            case 12:
+                aleatoire = "Bourgogne";
+                if (mode == 1){aleatoire = "Bourgogne-Franche-Comte";}
+                break;
+            case 13:
+                aleatoire = "Guadeloupe";
+                break;
+            case 14:
+                aleatoire = "Rhone-Alpes";
+                if (mode == 1){aleatoire = "Auvergne-Rhône-Alpes";}
+                break;
+            case 15:
+                aleatoire = "Corse";
+                break;
+            case 16:
+                aleatoire = "La Reunion";
+                break;
+            case 17:
+                aleatoire = "Champagne-Ardenne";
+                break;
+            case 18:
+                aleatoire = "Midi-Pyrenees";
+                if (mode == 1){aleatoire = "Occitanie";}
+                break;
+            case 19:
+                aleatoire = "Languedoc-Roussillon";
+                break;
+            case 20:
+                aleatoire = "Lorraine";
+                break;
+            case 21:
+                aleatoire = "Auvergne";
+                break;
+            case 22:
+                aleatoire = "Poitou-Charentes";
+                break;
+            case 23:
+                aleatoire = "Limousin";
+                break;
+            case 24:
+                aleatoire = "Picardie";
+                break;
+            case 25:
+                aleatoire = "Basse-Normandie";
+                break;
+            case 26:
+                aleatoire = "Franche-Comte";
+                break;
+            default:
+                aleatoire = "Nord-Pas-de-Calais";
+                if (mode == 1){aleatoire = "Hauts-de-France";}
+                break;
+        }
+
+        if ((mode == 1) || (mode == 2))
+        {
+            if ((de == 0) && (valeur < 18))
+            {
+                switch(valeur){
+                    case 0 :
+                        aleatoire = "Hauts-de-France";
+                        break;
+                    case 1 :
+                        aleatoire = "Normandie";
+                        break;
+                    case 2 :
+                        aleatoire = "Bretagne";
+                        break;
+                    case 3 :
+                        aleatoire = "Nouvelle-Aquitaine";
+                        break;
+                    case 4 :
+                        aleatoire = "Occitanie";
+                        break;
+                    case 5 :
+                        aleatoire = "Pays de la Loire";
+                        break;
+                    case 6 :
+                        aleatoire = "Ile-de-France";
+                        break;
+                    case 7 :
+                        aleatoire = "Centre-Val de Loire";
+                        break;
+                    case 8 :
+                        aleatoire = "Bourgogne-Franche-Comté";
+                        break;
+                    case 9 :
+                        aleatoire = "Auvergne-Rhone-Alpes";
+                        break;
+                    case 10 :
+                        aleatoire = "Grand Est";
+                        break;
+                    case 11 :
+                        aleatoire = "Provence-Alpes-Cote d'Azur";
+                        break;
+                    case 12 :
+                        aleatoire = "Corse";
+                        break;
+                    case 13 :
+                        aleatoire = "Mayotte";
+                        break;
+                    case 14 :
+                        aleatoire = "La Reunion";
+                        break;
+                    case 15 :
+                        aleatoire = "Guyane";
+                        break;
+                    case 16 :
+                        aleatoire = "Martinique";
+                        break;
+                    case 17 :
+                        aleatoire = "Guadeloupe";
+                        break;
+                    default :
+                        aleatoire = "Nord-Pas-de-Calais";
+                        break;
+                }
+            }
+        }
+        return aleatoire;
+    }
+
+
+    public int jeu(String region, int compteur, int modedejeu){
 
         Scanner scanner = new Scanner(System.in);
         System.out.println("Noter votre choix : ");
@@ -484,76 +566,6 @@ class Region{
         double soustraction1;
         double soustraction2;
         String fleche;
-        /*
-
-        if (laregion[0] < lasupposition[0]){
-            besoin = laregion[0];
-            laregion[0] = lasupposition[0];
-            lasupposition[0] = besoin;
-            soustraction1 = laregion[0] - lasupposition[0];
-        }
-        else if (laregion[0] == lasupposition[0]){
-            soustraction1 = 0;
-        }
-        else {
-            soustraction1 = laregion[0] - lasupposition[0];
-        }
-
-        if (laregion[1] < lasupposition[1]){
-            besoin = laregion[1];
-            laregion[1] = lasupposition[1];
-            lasupposition[1] = besoin;
-            soustraction2 = laregion[1] - lasupposition[1];
-        }
-        else if (laregion[1] == lasupposition[1]){
-            soustraction2 = 0;
-        }
-        else {
-            soustraction2 = laregion[1] - lasupposition[1];
-        }
-
-         */
-        /*
-        int nordousud = 1;
-        int estououest = 1;
-        if (laregion[0] > lasupposition[0]){
-            nordousud = 0;
-        }
-
-        if (laregion[1] > lasupposition[1]){
-            estououest = 0;
-        }
-
-        if ((nordousud == 0) && (estououest == 0)){
-            fleche = ("Sud-Est");
-        }
-        else if((nordousud == 0) && (estououest == 1)){
-            fleche = ("Sud-Ouest");
-        }
-        else if ((nordousud == 1) && (estououest == 0)){
-            fleche = ("Nord-Est");
-        }
-        else if ((nordousud == 1) && (estououest == 1)){
-            fleche = ("Nord-Ouest");
-        }
-        else {
-            fleche = ("Felicitations");
-        }
-
-        soustraction1 = laregion[0] - lasupposition[0];
-        soustraction2 = laregion[1] - lasupposition[1];
-
-        if (laregion[1] < lasupposition[1]){
-            besoin = laregion[1];
-            laregion[1] = lasupposition[1];
-            lasupposition[1] = besoin;
-            soustraction2 = laregion[1] - lasupposition[1];
-        }
-        else {
-            soustraction2 = laregion[1] - lasupposition[1];
-        }
-
-         */
 
         double carotte;
         double x;
@@ -598,6 +610,7 @@ class Region{
         else {
             fleche = ("Le degre est de " + carotte + " la fleche est probablement au Sud");
         }
+        //mettre des tues chauffes à la place ? Cela revient pas aux pourcentages ? Cela permettrait de simplifier les pourcentages...
 
         return fleche;
     }
@@ -915,164 +928,3 @@ Obligation de faire une classe convertisseur pour essayer de prendre les supposi
         B3 = longitude2;
         C3 = latitude2;
         */
-
-
-
-
-
-        chiffre = Math.floor(Math.random()*17);
-        int valeur = (int)chiffre;
-        //au niveau de ce switch que le paraletres des régions
-        switch(valeur){
-            case 0 :
-                aleatoire = "Hauts-de-France";
-                break;
-            case 1 :
-                aleatoire = "Normandie";
-                break;
-            case 2 :
-                aleatoire = "Bretagne";
-                break;
-            case 3 :
-                aleatoire = "Nouvelle-Aquitaine";
-                break;
-            case 4 :
-                aleatoire = "Occitanie";
-                break;
-            case 5 :
-                aleatoire = "Pays de la Loire";
-                break;
-            case 6 :
-                aleatoire = "Ile-de-France";
-                break;
-            case 7 :
-                aleatoire = "Centre-Val de Loire";
-                break;
-            case 8 :
-                aleatoire = "Bourgogne-Franche-Comté";
-                break;
-            case 9 :
-                aleatoire = "Auvergne-Rhone-Alpes";
-                break;
-            case 10 :
-                aleatoire = "Grand Est";
-                break;
-            case 11 :
-                aleatoire = "Provence-Alpes-Cote d'Azur";
-                break;
-            case 12 :
-                aleatoire = "Corse";
-                break;
-            case 13 :
-                aleatoire = "Mayotte";
-                break;
-            case 14 :
-                aleatoire = "La Reunion";
-                break;
-            case 15 :
-                aleatoire = "Guyane";
-                break;
-            case 16 :
-                aleatoire = "Martinique";
-                break;
-            case 17 :
-                aleatoire = "Guadeloupe";
-                break;
-            default :
-                aleatoire = "Nord-Pas-de-Calais";
-                break;
-        }
-
-        return aleatoire;
-    }
-
-
-
-    double latitude;
-    double longitude;
-    public double[] veriflatlon(String region) {
-        switch (region) {
-            case "Hauts-de-France":
-                latitude = 50.62925;
-                longitude = 3.057256;
-                break;
-
-            case "Normandie":
-                latitude = 49.443232;
-                longitude = 1.099971;
-                break;
-            case "Bretagne":
-                latitude = 48.117266;
-                longitude = -1.6777926;
-                break;
-            case "Pays de la Loire":
-                latitude = 47.218371;
-                longitude = -1.553621;
-                break;
-            case "Ile-de-France":
-                latitude = 48.856614;
-                longitude = 2.3522219;
-                break;
-            case "Centre-val-de-Loire":
-                latitude = 47.902964;
-                longitude = 1.909251;
-                break;
-            case "Grand Est":
-                latitude = 48.5734053;
-                longitude = 7.7521113;
-                break;
-            case "Bourgogne Franche-Comté":
-                latitude = 47.322047;
-                longitude = 5.04148;
-                break;
-
-            case "Auvergne Rhone-Alpes":
-                latitude = 45.764043;
-                longitude = 4.835659;
-                break;
-
-            case "Nouvelle-Aquitaine":
-                latitude = 44.837789;
-                longitude = -0.57918;
-                break;
-            case "Occitanie":
-                latitude = 43.604652;
-                longitude = 1.444209;
-                break;
-            case "Provence-Alpes-Cote d'Azur":
-                latitude = 43.296482;
-                longitude = 5.36978;
-                break;
-            case "Corse":
-                latitude = 41.919229;
-                longitude = 8.738635;
-                break;
-            case "Mayotte":
-                latitude = -12.780600;
-                longitude = 45.227800;
-                break;
-            case "La Reunion":
-                latitude = -20.882057;
-                longitude = 55.450675;
-                break;
-            case "Guyane":
-                latitude = 4.9227;
-                longitude = -52.3269;
-                break;
-            case "Martinique":
-                latitude = 14.6160647;
-                longitude = -61.0587804;
-                break;
-            case "Guadeloupe":
-                latitude = 17.302606;
-                longitude = -62.717692;
-                break;
-            default:
-                latitude = 0;
-                longitude = 0;
-                break;
-
-        }
-        double[] latlon = {latitude,longitude};
-        return latlon;
-    }
