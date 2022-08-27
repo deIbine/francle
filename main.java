@@ -1,6 +1,6 @@
 import java.lang.Math;
 import java.util.Scanner;
-import java.util.Arrays;
+import java.util.ArrayList;
 
 public class main{
 
@@ -272,76 +272,6 @@ class Region{
                 break;
         }
         return aleatoire;
-
-        /*
-        if ((mode == 1) || (mode == 2))
-        {
-            if ((de == 0) && (valeur < 18))
-            {
-                switch(valeur){
-                    case 0 :
-                        aleatoire = "Hauts-de-France";
-                        break;
-                    case 1 :
-                        aleatoire = "Normandie";
-                        break;
-                    case 2 :
-                        aleatoire = "Bretagne";
-                        break;
-                    case 3 :
-                        aleatoire = "Nouvelle-Aquitaine";
-                        break;
-                    case 4 :
-                        aleatoire = "Occitanie";
-                        break;
-                    case 5 :
-                        aleatoire = "Pays de la Loire";
-                        break;
-                    case 6 :
-                        aleatoire = "Ile-de-France";
-                        break;
-                    case 7 :
-                        aleatoire = "Centre-Val de Loire";
-                        break;
-                    case 8 :
-                        aleatoire = "Bourgogne-Franche-Comté";
-                        break;
-                    case 9 :
-                        aleatoire = "Auvergne-Rhone-Alpes";
-                        break;
-                    case 10 :
-                        aleatoire = "Grand Est";
-                        break;
-                    case 11 :
-                        aleatoire = "Provence-Alpes-Cote d'Azur";
-                        break;
-                    case 12 :
-                        aleatoire = "Corse";
-                        break;
-                    case 13 :
-                        aleatoire = "Mayotte";
-                        break;
-                    case 14 :
-                        aleatoire = "La Reunion";
-                        break;
-                    case 15 :
-                        aleatoire = "Guyane";
-                        break;
-                    case 16 :
-                        aleatoire = "Martinique";
-                        break;
-                    case 17 :
-                        aleatoire = "Guadeloupe";
-                        break;
-                    default :
-                        aleatoire = "Nord-Pas-de-Calais";
-                        break;
-                }
-            }
-        }
-        return aleatoire;
-
-         */
     }
 
 
@@ -351,9 +281,8 @@ class Region{
         System.out.println("Noter votre choix : ");
         String supposition = scanner.nextLine();
         double distance;
-       if (supposition.equals(region)){
+        if (supposition.equals(region)){
             System.out.println("C'est trouve, bravo ! ");
-            System.out.println("Vous etes a " + distance + "km");
             compteur = 5;
             return compteur;
         }
@@ -365,6 +294,9 @@ class Region{
             }
             else {
                 System.out.println("Vous etes a " + distance + " km");
+                int pourcentage = moyenne(region, distance);
+                //int pourcentage = calculmoyenne(distance,mediane);
+                System.out.println("Pourcentage de distance = " + pourcentage + "%");
                 String fleche = this.veriffleche(region,supposition);
                 System.out.println(fleche);
                 compteur = compteur + 1;
@@ -398,12 +330,6 @@ class Region{
         laregion = veriflatlon(region);
         distance = Math.acos(Math.sin(degresversradian(laregion[1]))*Math.sin(degresversradian(lasupposition[1]))+Math.cos(degresversradian(laregion[1]))*Math.cos(degresversradian(lasupposition[1]))*Math.cos(degresversradian((laregion[0]-lasupposition[0])))) * r;
 
-        //distance = Math.acos(Math.sin(degresversradian(longitude1))*Math.sin(degresversradian(longitude2))+Math.cos(degresversradian(longitude1))*Math.cos(degresversradian(longitude2))*Math.cos(degresversradian((latitude1-latitude2)))) * r;
-        /*
-        =ACOS(SIN(RADIANS(B2))*SIN(RADIANS(B3))+COS(RADIANS(B2))*COS(RADIANS(B3))*COS(RADIANS(C2-C3)))*6371.
-        normalement un simple calcul avec la latitude et la longitude
-        d'ailleurs, c'est fort possible qu'on doit mettre ses fonctions dans la class Region
-        */
         if ((laregion[0] == 0) || (lasupposition[0] == 0)){
             distance = 0;
         }
@@ -420,9 +346,11 @@ class Region{
         return degre;
 
     }
-    double latitude;
-    double longitude;
+
+
     public double[] veriflatlon(String region) {
+        double latitude;
+        double longitude;
         switch (region) {
             case "Nord-Pas-de-Calais":
                 latitude = 50.62925;
@@ -573,6 +501,203 @@ class Region{
         double[] latlon = {latitude,longitude};
         return latlon;
     }
+
+    public int moyenne(String region, double ladistance){
+        double latitude;
+        double longitude;
+        int cas = 0;
+        double moyenne = 0;
+        int stop = 0;
+        int r = 6371;
+        double [] laregion;
+        laregion = veriflatlon(region);
+        double distance;
+        double [] tableaudemoyenne = new double[27];
+        while (cas <= 26){
+            double [] letestmoyenne;
+            letestmoyenne = lesregionsenint(cas);
+            distance = Math.acos(Math.sin(degresversradian(laregion[1]))*Math.sin(degresversradian(letestmoyenne[1]))+Math.cos(degresversradian(laregion[1]))*Math.cos(degresversradian(letestmoyenne[1]))*Math.cos(degresversradian((laregion[0]-letestmoyenne[0])))) * r;
+            tableaudemoyenne[cas] = distance;
+            //System.out.println(tableaudemoyenne[cas]);
+            cas = cas + 1;
+        }
+        tableaudemoyenne = tri_selection(tableaudemoyenne);
+        double mediane = calculmediane(tableaudemoyenne);
+        int pourcentage = calculpourcentage(tableaudemoyenne, ladistance);
+        return pourcentage;
+    }
+
+    public int calculpourcentage(double[] tab, double distance){
+        double calcul = tab[26] - distance;
+        calcul = (calcul * 100) / tab[26];
+        System.out.println(calcul + " " + distance + " " + tab[26]);
+        int pourcentagefinal = (int)calcul;
+        return pourcentagefinal;
+    }
+    public int calculmoyenne(double distance, double mediane){
+        double calcul = mediane - distance;
+        calcul = (calcul * 100) / mediane;
+        System.out.println(calcul + " " + distance + " " + mediane);
+        if (calcul < 0)
+        {
+            calcul = calcul * (-1);
+        }
+        int pourcentagefinal = (int)calcul;
+        return pourcentagefinal;
+    }
+
+    public double[] tri_selection(double[] tab)
+    {
+
+        int test = 0;
+        int cpt = 0;
+        while (test==0){
+            if (tab[cpt] > tab[cpt + 1]){
+                double buffer = tab[cpt];
+                tab[cpt] = tab[cpt + 1];
+                tab[cpt + 1] = buffer;
+                cpt = 0;
+            }
+            else {
+                cpt = cpt + 1;
+                if (cpt == 26)
+                {
+                    test = 1;
+                }
+            }
+        }
+        return tab;
+    }
+
+    public double calculmediane(double[] tab){
+        int mediane = tab.length / 2;
+        int medianedeux = (tab.length/2) + 1;
+        double medianne = (tab[mediane] + tab[medianedeux]) / 2;
+        return medianne;
+
+    }
+
+    public double[] lesregionsenint(int cas){
+        double latitude;
+        double longitude;
+        switch (cas) {
+            case 0 :
+                latitude = 50.62925;
+                longitude = 3.057256;
+                break;
+            case 1:
+                latitude = 49.844067;
+                longitude = 2.295753;
+                break;
+            case 2 :
+                latitude = 49.443232;
+                longitude = 1.099971;
+                break;
+            case 3 :
+                latitude = 49.182863;
+                longitude = -0.370679;
+                break;
+            case 4 :
+                latitude = 48.117266;
+                longitude = -1.6777926;
+                break;
+            case 5 :
+                latitude = 47.218371;
+                longitude = -1.553621;
+                break;
+            case 6 :
+                latitude = 46.580224;
+                longitude = 0.340375;
+                break;
+            case 7:
+                latitude = 48.856614;
+                longitude = 2.3522219;
+                break;
+            case 8 :
+                latitude = 47.902964;
+                longitude = 1.909251;
+                break;
+            case 9 :
+                latitude = 48.956682;
+                longitude = 4.363073;
+                break;
+            case 10 :
+                latitude = 49.1193089;
+                longitude = 6.1757156;
+                break;
+            case 11:
+                latitude = 48.5734053;
+                longitude = 7.7521113;
+                break;
+            case 12 :
+                latitude = 47.322047;
+                longitude = 5.04148;
+                break;
+            case 13:
+                latitude = 47.237829;
+                longitude = 6.0240539;
+                break;
+            case 14 :
+                latitude = 45.764043;
+                longitude = 4.835659;
+                break;
+            case 15 :
+                latitude = 45.777222;
+                longitude = 3.087025;
+                break;
+            case 16 :
+                latitude = 45.833619;
+                longitude = 1.261105;
+                break;
+            case 17 :
+                latitude = 44.837789;
+                longitude = -0.57918;
+                break;
+            case 18 :
+                latitude = 43.604652;
+                longitude = 1.444209;
+                break;
+            case 19 :
+                latitude = 43.610769;
+                longitude = 3.876716;
+                break;
+            case 20 :
+                latitude = 43.296482;
+                longitude = 5.36978;
+                break;
+            case 21 :
+                latitude = 41.919229;
+                longitude = 8.738635;
+                break;
+            case 22 :
+                latitude = -12.780600;
+                longitude = 45.227800;
+                break;
+            case 23 :
+                latitude = -20.882057;
+                longitude = 55.450675;
+                break;
+            case 24 :
+                latitude = 4.9227;
+                longitude = -52.3269;
+                break;
+            case 25 :
+                latitude = 14.6160647;
+                longitude = -61.0587804;
+                break;
+            case 26 :
+                latitude = 17.302606;
+                longitude = -62.717692;
+                break;
+            default:
+                latitude = 0;
+                longitude = 0;
+                break;
+
+        }
+        double[] latlon = {latitude,longitude};
+        return latlon;
+    }
     public int verifpourcentage(){
         //l'idée est d'envoyer un pourcentage en fonction de la distance du joueur
 
@@ -690,281 +815,7 @@ class internet ?{
 Obligation de faire une classe convertisseur pour essayer de prendre les suppositions des utilisateurs ratées ou vérifier les accents et les tirets ?
  */
 
-/*
 
- */
-
-/*
-        double longitude1;
-        double latitude1;
-        double longitude2;
-        double latitude2;
-
-         */
-
-//Test entre Lille et Amiens, distance réelle de 131 km
-        /*
-        latitude1 = 48.117266;
-        longitude1 = 1.6777926;
-        latitude2 = 49.894067;
-        longitude2 = 2.295753;
-        */
-        /*
-        double[] coordoregion = veriflatlon(region);
-        latitude1 = coordoregion[0];
-        longitude1 = coordoregion[1];
-        double[] coordosupposition = veriflatlon(region);
-        latitude2 = coordosupposition[0];
-        longitude2 = coordosupposition[1];
-        //System.out.println(latitude1); y'a bien un problème
-
-         */
-
-        /*
-        //https://www.gps-longitude-latitude.net/longitude-latitude-coordonnees-gps-du-lieu
-        switch (region){
-            case "Nord-Pas-de-Calais":
-                latitude1 = 50.62925;
-                longitude1 = 3.057256;
-                break;
-            case "Picardie":
-                latitude1 = 49.844067;
-                longitude1 = 2.295753;
-                break;
-            case "Haute-Normandie":
-                latitude1 = 49.443232;
-                longitude1 = 1.099971;
-                break;
-            case "Basse-Normandie":
-                latitude1 = 49.182863;
-                longitude1 = -0.370679;
-                break;
-            case "Bretagne":
-                latitude1 = 48.117266;
-                longitude1 = -1.6777926;
-                break;
-            case "Pays de la Loire":
-                latitude1 = 47.218371;
-                longitude1 = -1.553621;
-                break;
-            case "Poitou-Charentes":
-                latitude1 = 46.580224;
-                longitude1 = 0.340375;
-                break;
-            case "Ile-de-France":
-                latitude1 = 48.856614;
-                longitude1 = 2.3522219;
-                break;
-            case "Centre":
-                latitude1 = 47.902964;
-                longitude1 = 1.909251;
-                break;
-            case "Champagne-Ardenne":
-                latitude1 = 48.956682;
-                longitude1 = 4.363073;
-                break;
-            case "Lorraine":
-                latitude1 = 49.1193089;
-                longitude1 = 6.1757156;
-                break;
-            case "Alsace":
-                latitude1 = 48.5734053;
-                longitude1 = 7.7521113;
-                break;
-            case "Bourgogne":
-                latitude1 = 47.322047;
-                longitude1 = 5.04148;
-                break;
-            case "Franche-Comte":
-                latitude1 = 47.237829;
-                longitude1 = 6.0240539;
-                break;
-            case "Rhone-Alpes":
-                latitude1 = 45.764043;
-                longitude1 = 4.835659;
-                break;
-            case "Auvergne":
-                latitude1 = 45.777222;
-                longitude1 = 3.087025;
-                break;
-            case "Limousin":
-                latitude1 = 45.833619;
-                longitude1 = 1.261105;
-                break;
-            case "Aquitaine":
-                latitude1 = 44.837789;
-                longitude1 = -0.57918;
-                break;
-            case "Midi-Pyrenees":
-                latitude1 = 43.604652;
-                longitude1 = 1.444209;
-                break;
-            case "Languedoc-Roussillon":
-                latitude1 = 43.610769;
-                longitude1 = 3.876716;
-                break;
-            case "Provence-Alpes-Cote d'Azur":
-                latitude1 = 43.296482;
-                longitude1 = 5.36978;
-                break;
-            case "Corse":
-                latitude1 = 41.919229;
-                longitude1 = 8.738635;
-                break;
-            case "Mayotte":
-                latitude1 = -12.780600;
-                longitude1 = 45.227800;
-                break;
-            case "La Reunion":
-                latitude1 = -20.882057;
-                longitude1 = 55.450675;
-                break;
-            case "Guyane":
-                latitude1 = 4.9227;
-                longitude1 = -52.3269;
-                break;
-            case "Martinique":
-                latitude1 = 14.6160647;
-                longitude1 = -61.0587804;
-                break;
-            case "Guadeloupe":
-                latitude1 = 17.302606;
-                longitude1 = -62.717692;
-                break;
-            default:
-                latitude1 = 0;
-                longitude1 = 0;
-                break;
-
-        }
-
-        switch (supposition){
-            case "Nord-Pas-de-Calais":
-                latitude2 = 50.62925;
-                longitude2 = 3.057256;
-                break;
-            case "Picardie":
-                latitude2 = 49.844067;
-                longitude2 = 2.295753;
-                break;
-            case "Haute-Normandie":
-                latitude2 = 49.443232;
-                longitude2 = 1.099971;
-                break;
-            case "Basse-Normandie":
-                latitude2 = 49.182863;
-                longitude2 = -0.370679;
-                break;
-            case "Bretagne":
-                latitude2 = 48.117266;
-                longitude2 = -1.6777926;
-                break;
-            case "Pays de la Loire":
-                latitude2 = 47.218371;
-                longitude2 = -1.553621;
-                break;
-            case "Poitou-Charentes":
-                latitude2 = 46.580224;
-                longitude2 = 0.340375;
-                break;
-            case "Ile-de-France":
-                latitude2 = 48.856614;
-                longitude2 = 2.3522219;
-                break;
-            case "Centre":
-                latitude2 = 47.902964;
-                longitude2 = 1.909251;
-                break;
-            case "Champagne-Ardenne":
-                latitude2 = 48.956682;
-                longitude2 = 4.363073;
-                break;
-            case "Lorraine":
-                latitude2 = 49.1193089;
-                longitude2 = 6.1757156;
-                break;
-            case "Alsace":
-                latitude2 = 48.5734053;
-                longitude2 = 7.7521113;
-                break;
-            case "Bourgogne":
-                latitude2 = 47.322047;
-                longitude2 = 5.04148;
-                break;
-            case "Franche-Comte":
-                latitude2 = 47.237829;
-                longitude2 = 6.0240539;
-                break;
-            case "Rhone-Alpes":
-                latitude2 = 45.764043;
-                longitude2 = 4.835659;
-                break;
-            case "Auvergne":
-                latitude2 = 45.777222;
-                longitude2 = 3.087025;
-                break;
-            case "Limousin":
-                latitude2 = 45.833619;
-                longitude2 = 1.261105;
-                break;
-            case "Aquitaine":
-                latitude2 = 44.837789;
-                longitude2 = -0.57918;
-                break;
-            case "Midi-Pyrenees":
-                latitude2 = 43.604652;
-                longitude2 = 1.444209;
-                break;
-            case "Languedoc-Roussillon":
-                latitude2 = 43.610769;
-                longitude2 = 3.876716;
-                break;
-            case "Provence-Alpes-Cote d'Azur":
-                latitude2 = 43.296482;
-                longitude2 = 5.36978;
-                break;
-            case "Corse":
-                latitude2 = 41.919229;
-                longitude2 = 8.738635;
-                break;
-            case "Mayotte":
-                latitude2 = -12.780600;
-                longitude2 = 45.227800;
-                break;
-            case "La Reunion":
-                latitude2 = -20.882057;
-                longitude2 = 55.450675;
-                break;
-            case "Guyane":
-                latitude2 = 4.9227;
-                longitude2 = -52.3269;
-                break;
-            case "Martinique":
-                latitude2 = 14.6160647;
-                longitude2 = -61.0587804;
-                break;
-            case "Guadeloupe":
-                latitude2 = 17.302606;
-                longitude2 = -62.717692;
-                break;
-            default:
-                latitude2 = 0;
-                longitude2 = 0;
-                System.out.println("Ce n'est pas une supposition acceptable");
-                break;
-        }
-
-         */
-
-
-
-
-        /*
-        B2 = longitude1;
-        C2 = latitude1;
-        B3 = longitude2;
-        C3 = latitude2;
-        */
 
 
  double latitude;
