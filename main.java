@@ -1,6 +1,11 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.lang.Math;
 import java.util.Scanner;
-import java.util.ArrayList;
+
 
 public class main{
 
@@ -8,7 +13,7 @@ public class main{
     public static void main (String[] args){
 
         Parametres lesparametres = new Parametres();
-        lesparametres.setChoixdelaregion(0);
+        lesparametres.setChoixdelaregion(1);
         int findujeu;
         findujeu = -1;
         while(findujeu !=0){
@@ -26,6 +31,14 @@ public class main{
                     System.out.println("Quelle est cette region francaise ?");
                     String region;
                     region = Francaise.aleatoire(lesparametres.getChoixdelaregion());
+                    //A mettre dans les regions avec l'aléatoire
+                    representation larep = new representation();
+                    JFrame frame = new JFrame();
+                    frame.getContentPane().setLayout(new FlowLayout());
+                    frame.getContentPane().add(new JLabel(new ImageIcon(larep.getRegion())));
+                    frame.pack();
+                    frame.setVisible(true);
+                    //frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // if you want the X button to close the ap
                     System.out.println((region));
                     while (compteur !=5){
                         compteur=Francaise.jeu(region, compteur,lesparametres.getChoixdelaregion());
@@ -176,6 +189,7 @@ class Region{
             else if (de == 1){mode = 1;}
         }
 
+
         switch(valeur) {
             case 0:
                 aleatoire = "Nord-Pas-de-Calais";
@@ -271,8 +285,12 @@ class Region{
                 if (mode == 1){aleatoire = "Hauts-de-France";}
                 break;
         }
-        return aleatoire;
+                return aleatoire;
     }
+
+    /*
+
+     */
 
 
     public int jeu(String region, int compteur, int modedejeu){
@@ -282,6 +300,7 @@ class Region{
         String supposition = scanner.nextLine();
         double distance;
         if (supposition.equals(region)){
+            System.out.println("Vous etes a 0 km");
             System.out.println("C'est trouve, bravo ! ");
             compteur = 5;
             return compteur;
@@ -294,7 +313,7 @@ class Region{
             }
             else {
                 System.out.println("Vous etes a " + distance + " km");
-                int pourcentage = moyenne(region, distance);
+                int pourcentage = moyenne(region, distance, modedejeu);
                 //int pourcentage = calculmoyenne(distance,mediane);
                 System.out.println("Pourcentage de distance = " + pourcentage + "%");
                 String fleche = this.veriffleche(region,supposition);
@@ -502,7 +521,7 @@ class Region{
         return latlon;
     }
 
-    public int moyenne(String region, double ladistance){
+    public int moyenne(String region, double ladistance, int modedejeu){
         double latitude;
         double longitude;
         int cas = 0;
@@ -512,18 +531,57 @@ class Region{
         double [] laregion;
         laregion = veriflatlon(region);
         double distance;
-        double [] tableaudemoyenne = new double[27];
-        while (cas <= 26){
-            double [] letestmoyenne;
-            letestmoyenne = lesregionsenint(cas);
-            distance = Math.acos(Math.sin(degresversradian(laregion[1]))*Math.sin(degresversradian(letestmoyenne[1]))+Math.cos(degresversradian(laregion[1]))*Math.cos(degresversradian(letestmoyenne[1]))*Math.cos(degresversradian((laregion[0]-letestmoyenne[0])))) * r;
-            tableaudemoyenne[cas] = distance;
-            //System.out.println(tableaudemoyenne[cas]);
-            cas = cas + 1;
+        double [] tableaudemoyenne = new double[100];
+        //double [] petittableaudemoyenne = new double[18];
+        if (modedejeu == 2)
+        {
+            int de = 0;
+            double lareponse = Math.floor(Math.random()*1);
+            de = (int)lareponse;
+            if (de == 0) {modedejeu = 0;}
+            else if (de == 1){modedejeu = 1;}
         }
+        if (modedejeu == 0) {
+            while (cas <= 26) {
+                double[] letestmoyenne;
+                letestmoyenne = lesregionsenint(cas, modedejeu);
+                distance = Math.acos(Math.sin(degresversradian(laregion[1])) * Math.sin(degresversradian(letestmoyenne[1])) + Math.cos(degresversradian(laregion[1])) * Math.cos(degresversradian(letestmoyenne[1])) * Math.cos(degresversradian((laregion[0] - letestmoyenne[0])))) * r;
+                tableaudemoyenne[cas] = distance;
+                //System.out.println(tableaudemoyenne[cas]);
+                cas = cas + 1;
+            }
+        }
+        if (modedejeu == 1){
+            while (cas <= 17) {
+                double[] letestmoyenne;
+                letestmoyenne = lesregionsenint(cas, modedejeu);
+                distance = Math.acos(Math.sin(degresversradian(laregion[1])) * Math.sin(degresversradian(letestmoyenne[1])) + Math.cos(degresversradian(laregion[1])) * Math.cos(degresversradian(letestmoyenne[1])) * Math.cos(degresversradian((laregion[0] - letestmoyenne[0])))) * r;
+                tableaudemoyenne[cas] = distance;
+                //System.out.println(petittableaudemoyenne[cas]);
+                cas = cas + 1;
+            }
+        }
+
+        int pourcentage = 0;
+        /*
+        if (modedejeu == 0)
+        {
         tableaudemoyenne = tri_selection(tableaudemoyenne);
         double mediane = calculmediane(tableaudemoyenne);
-        int pourcentage = calculpourcentage(tableaudemoyenne, ladistance);
+        pourcentage = calculpourcentage(tableaudemoyenne, ladistance);
+        }
+
+        if (modedejeu == 1)
+        {
+            petittableaudemoyenne = tri_selection(petittableaudemoyenne);
+            double mediane = calculmediane(petittableaudemoyenne);
+            pourcentage = calculpourcentage(petittableaudemoyenne, ladistance);
+        }
+
+         */
+        tableaudemoyenne = tri_selection(tableaudemoyenne);
+        double mediane = calculmediane(tableaudemoyenne);
+        pourcentage = calculpourcentage(tableaudemoyenne, ladistance);
         return pourcentage;
     }
 
@@ -577,9 +635,22 @@ class Region{
 
     }
 
-    public double[] lesregionsenint(int cas){
-        double latitude;
-        double longitude;
+    public double[] lesregionsenint(int cas, int modedejeu){
+        double latitude = 0;
+        double longitude = 0;
+
+        if (modedejeu == 2){
+            int de = 0;
+            double lareponse = Math.floor(Math.random()*1);
+            de = (int)lareponse;
+            if (de == 0) {modedejeu = 0;}
+            else if (de == 1){modedejeu = 1;}
+        }
+
+        if (modedejeu == 0)
+        {
+
+
         switch (cas) {
             case 0 :
                 latitude = 50.62925;
@@ -695,6 +766,90 @@ class Region{
                 break;
 
         }
+        }
+        else if (modedejeu == 1)
+        {
+            switch (cas) {
+                case 0:
+                    latitude = 50.62925;
+                    longitude = 3.057256;
+                    break;
+                case 1:
+                    latitude = 49.443232;
+                    longitude = 1.099971;
+                    break;
+                case 2:
+                    latitude = 48.117266;
+                    longitude = -1.6777926;
+                    break;
+                case 3:
+                    latitude = 47.218371;
+                    longitude = -1.553621;
+                    break;
+                case 4:
+                    latitude = 48.856614;
+                    longitude = 2.3522219;
+                    break;
+                case 5:
+                    latitude = 47.902964;
+                    longitude = 1.909251;
+                    break;
+                case 6:
+                    latitude = 48.5734053;
+                    longitude = 7.7521113;
+                    break;
+                case 7:
+                    latitude = 47.322047;
+                    longitude = 5.04148;
+                    break;
+
+                case 8:
+                    latitude = 45.764043;
+                    longitude = 4.835659;
+                    break;
+
+                case 9:
+                    latitude = 44.837789;
+                    longitude = -0.57918;
+                    break;
+                case 10:
+                    latitude = 43.604652;
+                    longitude = 1.444209;
+                    break;
+                case 11:
+                    latitude = 43.296482;
+                    longitude = 5.36978;
+                    break;
+                case 12:
+                    latitude = 41.919229;
+                    longitude = 8.738635;
+                    break;
+                case 13:
+                    latitude = -12.780600;
+                    longitude = 45.227800;
+                    break;
+                case 14:
+                    latitude = -20.882057;
+                    longitude = 55.450675;
+                    break;
+                case 15:
+                    latitude = 4.9227;
+                    longitude = -52.3269;
+                    break;
+                case 16:
+                    latitude = 14.6160647;
+                    longitude = -61.0587804;
+                    break;
+                case 17:
+                    latitude = 17.302606;
+                    longitude = -62.717692;
+                    break;
+                default:
+                    latitude = 0;
+                    longitude = 0;
+                    break;
+            }
+        }
         double[] latlon = {latitude,longitude};
         return latlon;
     }
@@ -787,6 +942,26 @@ class Region{
         return fleche;
     }
 }
+
+class representation{
+
+
+    public static BufferedImage Image(String path) {
+        BufferedImage img = null;
+        try {
+            img = javax.imageio.ImageIO.read(new File(path));
+        } catch (IOException e) {
+        }
+        return img;
+    }
+    private Image region = representation.Image("C:/Users/cleme/Downloads/Corse.png");
+
+    public Image getRegion() {
+        return region;
+    }
+
+
+}
 /*
 class Statistiques{
     ok donc c'est en bonus avec des stats à modifier en fonction des tests
@@ -830,85 +1005,7 @@ Obligation de faire une classe convertisseur pour essayer de prendre les supposi
     double longitude;
     public double[] veriflatlon(String region) {
         switch (region) {
-            case "Hauts-de-France":
-                latitude = 50.62925;
-                longitude = 3.057256;
-                break;
 
-            case "Normandie":
-                latitude = 49.443232;
-                longitude = 1.099971;
-                break;
-            case "Bretagne":
-                latitude = 48.117266;
-                longitude = -1.6777926;
-                break;
-            case "Pays de la Loire":
-                latitude = 47.218371;
-                longitude = -1.553621;
-                break;
-            case "Ile-de-France":
-                latitude = 48.856614;
-                longitude = 2.3522219;
-                break;
-            case "Centre-val-de-Loire":
-                latitude = 47.902964;
-                longitude = 1.909251;
-                break;
-            case "Grand Est":
-                latitude = 48.5734053;
-                longitude = 7.7521113;
-                break;
-            case "Bourgogne Franche-Comté":
-                latitude = 47.322047;
-                longitude = 5.04148;
-                break;
-
-            case "Auvergne Rhone-Alpes":
-                latitude = 45.764043;
-                longitude = 4.835659;
-                break;
-
-            case "Nouvelle-Aquitaine":
-                latitude = 44.837789;
-                longitude = -0.57918;
-                break;
-            case "Occitanie":
-                latitude = 43.604652;
-                longitude = 1.444209;
-                break;
-            case "Provence-Alpes-Cote d'Azur":
-                latitude = 43.296482;
-                longitude = 5.36978;
-                break;
-            case "Corse":
-                latitude = 41.919229;
-                longitude = 8.738635;
-                break;
-            case "Mayotte":
-                latitude = -12.780600;
-                longitude = 45.227800;
-                break;
-            case "La Reunion":
-                latitude = -20.882057;
-                longitude = 55.450675;
-                break;
-            case "Guyane":
-                latitude = 4.9227;
-                longitude = -52.3269;
-                break;
-            case "Martinique":
-                latitude = 14.6160647;
-                longitude = -61.0587804;
-                break;
-            case "Guadeloupe":
-                latitude = 17.302606;
-                longitude = -62.717692;
-                break;
-            default:
-                latitude = 0;
-                longitude = 0;
-                break;
 
         }
         double[] latlon = {latitude,longitude};
