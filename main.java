@@ -38,7 +38,7 @@ public class main{
                     String region;
                     representation larep = new representation();
                     region = Francaise.aleatoire(lesparametres.getChoixdelaregion());
-                    System.out.println(region);
+                    //System.out.println(region);
                     if (lesparametres.getChoiximage() == 0) {
                         larep.setRegion(larep.onmetlimage(region));
                         //A mettre dans les regions avec l'aléatoire
@@ -74,17 +74,21 @@ public class main{
                             int choixregion = -1;
                             choixregion = scanner.nextInt();
                             choixregion = lesparametres.ancienneounouvelle(choixregion);
+                            break;
                         case 2 :
                             System.out.println("0 = garder les images, 1 = enlever les images");
                             int choiximage = -1;
                             choiximage = scanner.nextInt();
                             choiximage = lesparametres.imageounon(choiximage);
-                        case 3 : 
+                            break;
+                        case 3 :
                             System.out.println("0 = garder la liste des regions, 1 = enlever la liste des regions");
                             int choixliste = -1;
                             choixliste = scanner.nextInt();
-                            choixliste = lesparametres.imageounon(choixliste);
-                            
+                            choixliste = lesparametres.choixlisteounon(choixliste);
+                            break;
+
+
                     }
                 default :
                     //System.out.println("Essaie encore");
@@ -104,17 +108,10 @@ public class main{
     public possibilitedelutilisateur (){
         tu connais, on lui donne des possibilites entre commentjouer, parametres, statistiques, faire des guess, ça me paraît bien
     }
-
-
-
     public verifsens(){
         bon en gros c'est ce qui permettrait de tourner la flèche dans le bon sens
         il y aurait genre 8 flèches maximum du coup dans les sens cardinaux, faut trouver une méthode MATHEMATIQUE STONK
     }
-
-
-
-
      */
 }
 class Parametres{
@@ -167,7 +164,7 @@ class Parametres{
             this.setChoixdelaregion(2);
         }
         else {
-            System.out.println("Rien n'a été modifié");
+            System.out.println("Rien n'a ete modifié");
         }
         return choixregion;
     }
@@ -186,7 +183,7 @@ class Parametres{
         }
         return choiximage;
     }
-    
+
     public int choixlisteounon(int choixliste){
         if (choixliste == 0){
             System.out.println("Vous jouez avec la liste");
@@ -204,7 +201,7 @@ class Parametres{
     /*
     private int unite (0 = km, 1 = miles)
     private int theme (0 = light, 1 = dark)
-    private int langage (a voir en fontion de notre ambition)
+    private int langage (a voir en fonction de notre ambition)
     private int modedejeu (choix possible entre les anciennes et les nouvelles régions par exemple, 0  = ancienne, 1 = nouvelle (pourquoi pas mettre les départements ?)
 
 
@@ -224,10 +221,13 @@ class Parametres{
 }
 
 class Region{
+    /*
     private String villeprincipale;
     private int serie;
     private int seriemax;
     private int moyennedistance;
+
+     */
 
     public String aleatoire(int mode){
         String aleatoire;
@@ -364,20 +364,19 @@ class Region{
                 return aleatoire;
     }
 
-    /*
-
-     */
-
 
     public int jeu(String region, int compteur, int modedejeu, int choixliste){
 
         Scanner scanner = new Scanner(System.in);
-        if ((modedejeu == 1) && (choixliste == 0))
+        System.out.println("Quelle est votre supposition ? (1 pour avoir la liste)");
+        String supposition = scanner.nextLine();
+        if ((supposition.equals("1")) && (modedejeu == 1) && (choixliste == 0))
         {
             touteslesregions();
+            return compteur;
         }
-        System.out.println("Quelle est votre supposition ?");
-        String supposition = scanner.nextLine();
+        else
+        {
         double distance;
         if (supposition.equals(region)){
             System.out.println("Vous etes a 0 km");
@@ -387,11 +386,10 @@ class Region{
         }
         else {
             System.out.println("Rate !");
-            distance = verifdistance(region,supposition,compteur,modedejeu);
-            if (distance==0){
-                System.out.println("La saisie n'a pas été reconnue");
-            }
-            else {
+            distance = verifdistance(region, supposition, compteur, modedejeu);
+            if (distance == 0) {
+                System.out.println("La saisie n'a pas ete reconnue");
+            } else {
                 System.out.println("Vous etes a " + distance + " km");
                 int pourcentage = moyenne(region, distance, modedejeu);
                 //int pourcentage = calculmoyenne(distance,mediane);
@@ -400,14 +398,13 @@ class Region{
                 //System.out.println(fleche);
                 compteur = compteur + 1;
             }
-            if (compteur == 5 ){
+            if (compteur == 5) {
                 System.out.println("Vous n'avez plus de suppositions, la reponse etait " + region);
                 return compteur;
-            }
-            else {
+            } else {
                 return compteur;
             }
-
+        }
         }
 
 
@@ -495,8 +492,6 @@ class Region{
     }
 
     public double verifdistance(String region, String supposition, int compteur, int modedejeu){
-        //donc soit on récupère le fichier en .csv, soit on admet un tableau avec les infos dedans
-        //le calcul dans tous les cas
         double distance;
         int r;
         r = 6371;
@@ -858,11 +853,7 @@ class Region{
     }
 
     public int moyenne(String region, double ladistance, int modedejeu){
-        double latitude;
-        double longitude;
         int cas = 0;
-        double moyenne = 0;
-        int stop = 0;
         int r = 6371;
         double [] laregion;
         laregion = veriflatlon(region, cas, cas);
@@ -928,6 +919,7 @@ class Region{
         int pourcentagefinal = (int)calcul;
         return pourcentagefinal;
     }
+    /*
     public int calculmoyenne(double distance, double mediane){
         double calcul = mediane - distance;
         calcul = (calcul * 100) / mediane;
@@ -940,6 +932,8 @@ class Region{
         return pourcentagefinal;
     }
 
+
+     */
     public double[] tri_selection(double[] tab)
     {
 
@@ -1189,26 +1183,9 @@ class Region{
         double[] latlon = {latitude,longitude};
         return latlon;
     }
-    public int verifpourcentage(){
-        //l'idée est d'envoyer un pourcentage en fonction de la distance du joueur
-
-        Region Lille = new Region();
-        double distance;
-        //distance = Lille.verifdistance();
-        int pourcentage;
-        pourcentage = 2;
-        return pourcentage;
-
-        /*
-        Pour le moment, je n'ai pas d'idées de comment faire le calcul pour avoir le pourcentage autre
-        qu'avec des potentiels switch et case partout, ce qui n'est pas optimisé
-        il y a forcément la possibilité de faire un calcul de pourcentage avec un facteur de distance
-        mais je ne le connais pas encore
-         */
 
 
-    }
-
+    /*
     public String veriffleche(String region, String supposition) {
         //soustraire la latitude et la longitude de chacun pourrait nous donner un chiffre ?
         double besoin;
@@ -1233,6 +1210,8 @@ class Region{
         x = Math.cos(degresversradian(laregion[0]))*Math.sin(degresversradian(lasupposition[0]))-Math.sin(degresversradian(laregion[0]))-Math.cos(degresversradian(lasupposition[0]))*Math.cos(degresversradian(lasupposition[1])-degresversradian(laregion[1]));
         carotte = Math.atan2(y,x);
         carotte = (carotte * 180/Math.PI+360)%360;
+
+     */
 
         //9 éléments possibles, pour le moment on ne va mettre que 5 fleches
         /*
@@ -1272,12 +1251,14 @@ class Region{
         //mettre des tues chauffes à la place ? Cela revient pas aux pourcentages ? Cela permettrait de simplifier les pourcentages...
 
          */
-
+        /*
         System.out.println("Latitude de direction = " + latregion + " et la longitude de direction " + longregion);
         fleche = "carotte";
 
         return fleche;
     }
+
+         */
 }
 
 class representation{
@@ -1300,7 +1281,10 @@ class representation{
     public Image onmetlimage(String region){
 
         if (Objects.equals(region, "Corse")){
-        this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Corse.png");
+            this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Corse.png");
+        }
+        else if (Objects.equals(region, "Bourgogne-Franche-Comte")){
+            this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Bourgogne Franche-Comté.png");
         }
         else if (Objects.equals(region, "Hauts-de-France")){
             this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Hauts de France.png");
@@ -1332,7 +1316,7 @@ class representation{
         else if (Objects.equals(region,"Martinique")){
             this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Martinique.png");
         }
-        else if (Objects.equals(region, "Mauotte")){
+        else if (Objects.equals(region, "Mayotte")){
             this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Mayotte.png");
         }
         else if (Objects.equals(region,"Normandie")){
