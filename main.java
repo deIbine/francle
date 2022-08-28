@@ -729,6 +729,11 @@ class Region{
         double soustraction2;
         String fleche;
 
+        double latregion = lasupposition[0]- laregion[0];
+        double longregion = lasupposition[1]-laregion[1];
+
+        //if (latregion
+
         double carotte;
         double x;
         double y;
@@ -759,7 +764,7 @@ class Region{
         }
 
          */
-
+        /*
         if ((carotte > 179.5) && (carotte < 182)){
             fleche = ("Le degre est de " + carotte + " la fleche est probablement au Nord");
         }
@@ -773,6 +778,11 @@ class Region{
             fleche = ("Le degre est de " + carotte + " la fleche est probablement au Sud");
         }
         //mettre des tues chauffes à la place ? Cela revient pas aux pourcentages ? Cela permettrait de simplifier les pourcentages...
+
+         */
+
+        System.out.println("Latitude de direction = " + latregion + " et la longitude de direction " + longregion);
+        fleche = "carotte";
 
         return fleche;
     }
@@ -815,10 +825,8 @@ class internet ?{
 Obligation de faire une classe convertisseur pour essayer de prendre les suppositions des utilisateurs ratées ou vérifier les accents et les tirets ?
  */
 
-
-
-
- double latitude;
+/*
+    double latitude;
     double longitude;
     public double[] veriflatlon(String region) {
         switch (region) {
@@ -905,4 +913,4 @@ Obligation de faire une classe convertisseur pour essayer de prendre les supposi
         }
         double[] latlon = {latitude,longitude};
         return latlon;
-    }
+    }*/
