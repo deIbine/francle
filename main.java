@@ -1,8 +1,8 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.ImageObserver;
-import java.awt.image.ImageProducer;
+//import java.awt.image.ImageObserver;
+//import java.awt.image.ImageProducer;
 import java.io.File;
 import java.io.IOException;
 import java.lang.Math;
@@ -380,6 +380,7 @@ class Region{
         double distance;
         if (supposition.equals(region)){
             System.out.println("Vous etes a 0 km");
+            System.out.println("100%");
             System.out.println("C'est trouve, bravo ! ");
             compteur = 5;
             return compteur;
@@ -586,7 +587,7 @@ class Region{
                 latitude = 48.117266;
                 longitude = -1.6777926;
                 if ((compteur == 1) && (test == 1)){
-                    System.out.println("crepe");
+                    System.out.println("la crepe");
                 }
                 if ((compteur == 2) && (test == 1)){
                     System.out.println("Anne-Claire Coudray");
@@ -658,7 +659,7 @@ class Region{
                 latitude = 48.5734053;
                 longitude = 7.7521113;
                 if ((compteur == 1) && (test == 1)){
-                    System.out.println("choucroute");
+                    System.out.println("la choucroute");
                 }
                 if ((compteur == 2) && (test == 1)){
                     System.out.println("Pierre Herme");
@@ -675,7 +676,7 @@ class Region{
                 latitude = 47.322047;
                 longitude = 5.04148;
                 if ((compteur == 1) && (test == 1)){
-                    System.out.println("boeuf bourguignon");
+                    System.out.println("le boeuf bourguignon");
                 }
                 if ((compteur == 2) && (test == 1)){
                     System.out.println("Victor Hugo");
@@ -721,7 +722,7 @@ class Region{
                 latitude = 44.837789;
                 longitude = -0.57918;
                 if ((compteur == 1) && (test == 1)){
-                    System.out.println("huitres du Bassin d'Arcachon");
+                    System.out.println("les huitres du Bassin d'Arcachon");
                 }
                 if ((compteur == 2) && (test == 1)){
                     System.out.println("Jacques Ellul");
@@ -738,7 +739,7 @@ class Region{
                 latitude = 43.604652;
                 longitude = 1.444209;
                 if ((compteur == 1) && (test == 1)){
-                    System.out.println("confit de canard");
+                    System.out.println("le confit de canard");
                 }
                 if ((compteur == 2) && (test == 1)){
                     System.out.println("Bigflo et Oli");
@@ -820,7 +821,7 @@ class Region{
                 latitude = 14.6160647;
                 longitude = -61.0587804;
                 if ((compteur == 1) && (test == 1)){
-                    System.out.println("gratin de bananes");
+                    System.out.println("le gratin de bananes");
                 }
                 if ((compteur == 2) && (test == 1)){
                     System.out.println("Aime Cesaire");
