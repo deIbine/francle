@@ -1,5 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 //import java.awt.image.ImageObserver;
 //import java.awt.image.ImageProducer;
@@ -7,7 +9,8 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.Math;
 import java.util.Objects;
-import java.util.Scanner;
+//import java.util.Scanner;
+
 
 
 public class main{
@@ -15,82 +18,115 @@ public class main{
 
     public static void main (String[] args){
 
+        /*
+        On initialise les classes de bases et nécessaires dans tout le code, les paramètres
+         */
         Parametres lesparametres = new Parametres();
         lesparametres.setChoixdelaregion(1);
         lesparametres.setChoiximage(0);
         lesparametres.setChoixlaliste(0);
+        //interfacerapide notreinterface = new interfacerapide();
         int findujeu;
         findujeu = -1;
         while(findujeu !=0){
-            Scanner scanner = new Scanner(System.in);
-            System.out.println("0 = arret, 1 = jeu, 2 = parametres");
-            System.out.println("Faites votre choix : ");
-            findujeu = scanner.nextInt();
+            //Scanner scanner = new Scanner(System.in);
+            /*
+            On a fait le choix d'une interface utilisant totalement JFrame, qu'on retrouvera dans la totalité du code, ici
+            cela nous permet, via des Input, de récupérer le choix de l'utilisateur, c'est qui récupère cette information et qui agit en fonction duditchoix
+             */
+            String lejeu = JOptionPane.showInputDialog("0 = arrêt, 1 = jeu, 2 = paramètres. Faites votre choix : ");
+            //System.out.println("Faites votre choix : ");
+            findujeu = Integer.parseInt(lejeu);
             switch(findujeu){
                 case 0 :
-                    System.out.println("Merci d'avoir joue !");
-                    System.exit(-1);
+                    JOptionPane.showMessageDialog( null, "Merci d'avoir joué !", "", JOptionPane.PLAIN_MESSAGE );
+                    System.exit(0);
                     break;
                 case 1 :
                     Region Francaise = new Region();
                     int compteur=0;
-                    System.out.println("Quelle est cette region francaise ?");
+                    JOptionPane.showMessageDialog( null, "Quelle est cette région française ?", "", JOptionPane.PLAIN_MESSAGE );
                     String region;
                     representation larep = new representation();
                     region = Francaise.aleatoire(lesparametres.getChoixdelaregion());
                     //System.out.println(region);
                     if (lesparametres.getChoiximage() == 0) {
-                        larep.setRegion(larep.onmetlimage(region));
-                        //A mettre dans les regions avec l'aléatoire
-                        JFrame frame = new JFrame();
-                        frame.getContentPane().setLayout(new FlowLayout());
-                        frame.getContentPane().add(new JLabel(new ImageIcon(larep.getRegion())));
-                        frame.pack();
-                        frame.setVisible(true);
+                        if ((lesparametres.getChoixdelaregion() == 0) || (lesparametres.getChoixdelaregion() == 2))
+                        {
+                            larep.setRegion(larep.onmetlimage("autre"));
+                        }
+                        else{
+                            larep.setRegion(larep.onmetlimage(region));
+                        }
+                        /*
+                        L'interface graphique de la région est définie ici
+                         */
+                            JFrame frame = new JFrame();
+                            frame.getContentPane().setLayout(new FlowLayout());
+                            frame.getContentPane().add(new JLabel(new ImageIcon(larep.getRegion())));
+                            frame.pack();
+                            frame.setVisible(true);
+                        //String test = "test";
+                        //notreinterface.notreinterface();
+                        /*
+                        5 essais pour l'utilisateur, on utilise la fonction jeu pour faire fonctionner le code principal présent
+                        dans région
+                         */
                         while (compteur != 5) {
-                            compteur = Francaise.jeu(region, compteur, lesparametres.getChoixdelaregion(), lesparametres.getChoixlaliste());
+                            compteur = Francaise.jeu(region, compteur, lesparametres.getChoixdelaregion(), lesparametres.getChoixlaliste(), lesparametres.getChoiximage());
                         }
                         //frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // if you want the X button to close the ap
+                        // On enlève la représentation de la région quand le compteur est terminé
                         frame.setVisible(false);
                     }
                     else if (lesparametres.getChoiximage() == 1){
+                        /*
+                        Même cas sans images
+                         */
                         //System.out.println(region);
                         while (compteur != 5) {
-                            compteur = Francaise.jeu(region, compteur, lesparametres.getChoixdelaregion(), lesparametres.getChoixlaliste());
+                            compteur = Francaise.jeu(region, compteur, lesparametres.getChoixdelaregion(), lesparametres.getChoixlaliste(),lesparametres.getChoiximage());
                         }
                     }
                     break;
                 case 2 :
-                    System.out.println("Que voulez vous-modifier ?");
-                    System.out.println("0 = retour, 1 = anciennes ou nouvelles regions, 2 = image presente ou non, 3 = liste des regions ou non");
-                    int choixparam = -1;
-                    choixparam = scanner.nextInt();
+                    String choixdesparam = JOptionPane.showInputDialog("Que voulez-vous modifier ? 0 = retour, 1 = anciennes ou nouvelles régions, 2 = images présentes ou non, 3 = liste des régions ou non");
+                    /*
+                    Modification en fonction du chiffre rentré
+                    Chaque paramètre est modifié via la fonction en question dans paramètres
+                    Puis sauvegarder dans une variable pour le reste des traitements
+                    */
+                    //findujeu = Integer.parseInt(lejeu);
+                    //System.out.println("Que voulez vous-modifier ?");
+                    //System.out.println("0 = retour, 1 = anciennes ou nouvelles regions, 2 = image presente ou non, 3 = liste des regions ou non");
+                    int choixparam = Integer.parseInt(choixdesparam);
                     switch(choixparam){
                         case 0 :
-                            System.out.println("Retour au menu");
+                            JOptionPane.showMessageDialog( null, "Retour au menu", "", JOptionPane.PLAIN_MESSAGE );;
                             break;
                         case 1 :
-                            System.out.println("0 = anciennes regions, 1 = nouvelles regions, 2 = toutes les regions");
-                            int choixregion = -1;
-                            choixregion = scanner.nextInt();
+                            String choixdelaregion = JOptionPane.showInputDialog("0 = anciennes régions, 1 = nouvelles régions, 2 = toutes les régions");
+                            //System.out.println("0 = anciennes regions, 1 = nouvelles regions, 2 = toutes les regions");
+                            int choixregion = Integer.parseInt(choixdelaregion);
+                            //choixregion = scanner.nextInt();
                             choixregion = lesparametres.ancienneounouvelle(choixregion);
                             break;
                         case 2 :
-                            System.out.println("0 = garder les images, 1 = enlever les images");
-                            int choiximage = -1;
-                            choiximage = scanner.nextInt();
+                            String choixdelimage = JOptionPane.showInputDialog("0 = garder les images, 1 = enlever les images");
+                            int choiximage = Integer.parseInt(choixdelimage);
+                            //choiximage = scanner.nextInt();
                             choiximage = lesparametres.imageounon(choiximage);
                             break;
                         case 3 :
-                            System.out.println("0 = garder la liste des regions, 1 = enlever la liste des regions");
-                            int choixliste = -1;
-                            choixliste = scanner.nextInt();
+                            String choixdelaliste = JOptionPane.showInputDialog("0 = garder la liste des régions, 1 = enlever la liste des régions");
+                            int choixliste = Integer.parseInt(choixdelaliste);
+                            //choixliste = scanner.nextInt();
                             choixliste = lesparametres.choixlisteounon(choixliste);
                             break;
-
-
                     }
                 default :
+                    //if choix param != 0
+                    //findujeu = 0;
                     //System.out.println("Essaie encore");
         }
 
@@ -115,6 +151,12 @@ public class main{
      */
 }
 class Parametres{
+
+    /*
+    On retrouve tous les paramètres ici modifiables, en private donc modifiables uniquement avec les
+    getter et les setter
+    c'est ici qu'on lance le message pour donner l'information à l'utilisateur du bon traitement
+     */
 
     private int modedejeu = 0;
     private int choixdelaregion;
@@ -150,51 +192,51 @@ class Parametres{
         if (choixregion == 0)
         {
             //tour de magie pour permettre le fonctionnement avec les anciennes régions, probablement avec des booleebs
-            System.out.println("Tout est ok, les anciennes regions sont maintenant jouables");
+            JOptionPane.showMessageDialog( null, "Les anciennes régions sont maintenant jouables", "", JOptionPane.PLAIN_MESSAGE );
             this.setChoixdelaregion(0);
         }
         else if (choixregion == 1){
             //même tour de magie
-            System.out.println("Tout est ok, les nouvelles regions sont maintenant jouables");
+            JOptionPane.showMessageDialog( null, "Les nouvelles régions sont maintenant jouables", "", JOptionPane.PLAIN_MESSAGE );
             this.setChoixdelaregion(1);
             //donner la possibilite de jouer avec toutes les regions en meme temps ?
         }
         else if (choixregion == 2){
-            System.out.println("Tout est ok, les anciennes et nouvelles regions sont maintenant jouables");
+            JOptionPane.showMessageDialog( null, "Toutes les régions sont maintenant jouables", "", JOptionPane.PLAIN_MESSAGE );
             this.setChoixdelaregion(2);
         }
         else {
-            System.out.println("Rien n'a ete modifié");
+            JOptionPane.showMessageDialog( null, "Pas de changements", "", JOptionPane.PLAIN_MESSAGE );
         }
         return choixregion;
     }
 
     public int imageounon(int choiximage){
         if (choiximage == 0){
-            System.out.println("Vous jouez avec les images");
+            JOptionPane.showMessageDialog( null, "Vous jouez avec les images", "", JOptionPane.PLAIN_MESSAGE );
             this.setChoiximage(0);
         }
         else if (choiximage == 1){
-            System.out.println("Vous jouez sans les images");
+            JOptionPane.showMessageDialog( null, "Vous jouez sans les images", "", JOptionPane.PLAIN_MESSAGE );
             this.setChoiximage(1);
         }
         else {
-            System.out.println("Rien n'a ete modifie");
+            JOptionPane.showMessageDialog( null, "Pas de changements", "", JOptionPane.PLAIN_MESSAGE );
         }
         return choiximage;
     }
 
     public int choixlisteounon(int choixliste){
         if (choixliste == 0){
-            System.out.println("Vous jouez avec la liste");
+            JOptionPane.showMessageDialog( null, "Vous jouez avec la liste", "", JOptionPane.PLAIN_MESSAGE );
             this.setChoixlaliste(0);
         }
         else if (choixliste == 1){
-            System.out.println("Vous jouez sans la liste");
+            JOptionPane.showMessageDialog( null, "Vous jouez sans la liste", "", JOptionPane.PLAIN_MESSAGE );
             this.setChoixlaliste(1);
         }
         else {
-            System.out.println("Rien n'a ete modifie");
+            JOptionPane.showMessageDialog( null, "Pas de changements", "", JOptionPane.PLAIN_MESSAGE );
         }
         return choixliste;
     }
@@ -229,6 +271,10 @@ class Region{
 
      */
 
+
+    /*
+    Permet de définir aléatoirement la région à chercher via un code simple
+     */
     public String aleatoire(int mode){
         String aleatoire;
         double chiffre;
@@ -240,7 +286,7 @@ class Region{
         }
         else if (mode==1)
         {
-            chiffre = Math.floor(Math.random()*18);
+            chiffre = Math.floor(Math.random()*17);
             int valeur = (int)chiffre;
             aleatoire = choixpossible(mode, valeur);
         }
@@ -254,6 +300,11 @@ class Region{
         return aleatoire;
     }
 
+    /*
+    C'est ici que l'on décide réellement du choix de l'utilisateur, en fonction du chiffre récupéré
+    on lui donne une région
+    le mode 2 décide aléatoirement entre un mode 0 et un mode 1
+     */
     public String choixpossible(int mode, int valeur){
         String aleatoire;
 
@@ -365,11 +416,17 @@ class Region{
     }
 
 
-    public int jeu(String region, int compteur, int modedejeu, int choixliste){
+    /*
+    Code général pour le fonctionnement du jeu
+    permet de voir les résultats des calculs
+     */
 
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Quelle est votre supposition ? (1 pour avoir la liste)");
-        String supposition = scanner.nextLine();
+    public int jeu(String region, int compteur, int modedejeu, int choixliste, int choixdelimage){
+
+        //Scanner scanner = new Scanner(System.in);
+        String supposition = JOptionPane.showInputDialog( "Quelle est votre supposition ? (1 pour avoir la liste)");
+        //System.out.println("Quelle est votre supposition ? (1 pour avoir la liste)");
+        //String supposition = scanner.nextLine();
         if ((supposition.equals("1")) && (modedejeu == 1) && (choixliste == 0))
         {
             touteslesregions();
@@ -379,28 +436,33 @@ class Region{
         {
         double distance;
         if (supposition.equals(region)){
-            System.out.println("Vous etes a 0 km");
-            System.out.println("100%");
-            System.out.println("C'est trouve, bravo ! ");
+            JOptionPane.showMessageDialog( null, "Vous êtes à 0 km, 100%. C'est trouvé, bravo !", "", JOptionPane.PLAIN_MESSAGE );
+            //System.out.println("Vous etes a 0 km");
+            //System.out.println("100%");
+            //System.out.println("C'est trouve, bravo ! ");
             compteur = 5;
             return compteur;
         }
         else {
-            System.out.println("Rate !");
-            distance = verifdistance(region, supposition, compteur, modedejeu);
+            distance = verifdistance(region, supposition, compteur, modedejeu,choixliste,choixdelimage);
+            JOptionPane.showMessageDialog( null, "Raté !", "", JOptionPane.PLAIN_MESSAGE );
+            //modedejeu = 0;
             if (distance == 0) {
-                System.out.println("La saisie n'a pas ete reconnue");
+                JOptionPane.showMessageDialog( null, "La saisie n'a pas été reconnue", "", JOptionPane.PLAIN_MESSAGE );
             } else {
-                System.out.println("Vous etes a " + distance + " km");
-                int pourcentage = moyenne(region, distance, modedejeu);
+                //System.out.println("Vous etes a " + distance + " km");
+                int pourcentage = pourcentage(region, distance, modedejeu);
+                JOptionPane.showMessageDialog( null, "Vous êtes à " + distance + " km. \n Votre pourcentage de proximité est de : " + pourcentage + "%", "", JOptionPane.PLAIN_MESSAGE );
                 //int pourcentage = calculmoyenne(distance,mediane);
-                System.out.println(pourcentage + "%");
+                //JOptionPane.showMessageDialog( null, pourcentage + "%", "", JOptionPane.PLAIN_MESSAGE );
+                //System.out.println(pourcentage + "%");
                 //String fleche = this.veriffleche(region,supposition);
                 //System.out.println(fleche);
                 compteur = compteur + 1;
             }
             if (compteur == 5) {
-                System.out.println("Vous n'avez plus de suppositions, la reponse etait " + region);
+                JOptionPane.showMessageDialog( null, "Jeu terminé, la réponse était " + region, "", JOptionPane.PLAIN_MESSAGE );
+                //System.out.println("Vous n'avez plus de suppositions, la reponse etait " + region);
                 return compteur;
             } else {
                 return compteur;
@@ -408,12 +470,15 @@ class Region{
         }
         }
 
-
-
     }
 
+    /*
+    de base un code pour donner toutes les régions, c'est depuis simplifié
+     */
     public void touteslesregions(){
-        System.out.println("Voici les regions possiblent : ");
+        //JFrame lesregions = new JFrame();
+        JOptionPane.showMessageDialog( null, "Voici les régions possiblent : \n Auvergne-Rhone-Alpes \n Bretagne \n Centre-Val de Loire \n Corse \n Grand Est \n Guadeloupe \n Guyane \n Hauts-de-France \n Ile-de-France \n La Reunion \n Martinique \n Mayotte \n Normandie \n Nouvelle-Aquitaine \n Occitanie \n Pays de la Loire \n Provence-Alpes-Cote d'Azur", "", JOptionPane.PLAIN_MESSAGE );
+        /*
         System.out.println("");
         String lesregions = "";
         int compteur = 0;
@@ -426,8 +491,11 @@ class Region{
                 }
                 compteur = compteur + 1;
             }
-        }
 
+         */
+
+        }
+    /*
     public String lesregions(int laregion){
         String regionenquestion;
         switch (laregion){
@@ -492,7 +560,12 @@ class Region{
         return regionenquestion;
     }
 
-    public double verifdistance(String region, String supposition, int compteur, int modedejeu){
+     */
+
+    /*
+    code simple de vérification de la distance entre deux distances, suivant la trigonométrie
+     */
+    public double verifdistance(String region, String supposition, int compteur, int modedejeu, int choixdelaliste, int choixdelimage){
         double distance;
         int r;
         r = 6371;
@@ -500,11 +573,13 @@ class Region{
         double[] lasupposition;
         double[] laregion;
         int test = 0;
-        lasupposition = veriflatlon(supposition, compteur, test);
-        if (modedejeu == 1){
+        lasupposition = veriflatlon(supposition, compteur, modedejeu,test);
+
+        if ((modedejeu == 1) && (choixdelimage == 0) && (choixdelaliste == 0)){
             test = 1;
         }
-        laregion = veriflatlon(region, compteur, test);
+
+        laregion = veriflatlon(region, compteur, modedejeu,test);
         distance = Math.acos(Math.sin(degresversradian(laregion[1]))*Math.sin(degresversradian(lasupposition[1]))+Math.cos(degresversradian(laregion[1]))*Math.cos(degresversradian(lasupposition[1]))*Math.cos(degresversradian((laregion[0]-lasupposition[0])))) * r;
 
         if ((laregion[0] == 0) || (lasupposition[0] == 0)){
@@ -524,39 +599,272 @@ class Region{
 
     }
 
+    /*
+    latitude longitude en fonction de la région à trouver et la région supposée
+    gère également les indices en fonction du compteur
+     */
 
-    public double[] veriflatlon(String region, int compteur, int test) {
-        double latitude;
-        double longitude;
-        if (test == 1){
-            if (compteur == 1)
+    public double[] veriflatlon(String region, int compteur, int test, int test2) {
+        double latitude = 0;
+        double longitude = 0;
+        String information = "";
+        if (test == 1)
+        {
+            //test anciennes régions
+            switch (region)
             {
-                System.out.printf("La specialite culinaire de la region en question est : ");
-            }
-            else if (compteur == 2){
-                System.out.printf("La personnalite connue regionale de la region en question est : ");
-            }
-            else if (compteur == 3){
-                System.out.printf("La capitale regionale de la region en question est : ");
+                case "Hauts-de-France":
+                    latitude = 50.62925;
+                    longitude = 3.057256;
+                    if ((compteur == 1) && (test == 1)){
+                        information = "la bière";
+                    }
+                    if ((compteur == 2) && (test == 1)){
+                        information = "Charles de Gaulle";
+                    }
+                    if ((compteur == 3) && (test == 1)){
+                        information = "Lille";
+                    }
+                    break;
+                case "Normandie" :
+                    latitude = 49.443232;
+                    longitude = 1.099971;
+                    if ((compteur == 1) && (test == 1)){
+                        information = ("la matelote");
+                    }
+                    if ((compteur == 2) && (test == 1)){
+                        information = ("Thomas Pesquet");
+                    }
+                    if ((compteur == 3) && (test == 1)){
+                        information = ("Rouen");
+                    }
+                    break;
+                case "Bretagne":
+                    latitude = 48.117266;
+                    longitude = -1.6777926;
+                    if ((compteur == 1) && (test == 1)){
+                        information = ("la crepe");
+                    }
+                    if ((compteur == 2) && (test == 1)){
+                        information = ("Anne-Claire Coudray");
+                    }
+                    if ((compteur == 3) && (test == 1)){
+                        information = ("Rennes");
+                    }
+                    break;
+                case "Pays de la Loire":
+                    latitude = 47.218371;
+                    longitude = -1.553621;
+                    if ((compteur == 1) && (test == 1)){
+                        information = ("la fouace");
+                    }
+                    if ((compteur == 2) && (test == 1)){
+                        information = ("Jules Verne");
+                    }
+                    if ((compteur == 3) && (test == 1)){
+                        information = ("Nantes");
+                    }
+                    break;
+                case "Ile-de-France":
+                    latitude = 48.856614;
+                    longitude = 2.3522219;
+                    if ((compteur == 1) && (test == 1)){
+                        information = ("le macaron");
+                    }
+                    if ((compteur == 2) && (test == 1)){
+                        information = ("Anne Hidalgo");
+                    }
+                    if ((compteur == 3) && (test == 1)){
+                        information = ("Paris");
+                    }
+                    break;
+                case "Centre-Val de Loire" :
+                    latitude = 47.902964;
+                    longitude = 1.909251;
+                    if ((compteur == 1) && (test == 1)){
+                        information = ("la tarte tatin");
+                    }
+                    if ((compteur == 2) && (test == 1)){
+                        information = ("Jeanne d'Arc");
+                    }
+                    if ((compteur == 3) && (test == 1)){
+                        information = ("Orleans");
+                    }
+                    break;
+                case "Grand Est" :
+                    latitude = 48.5734053;
+                    longitude = 7.7521113;
+                    if ((compteur == 1) && (test == 1)){
+                        information = ("la choucroute");
+                    }
+                    if ((compteur == 2) && (test == 1)){
+                        information = ("Pierre Herme");
+                    }
+                    if ((compteur == 3) && (test == 1)){
+                        information = ("Strasbourg");
+                    }
+                    break;
+                case "Bourgogne-Franche-Comte":
+                    latitude = 47.322047;
+                    longitude = 5.04148;
+                    if ((compteur == 1) && (test == 1)){
+                        information = ("le boeuf bourguignon");
+                    }
+                    if ((compteur == 2) && (test == 1)){
+                        information = ("Victor Hugo");
+                    }
+                    if ((compteur == 3) && (test == 1)){
+                        information = ("Dijon");
+                    }
+                    break;
+                case "Auvergne-Rhone-Alpes" :
+                    latitude = 45.764043;
+                    longitude = 4.835659;
+                    if ((compteur == 1) && (test == 1)){
+                        information = ("le coq au vin");
+                    }
+                    if ((compteur == 2) && (test == 1)){
+                        information = ("Jean Moulin");
+                    }
+                    if ((compteur == 3) && (test == 1)){
+                        information = ("Lyon");
+                    }
+                    break;
+                case "Nouvelle-Aquitaine" :
+                    latitude = 44.837789;
+                    longitude = -0.57918;
+                    if ((compteur == 1) && (test == 1)){
+                        information = ("les huitres du Bassin d'Arcachon");
+                    }
+                    if ((compteur == 2) && (test == 1)){
+                        information = ("Jacques Ellul");
+                    }
+                    if ((compteur == 3) && (test == 1)){
+                        information = ("Bordeaux");
+                    }
+                    break;
+                case "Occitanie" :
+                    latitude = 43.604652;
+                    longitude = 1.444209;
+                    if ((compteur == 1) && (test == 1)){
+                        information = ("le confit de canard");
+                    }
+                    if ((compteur == 2) && (test == 1)){
+                        information = ("Bigflo et Oli");
+                    }
+                    if ((compteur == 3) && (test == 1)){
+                        information = ("Toulouse");
+                    }
+                    break;
+                case "Provence-Alpes-Cote d'Azur":
+                    latitude = 43.296482;
+                    longitude = 5.36978;
+                    if ((compteur == 1) && (test == 1)){
+                        information = ("la bouillabaisse");
+                    }
+                    if ((compteur == 2) && (test == 1)){
+                        information = ("Zinedine Zidane");
+                    }
+                    if ((compteur == 3) && (test == 1)){
+                        information = ("Marseille");
+                    }
+                    break;
+                case "Corse":
+                    latitude = 41.919229;
+                    longitude = 8.738635;
+                    if ((compteur == 1) && (test == 1)){
+                        information = ("le figatellu");
+                    }
+                    if ((compteur == 2) && (test == 1)){
+                        information = ("Napoleon Bonaparte");
+                    }
+                    if ((compteur == 3) && (test == 1)){
+                        information = ("Ajaccio");
+                    }
+                    break;
+                case "Mayotte":
+                    latitude = -12.780600;
+                    longitude = 45.227800;
+                    if ((compteur == 1) && (test == 1)){
+                        information = ("le matsidza");
+                    }
+                    if ((compteur == 2) && (test == 1)){
+                        information = ("Geniale Attoumani");
+                    }
+                    if ((compteur == 3) && (test == 1)){
+                        information = ("Mamoudzou");
+                    }
+                    break;
+                case "La Reunion":
+                    latitude = -20.882057;
+                    longitude = 55.450675;
+                    if ((compteur == 1) && (test == 1)){
+                        information = ("le rhum arrange");
+                    }
+                    if ((compteur == 2) && (test == 1)){
+                        information = ("Dimitri Payet");
+                    }
+                    if ((compteur == 3) && (test == 1)){
+                        information = ("Saint-Denis");
+                    }
+                    break;
+                case "Guyane":
+                    latitude = 4.9227;
+                    longitude = -52.3269;
+                    if ((compteur == 1) && (test == 1)){
+                        information = ("le poulet boucane");
+                    }
+                    if ((compteur == 2) && (test == 1)){
+                        information = ("Christiane Taubira");
+                    }
+                    if ((compteur == 3) && (test == 1)){
+                        information = ("Cayenne");
+                    }
+                    break;
+                case "Martinique":
+                    latitude = 14.6160647;
+                    longitude = -61.0587804;
+                    if ((compteur == 1) && (test == 1)){
+                        information = ("le gratin de bananes");
+                    }
+                    if ((compteur == 2) && (test == 1)){
+                        information = ("Aime Cesaire");
+                    }
+                    if ((compteur == 3) && (test == 1)){
+                        information = ("Fort-de-France");
+                    }
+                    break;
+                case "Guadeloupe":
+                    latitude = 17.302606;
+                    longitude = -62.717692;
+                    if ((compteur == 1) && (test == 1)){
+                        information = ("les accras de morue");
+                    }
+                    if ((compteur == 2) && (test == 1)){
+                        information = ("Teddy Riner");
+                    }
+                    if ((compteur == 3) && (test == 1)){
+                        information = ("Basse-Terre");
+                    }
+                    break;
+                default :
+                    latitude = 0;
+                    longitude = 0;
             }
         }
+        else if (test == 0){
         switch (region) {
+            case "Normandie":
+                latitude = 49.443232;
+                longitude = 1.099971;
+                break;
+            case "Bretagne":
+                latitude = 48.117266;
+                longitude = -1.6777926;
+                break;
             case "Nord-Pas-de-Calais":
                 latitude = 50.62925;
                 longitude = 3.057256;
-                break;
-            case "Hauts-de-France":
-                latitude = 50.62925;
-                longitude = 3.057256;
-                if ((compteur == 1) && (test == 1)){
-                    System.out.println("la biere");
-                }
-                if ((compteur == 2) && (test == 1)){
-                    System.out.println("Charles de Gaulle");
-                }
-                if ((compteur == 3) && (test == 1)){
-                    System.out.println("Lille");
-                }
                 break;
             case "Picardie":
                 latitude = 49.844067;
@@ -566,48 +874,13 @@ class Region{
                 latitude = 49.443232;
                 longitude = 1.099971;
                 break;
-            case "Normandie" :
-                latitude = 49.443232;
-                longitude = 1.099971;
-            if ((compteur == 1) && (test == 1)){
-                System.out.println("la matelote");
-            }
-            if ((compteur == 2) && (test == 1)){
-                System.out.println("Thomas Pesquet");
-            }
-            if ((compteur == 3) && (test == 1)){
-                System.out.println("Rouen");
-            }
-            break;
             case "Basse-Normandie":
                 latitude = 49.182863;
                 longitude = -0.370679;
                 break;
-            case "Bretagne":
-                latitude = 48.117266;
-                longitude = -1.6777926;
-                if ((compteur == 1) && (test == 1)){
-                    System.out.println("la crepe");
-                }
-                if ((compteur == 2) && (test == 1)){
-                    System.out.println("Anne-Claire Coudray");
-                }
-                if ((compteur == 3) && (test == 1)){
-                    System.out.println("Rennes");
-                }
-                break;
             case "Pays de la Loire":
                 latitude = 47.218371;
                 longitude = -1.553621;
-                if ((compteur == 1) && (test == 1)){
-                    System.out.println("la fouace");
-                }
-                if ((compteur == 2) && (test == 1)){
-                    System.out.println("Jules Verne");
-                }
-                if ((compteur == 3) && (test == 1)){
-                    System.out.println("Nantes");
-                }
                 break;
             case "Poitou-Charentes":
                 latitude = 46.580224;
@@ -616,32 +889,10 @@ class Region{
             case "Ile-de-France":
                 latitude = 48.856614;
                 longitude = 2.3522219;
-                if ((compteur == 1) && (test == 1)){
-                    System.out.println("le macaron");
-                }
-                if ((compteur == 2) && (test == 1)){
-                    System.out.println("Anne Hidalgo");
-                }
-                if ((compteur == 3) && (test == 1)){
-                    System.out.println("Paris");
-                }
                 break;
             case "Centre":
                 latitude = 47.902964;
                 longitude = 1.909251;
-                break;
-            case "Centre-Val de Loire" :
-                latitude = 47.902964;
-                longitude = 1.909251;
-                if ((compteur == 1) && (test == 1)){
-                    System.out.println("la tarte tatin");
-                }
-                if ((compteur == 2) && (test == 1)){
-                    System.out.println("Jeanne d'Arc");
-                }
-                if ((compteur == 3) && (test == 1)){
-                    System.out.println("Orleans");
-                }
                 break;
             case "Champagne-Ardenne":
                 latitude = 48.956682;
@@ -655,35 +906,9 @@ class Region{
                 latitude = 48.5734053;
                 longitude = 7.7521113;
                 break;
-            case "Grand Est" :
-                latitude = 48.5734053;
-                longitude = 7.7521113;
-                if ((compteur == 1) && (test == 1)){
-                    System.out.println("la choucroute");
-                }
-                if ((compteur == 2) && (test == 1)){
-                    System.out.println("Pierre Herme");
-                }
-                if ((compteur == 3) && (test == 1)){
-                    System.out.println("Strasbourg");
-                }
-                break;
             case "Bourgogne":
                 latitude = 47.322047;
                 longitude = 5.04148;
-                break;
-            case "Bourgogne-Franche-Comte":
-                latitude = 47.322047;
-                longitude = 5.04148;
-                if ((compteur == 1) && (test == 1)){
-                    System.out.println("le boeuf bourguignon");
-                }
-                if ((compteur == 2) && (test == 1)){
-                    System.out.println("Victor Hugo");
-                }
-                if ((compteur == 3) && (test == 1)){
-                    System.out.println("Dijon");
-                }
                 break;
             case "Franche-Comte":
                 latitude = 47.237829;
@@ -692,19 +917,6 @@ class Region{
             case "Rhone-Alpes":
                 latitude = 45.764043;
                 longitude = 4.835659;
-                break;
-            case "Auvergne-Rhone-Alpes" :
-                latitude = 45.764043;
-                longitude = 4.835659;
-                if ((compteur == 1) && (test == 1)){
-                    System.out.println("le coq au vin");
-                }
-                if ((compteur == 2) && (test == 1)){
-                    System.out.println("Jean Moulin");
-                }
-                if ((compteur == 3) && (test == 1)){
-                    System.out.println("Lyon");
-                }
                 break;
             case "Auvergne":
                 latitude = 45.777222;
@@ -718,35 +930,9 @@ class Region{
                 latitude = 44.837789;
                 longitude = -0.57918;
                 break;
-            case "Nouvelle-Aquitaine" :
-                latitude = 44.837789;
-                longitude = -0.57918;
-                if ((compteur == 1) && (test == 1)){
-                    System.out.println("les huitres du Bassin d'Arcachon");
-                }
-                if ((compteur == 2) && (test == 1)){
-                    System.out.println("Jacques Ellul");
-                }
-                if ((compteur == 3) && (test == 1)){
-                    System.out.println("Bordeaux");
-                }
-                break;
             case "Midi-Pyrenees":
                 latitude = 43.604652;
                 longitude = 1.444209;
-                break;
-            case "Occitanie" :
-                latitude = 43.604652;
-                longitude = 1.444209;
-                if ((compteur == 1) && (test == 1)){
-                    System.out.println("le confit de canard");
-                }
-                if ((compteur == 2) && (test == 1)){
-                    System.out.println("Bigflo et Oli");
-                }
-                if ((compteur == 3) && (test == 1)){
-                    System.out.println("Toulouse");
-                }
                 break;
             case "Languedoc-Roussillon":
                 latitude = 43.610769;
@@ -755,109 +941,66 @@ class Region{
             case "Provence-Alpes-Cote d'Azur":
                 latitude = 43.296482;
                 longitude = 5.36978;
-                if ((compteur == 1) && (test == 1)){
-                    System.out.println("la bouillabaisse");
-                }
-                if ((compteur == 2) && (test == 1)){
-                    System.out.println("Zinedine Zidane");
-                }
-                if ((compteur == 3) && (test == 1)){
-                    System.out.println("Marseille");
-                }
                 break;
             case "Corse":
                 latitude = 41.919229;
                 longitude = 8.738635;
-                if ((compteur == 1) && (test == 1)){
-                    System.out.println("le figatellu");
-                }
-                if ((compteur == 2) && (test == 1)){
-                    System.out.println("Napoleon Bonaparte");
-                }
-                if ((compteur == 3) && (test == 1)){
-                    System.out.println("Ajaccio");
-                }
                 break;
             case "Mayotte":
                 latitude = -12.780600;
                 longitude = 45.227800;
-                if ((compteur == 1) && (test == 1)){
-                    System.out.println("le matsidza");
-                }
-                if ((compteur == 2) && (test == 1)){
-                    System.out.println("Geniale Attoumani");
-                }
-                if ((compteur == 3) && (test == 1)){
-                    System.out.println("Mamoudzou");
-                }
                 break;
             case "La Reunion":
                 latitude = -20.882057;
                 longitude = 55.450675;
-                if ((compteur == 1) && (test == 1)){
-                    System.out.println("le rhum arrange");
-                }
-                if ((compteur == 2) && (test == 1)){
-                    System.out.println("Dimitri Payet");
-                }
-                if ((compteur == 3) && (test == 1)){
-                    System.out.println("Saint-Denis");
-                }
                 break;
             case "Guyane":
                 latitude = 4.9227;
                 longitude = -52.3269;
-                if ((compteur == 1) && (test == 1)){
-                    System.out.println("le poulet boucane");
-                }
-                if ((compteur == 2) && (test == 1)){
-                    System.out.println("Christiane Taubira");
-                }
-                if ((compteur == 3) && (test == 1)){
-                    System.out.println("Cayenne");
-                }
                 break;
             case "Martinique":
                 latitude = 14.6160647;
                 longitude = -61.0587804;
-                if ((compteur == 1) && (test == 1)){
-                    System.out.println("le gratin de bananes");
-                }
-                if ((compteur == 2) && (test == 1)){
-                    System.out.println("Aime Cesaire");
-                }
-                if ((compteur == 3) && (test == 1)){
-                    System.out.println("Fort-de-France");
-                }
                 break;
             case "Guadeloupe":
                 latitude = 17.302606;
                 longitude = -62.717692;
-                if ((compteur == 1) && (test == 1)){
-                    System.out.println("les accras de morue");
-                }
-                if ((compteur == 2) && (test == 1)){
-                    System.out.println("Teddy Riner");
-                }
-                if ((compteur == 3) && (test == 1)){
-                    System.out.println("Basse-Terre");
-                }
                 break;
             default:
                 latitude = 0;
                 longitude = 0;
                 break;
+        }
 
         }
         double[] latlon = {latitude,longitude};
+        if (test2 == 1){
+            if (compteur == 1)
+            {
+                JOptionPane.showMessageDialog( null, "La spécialité culinaire de la région en question est : " + information, "", JOptionPane.PLAIN_MESSAGE );
+                //System.out.printf("La specialite culinaire de la region en question est : " + information);
+            }
+            else if (compteur == 2){
+                JOptionPane.showMessageDialog( null, "La personnalité connue régionale de la région en question est : " + information, "", JOptionPane.PLAIN_MESSAGE );
+                //System.out.printf("La personnalite connue regionale de la region en question est : " + information);
+            }
+            else if (compteur == 3){
+                JOptionPane.showMessageDialog( null, "La capitale régionale de la région en question est : " + information, "", JOptionPane.PLAIN_MESSAGE );
+                //System.out.printf("La capitale regionale de la region en question est : " + information);
+            }
+        }
         return latlon;
     }
 
-    public int moyenne(String region, double ladistance, int modedejeu){
+    /*
+    calcul du pourcentage de distance en fonction de la valeur plus grande
+     */
+
+    public int pourcentage(String region, double ladistance, int modedejeu){
         int cas = 0;
         int r = 6371;
         double [] laregion;
-        laregion = veriflatlon(region, cas, cas);
+        laregion = veriflatlon(region, cas, cas, cas);
         double distance;
         double [] tableaudemoyenne = new double[100];
         //double [] petittableaudemoyenne = new double[18];
@@ -908,7 +1051,7 @@ class Region{
 
          */
         tableaudemoyenne = tri_selection(tableaudemoyenne);
-        double mediane = calculmediane(tableaudemoyenne);
+        //double mediane = calculmediane(tableaudemoyenne);
         pourcentage = calculpourcentage(tableaudemoyenne, ladistance);
         return pourcentage;
     }
@@ -935,6 +1078,11 @@ class Region{
 
 
      */
+
+    /*
+    tri à bulles classique
+     */
+
     public double[] tri_selection(double[] tab)
     {
 
@@ -958,6 +1106,7 @@ class Region{
         return tab;
     }
 
+    /*
     public double calculmediane(double[] tab){
         int mediane = tab.length / 2;
         int medianedeux = (tab.length/2) + 1;
@@ -965,6 +1114,8 @@ class Region{
         return medianne;
 
     }
+
+     */
 
     public double[] lesregionsenint(int cas, int modedejeu){
         double latitude = 0;
@@ -980,8 +1131,6 @@ class Region{
 
         if (modedejeu == 0)
         {
-
-
         switch (cas) {
             case 0 :
                 latitude = 50.62925;
@@ -1264,7 +1413,11 @@ class Region{
 
 class representation{
 
-
+    /*
+    class permettant de charger les images
+    la ligne en-dessous est à modifier en fonction du chemin de l'utilisateur
+     */
+    String chemin = "C:/Users/cleme/Desktop/Francle/PNG des régions/";
     public static BufferedImage Image(String path) {
         BufferedImage img = null;
         try {
@@ -1282,58 +1435,62 @@ class representation{
     public Image onmetlimage(String region){
 
         if (Objects.equals(region, "Corse")){
-            this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Corse.png");
+            this.region = representation.Image(chemin + "Corse.png");
         }
         else if (Objects.equals(region, "Bourgogne-Franche-Comte")){
-            this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Bourgogne Franche-Comté.png");
+            this.region = representation.Image(chemin + "Bourgogne Franche-Comté.png");
         }
         else if (Objects.equals(region, "Hauts-de-France")){
-            this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Hauts de France.png");
+            this.region = representation.Image(chemin + "Hauts de France.png");
         }
         else if (Objects.equals(region, "Auvergne-Rhone-Alpes")){
-            this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Auvergne Rhone Alpes.png");
+            this.region = representation.Image(chemin + "Auvergne Rhone Alpes.png");
         }
         else if (Objects.equals(region,"Bretagne")){
-            this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Bretagne.png");
+            this.region = representation.Image(chemin + "Bretagne.png");
         }
         else if (Objects.equals(region, "Centre-Val de Loire")){
-            this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Centre-Val De Loire.png");
+            this.region = representation.Image(chemin + "Centre-Val De Loire.png");
         }
         else if (Objects.equals(region, "Grand Est")){
-            this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Grand Est.png");
+            this.region = representation.Image(chemin + "Grand Est.png");
         }
         else if (Objects.equals(region,"Guadeloupe")){
-            this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Guadeloupe.png");
+            this.region = representation.Image(chemin + "Guadeloupe.png");
         }
         else if (Objects.equals(region,"Guyane")){
-            this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Guyane.png");
+            this.region = representation.Image(chemin + "Guyane.png");
         }
         else if (Objects.equals(region, "Ile-de-France")){
-            this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Ile-de-France.png");
+            this.region = representation.Image(chemin + "Ile-de-France.png");
         }
         else if (Objects.equals(region,"La Reunion")){
-            this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/La Reunion.png");
+            this.region = representation.Image(chemin + "La Réunion.png");
         }
         else if (Objects.equals(region,"Martinique")){
-            this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Martinique.png");
+            this.region = representation.Image(chemin + "Martinique.png");
         }
         else if (Objects.equals(region, "Mayotte")){
-            this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Mayotte.png");
+            this.region = representation.Image(chemin + "Mayotte.png");
         }
         else if (Objects.equals(region,"Normandie")){
-            this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Normandie.png");
+            this.region = representation.Image(chemin + "Normandie.png");
         }
         else if (Objects.equals(region,"Nouvelle-Aquitaine")){
-            this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Nouvelle Aquitaine.png");
+            this.region = representation.Image(chemin + "Nouvelle Aquitaine.png");
         }
         else if (Objects.equals(region,"Occitanie")){
-            this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Occitanie.png");
+            this.region = representation.Image(chemin + "Occitanie.png");
         }
         else if (Objects.equals(region, "Pays de la Loire")){
-            this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Pays de la Loire.png");
+            this.region = representation.Image(chemin + "Pays de la Loire.png");
         }
         else if (Objects.equals(region, "Provence-Alpes-Cote d'Azur")){
-            this.region = representation.Image("C:/Users/cleme/Desktop/Francle/PNG des régions/Provence Alpes Cote d'Azur.png");
+            this.region = representation.Image(chemin + "Provence Alpes Cote d'Azur.png");
+        }
+        else
+        {
+            this.region = representation.Image(chemin + "défaut.png");
         }
 
         return this.region;
@@ -1342,6 +1499,37 @@ class representation{
         return region;
     }
 }
+
+/*
+
+Tentative d'interface non utilisée
+
+class interfacerapide extends JFrame implements ActionListener{
+    private JTextField tfEntree;
+    private JButton OKButton;
+    private JPanel myPanel;
+    private JLabel tfEntre;
+    private JLabel Sortie;
+
+
+    public void notreinterface() {
+        setTitle("Francle");
+        //setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        setVisible(true);
+        //setContentPane(myPanel);
+
+    }
+
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        tfEntree.setText("");
+        Sortie.setText("");
+    }
+}
+
+
+ */
 /*
 class Statistiques{
     ok donc c'est en bonus avec des stats à modifier en fonction des tests
