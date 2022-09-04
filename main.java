@@ -310,10 +310,10 @@ class Region{
 
         if (mode == 2){
             int de = 0;
-            double lareponse = Math.floor(Math.random()*1);
+            double lareponse = Math.floor(Math.random()*2);
             de = (int)lareponse;
             if (de == 0) {mode = 0;}
-            else if (de == 1){mode = 1;}
+            else {mode = 1;}
         }
 
 
@@ -1007,10 +1007,10 @@ class Region{
         if (modedejeu == 2)
         {
             int de = 0;
-            double lareponse = Math.floor(Math.random()*1);
+            double lareponse = Math.floor(Math.random()*2);
             de = (int)lareponse;
             if (de == 0) {modedejeu = 0;}
-            else if (de == 1){modedejeu = 1;}
+            else {modedejeu = 1;}
         }
         if (modedejeu == 0) {
             while (cas <= 26) {
@@ -1123,10 +1123,10 @@ class Region{
 
         if (modedejeu == 2){
             int de = 0;
-            double lareponse = Math.floor(Math.random()*1);
+            double lareponse = Math.floor(Math.random()*2);
             de = (int)lareponse;
             if (de == 0) {modedejeu = 0;}
-            else if (de == 1){modedejeu = 1;}
+            else {modedejeu = 1;}
         }
 
         if (modedejeu == 0)
