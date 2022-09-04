@@ -280,19 +280,19 @@ class Region{
         double chiffre;
 
         if (mode==0){
-            chiffre = Math.floor(Math.random()*26);
+            chiffre = Math.floor(Math.random()*27);
             int valeur = (int)chiffre;
             aleatoire = choixpossible(mode, valeur);
         }
         else if (mode==1)
         {
-            chiffre = Math.floor(Math.random()*17);
+            chiffre = Math.floor(Math.random()*18);
             int valeur = (int)chiffre;
             aleatoire = choixpossible(mode, valeur);
         }
         else
         {
-            chiffre = Math.floor(Math.random()*26);
+            chiffre = Math.floor(Math.random()*27);
             int valeur = (int)chiffre;
             aleatoire = choixpossible(mode, valeur);
         }
