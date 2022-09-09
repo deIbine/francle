@@ -8,8 +8,12 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.lang.Math;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.Scanner;
 //import java.util.Scanner;
+import java.text.Normalizer;
+import java.util.regex.Pattern;
 
 
 /*
@@ -26,6 +30,10 @@ Choix des régions : OK, mais vérifier le cas 2, où le dé n'est pas codé à 
 
 Amélioration de la production de l'aléatoire, je pense qu'elle ne fonctionne pas parfaitement,
 faire des calculs et voir d'autres possibilités
+dans le sens où on a régulièrement les mêmes guess même si l'aléatoire semble fonctionner
+cela fonctionnerait mieux avec plus de cas probablement
+
+Frankle avec les régions des pays de l'empire de Charlemagne ?
 
  */
 
@@ -36,7 +44,6 @@ public class main{
 
 
     public static void main (String[] args){
-
         Parametres lesparametres = new Parametres();
         lesparametres.setChoixdelaregion(1);
         lesparametres.setChoiximage(0);
@@ -273,6 +280,15 @@ class Region{
     private String indicedeux;
     private String indicetrois;
     private String nomdelaregion;
+    private String vrainom;
+
+    public String getVrainom() {
+        return vrainom;
+    }
+
+    public void setVrainom(String vrainom) {
+        this.vrainom = vrainom;
+    }
 
     public double getLatitude() {
         return latitude;
@@ -323,6 +339,28 @@ class Region{
     }
 
 
+    public String convertisseur(String region){
+
+        //supprimer les espaces
+        String lessai = region.replaceAll("\\s","");
+
+        //supprimer les majuscules
+
+        lessai = lessai.toLowerCase();
+
+        //supprimer les accentuations
+
+        lessai = lessai.replaceAll("\\p{Punct}", "");
+
+        //supprimer les accents
+
+        lessai = Normalizer.normalize(lessai,Normalizer.Form.NFD);
+        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+
+        return pattern.matcher(lessai).replaceAll("");
+    }
+
+
     public Region latitudeetlongitude(String region, int verifchoix) {
         //remplacer par une initialisation donc Region()
         double latitude;
@@ -330,6 +368,7 @@ class Region{
         String indiceun;
         String indicedeux;
         String indicetrois;
+        String vrainom;
 
         if (verifchoix == 2){
             int de;
@@ -338,134 +377,153 @@ class Region{
             if (de == 0) {verifchoix = 0;}
             else {verifchoix = 1;}
         }
+        region = this.convertisseur(region);
 
         switch (region)
         {
-            case "Hauts-de-France":
+            case "hautsdefrance":
                 latitude = 50.62925;
                 longitude = 3.057256;
                 indiceun = "la bière";
                 indicedeux = "Charles de Gaulle";
                 indicetrois = "Lille";
+                vrainom = ("Hauts-de-France");
                 break;
-            case "Normandie" :
+            case "normandie" :
                 latitude = 49.443232;
                 longitude = 1.099971;
                 indiceun = ("la matelote");
                 indicedeux = ("Thomas Pesquet");
                 indicetrois = ("Rouen");
+                vrainom = ("Normandie");
                 break;
-            case "Bretagne":
+            case "bretagne":
                 latitude = 48.117266;
                 longitude = -1.6777926;
                 indiceun = ("la crepe");
                 indicedeux = ("Anne-Claire Coudray");
                 indicetrois = ("Rennes");
+                vrainom = ("Bretagne");
                 break;
-            case "Pays de la Loire":
+            case "paysdelaloire":
                 latitude = 47.218371;
                 longitude = -1.553621;
                 indiceun = ("la fouace");
                 indicedeux = ("Jules Verne");
                 indicetrois = ("Nantes");
+                vrainom = ("Pays de la Loire");
                 break;
-            case "Ile-de-France":
+            case "iledefrance":
                 latitude = 48.856614;
                 longitude = 2.3522219;
                 indiceun = ("le macaron");
                 indicedeux = ("Anne Hidalgo");
                 indicetrois = ("Paris");
+                vrainom = ("Île-de-France");
                 break;
-            case "Centre-Val de Loire" :
+            case "centrevaldeloire" :
                 latitude = 47.902964;
                 longitude = 1.909251;
                 indiceun = ("la tarte tatin");
                 indicedeux = ("Jeanne d'Arc");
                 indicetrois = ("Orleans");
+                vrainom = ("Centre-Val de Loire");
                 break;
-            case "Grand Est" :
+            case "grandest" :
                 latitude = 48.5734053;
                 longitude = 7.7521113;
                 indiceun = ("la choucroute");
                 indicedeux = ("Pierre Herme");
                 indicetrois = ("Strasbourg");
+                vrainom = ("Grand Est");
                 break;
-            case "Bourgogne-Franche-Comte":
+            case "bourgognefranchecomte":
                 latitude = 47.322047;
                 longitude = 5.04148;
                 indiceun = ("le boeuf bourguignon");
                 indicedeux = ("Victor Hugo");
                 indicetrois = ("Dijon");
+                vrainom = ("Bourgogne-Franche-Comté");
                 break;
-            case "Auvergne-Rhone-Alpes" :
+            case "auvergnerhonealpes" :
                 latitude = 45.764043;
                 longitude = 4.835659;
                 indiceun = ("le coq au vin");
                 indicedeux  = ("Jean Moulin");
                 indicetrois = ("Lyon");
+                vrainom = ("Auvergne-Rhône-Alpes");
                 break;
-            case "Nouvelle-Aquitaine" :
+            case "nouvelleaquitaine" :
                 latitude = 44.837789;
                 longitude = -0.57918;
                 indiceun = ("les huitres du Bassin d'Arcachon");
                 indicedeux = ("Jacques Ellul");
                 indicetrois = ("Bordeaux");
+                vrainom = ("Nouvelle-Aquitaine");
                 break;
-            case "Occitanie" :
+            case "occitanie" :
                 latitude = 43.604652;
                 longitude = 1.444209;
                 indiceun = ("le confit de canard");
                 indicedeux = ("Bigflo et Oli");
                 indicetrois = ("Toulouse");
+                vrainom = ("Occitanie");
                 break;
-            case "Provence-Alpes-Cote d'Azur":
+            case "provencealpescotedazur":
                 latitude = 43.296482;
                 longitude = 5.36978;
                 indiceun = ("la bouillabaisse");
                 indicedeux = ("Zinedine Zidane");
                 indicetrois = ("Marseille");
+                vrainom = ("Provence-Alpes-Côte d'Azur");
                 break;
-            case "Corse":
+            case "corse":
                 latitude = 41.919229;
                 longitude = 8.738635;
                 indiceun = ("le figatellu");
                 indicedeux =  ("Napoleon Bonaparte");
                 indicetrois = ("Ajaccio");
+                vrainom = ("Corse");
                 break;
-            case "Mayotte":
+            case "mayotte":
                 latitude = -12.780600;
                 longitude = 45.227800;
                 indiceun = ("le matsidza");
                 indicedeux = ("Geniale Attoumani");
                 indicetrois = ("Mamoudzou");
+                vrainom = ("Mayotte");
                 break;
-            case "La Reunion":
+            case "lareunion":
                 latitude = -20.882057;
                 longitude = 55.450675;
                 indiceun = ("le rhum arrange");
                 indicedeux = ("Dimitri Payet");
                 indicetrois = ("Saint-Denis");
+                vrainom = ("La Réunion");
                 break;
-            case "Guyane":
+            case "guyane":
                 latitude = 4.9227;
                 longitude = -52.3269;
                 indiceun = ("le poulet boucane");
                 indicedeux = ("Christiane Taubira");
                 indicetrois =  ("Cayenne");
+                vrainom = ("Guyane");
                 break;
-            case "Martinique":
+            case "martinique":
                 latitude = 14.6160647;
                 longitude = -61.0587804;
                 indiceun = ("le gratin de bananes");
                 indicedeux = ("Aime Cesaire");
                 indicetrois = ("Fort-de-France");
+                vrainom = ("Martinique");
                 break;
-            case "Guadeloupe":
+            case "guadeloupe":
                 latitude = 17.302606;
                 longitude = -62.717692;
                 indiceun = ("les accras de morue");
                 indicedeux = ("Teddy Riner");
                 indicetrois = ("Basse-Terre");
+                vrainom = ("Guadeloupe");
                 break;
             default:
                 latitude = 0;
@@ -473,74 +531,91 @@ class Region{
                 indiceun="";
                 indicedeux ="";
                 indicetrois ="";
+                vrainom = "";
                 break;}
                 int test = 0;
                 if (longitude != 0){test = 1;}
                 if ((verifchoix == 0) && (test == 0)){
                     switch (region) {
-                        case "Nord-Pas-de-Calais":
+                        case "nordpasdecalais":
                             latitude = 50.62925;
                             longitude = 3.057256;
+                            vrainom = ("Nord-Pas-de-Calais");
                             break;
-                        case "Picardie":
+                        case "picardie":
                             latitude = 49.844067;
                             longitude = 2.295753;
+                            vrainom = ("Picardie");
                             break;
-                        case "Haute-Normandie":
+                        case "hautenormandie":
                             latitude = 49.443232;
                             longitude = 1.099971;
+                            vrainom = ("Haute-Normandie");
                             break;
-                        case "Basse-Normandie":
+                        case "bassenormandie":
                             latitude = 49.182863;
                             longitude = -0.370679;
+                            vrainom = ("Basse-Normandie");
                             break;
-                        case "Poitou-Charentes":
+                        case "poitoucharentes":
                             latitude = 46.580224;
                             longitude = 0.340375;
+                            vrainom = ("Poitou-Charentes");
                             break;
-                        case "Centre":
+                        case "centre":
                             latitude = 47.902964;
                             longitude = 1.909251;
+                            vrainom = ("Centre");
                             break;
-                        case "Champagne-Ardenne":
+                        case "chmpagneardenne":
                             latitude = 48.956682;
                             longitude = 4.363073;
+                            vrainom = ("Champagne-Ardenne");
                             break;
-                        case "Lorraine":
+                        case "lorraine":
                             latitude = 49.1193089;
                             longitude = 6.1757156;
+                            vrainom = ("Lorraine");
                             break;
-                        case "Alsace":
+                        case "alsace":
                             latitude = 48.5734053;
                             longitude = 7.7521113;
+                            vrainom = ("Alsace");
                             break;
-                        case "Bourgogne":
+                        case "bourgogne":
                             latitude = 47.322047;
                             longitude = 5.04148;
+                            vrainom = ("Bourgogne");
                             break;
-                        case "Franche-Comte":
+                        case "franchecomte":
                             latitude = 47.237829;
                             longitude = 6.0240539;
+                            vrainom = ("Franche-Comté");
                             break;
-                        case "Rhone-Alpes":
+                        case "rhonealpes":
                             latitude = 45.764043;
                             longitude = 4.835659;
+                            vrainom = ("Rhône-Alpes");
                             break;
-                        case "Auvergne":
+                        case "auvergne":
                             latitude = 45.777222;
                             longitude = 3.087025;
+                            vrainom = ("Auvergne");
                             break;
-                        case "Limousin":
+                        case "limousin":
                             latitude = 45.833619;
                             longitude = 1.261105;
+                            vrainom = ("Limousin");
                             break;
-                        case "Aquitaine":
+                        case "aquitaine":
                             latitude = 44.837789;
                             longitude = -0.57918;
+                            vrainom = ("Aquitaine");
                             break;
-                        case "Midi-Pyrenees":
+                        case "midipyrenees":
                             latitude = 43.604652;
                             longitude = 1.444209;
+                            vrainom = ("Midi-Pyrénées");
                             break;
                         default :
                             latitude = 0;
@@ -555,6 +630,7 @@ class Region{
         laregion.setIndicetrois(indicetrois);
         laregion.setLatitude(latitude);
         laregion.setLongitude(longitude);
+        laregion.setVrainom(vrainom);
         return laregion;
 }
 
@@ -698,7 +774,7 @@ class Region{
         }
         else
         {
-        double distance;
+            supposition = this.convertisseur(supposition);
         if (supposition.equals(laregion.getNomdelaregion())){
             JOptionPane.showMessageDialog( null, "Vous êtes à 0 km, 100%. C'est trouvé, bravo !", "", JOptionPane.PLAIN_MESSAGE );
             compteur = 5;
@@ -706,7 +782,7 @@ class Region{
         else {
             Region lasupposition = new Region();
             lasupposition = lasupposition.latitudeetlongitude(supposition, lesparametres.getChoixdelaregion());
-            distance = verifdistance(laregion, lasupposition);
+            double distance = verifdistance(laregion, lasupposition);
             JOptionPane.showMessageDialog( null, "Raté !", "", JOptionPane.PLAIN_MESSAGE );
             if (distance == 0) {
                 JOptionPane.showMessageDialog( null, "La saisie n'a pas été reconnue", "", JOptionPane.PLAIN_MESSAGE );
@@ -718,7 +794,7 @@ class Region{
                 compteur = compteur + 1;
             }
             if (compteur == 5) {
-                JOptionPane.showMessageDialog( null, "Jeu terminé, la réponse était " + laregion.getNomdelaregion(), "", JOptionPane.PLAIN_MESSAGE );
+                JOptionPane.showMessageDialog( null, "Jeu terminé, la réponse était " + laregion.getVrainom(), "", JOptionPane.PLAIN_MESSAGE );
             }
         }
         }
@@ -1044,58 +1120,58 @@ class representation{
 
     public Image onmetlimage(String region){
 
-        if (Objects.equals(region, "Corse")){
+        if (Objects.equals(region, "corse")){
             this.region = representation.Image(chemin + "Corse.png");
         }
-        else if (Objects.equals(region, "Bourgogne-Franche-Comte")){
+        else if (Objects.equals(region, "bourgognefranchecomte")){
             this.region = representation.Image(chemin + "Bourgogne Franche-Comté.png");
         }
-        else if (Objects.equals(region, "Hauts-de-France")){
+        else if (Objects.equals(region, "hautsdefrance")){
             this.region = representation.Image(chemin + "Hauts de France.png");
         }
-        else if (Objects.equals(region, "Auvergne-Rhone-Alpes")){
+        else if (Objects.equals(region, "auvergnerhonealpes")){
             this.region = representation.Image(chemin + "Auvergne Rhone Alpes.png");
         }
-        else if (Objects.equals(region,"Bretagne")){
+        else if (Objects.equals(region,"bretagne")){
             this.region = representation.Image(chemin + "Bretagne.png");
         }
-        else if (Objects.equals(region, "Centre-Val de Loire")){
+        else if (Objects.equals(region, "centrevaldeloire")){
             this.region = representation.Image(chemin + "Centre-Val De Loire.png");
         }
-        else if (Objects.equals(region, "Grand Est")){
+        else if (Objects.equals(region, "grandest")){
             this.region = representation.Image(chemin + "Grand Est.png");
         }
-        else if (Objects.equals(region,"Guadeloupe")){
+        else if (Objects.equals(region,"guadeloupe")){
             this.region = representation.Image(chemin + "Guadeloupe.png");
         }
-        else if (Objects.equals(region,"Guyane")){
+        else if (Objects.equals(region,"guyane")){
             this.region = representation.Image(chemin + "Guyane.png");
         }
-        else if (Objects.equals(region, "Ile-de-France")){
+        else if (Objects.equals(region, "iledefrance")){
             this.region = representation.Image(chemin + "Ile-de-France.png");
         }
-        else if (Objects.equals(region,"La Reunion")){
+        else if (Objects.equals(region,"lareunion")){
             this.region = representation.Image(chemin + "La Réunion.png");
         }
-        else if (Objects.equals(region,"Martinique")){
+        else if (Objects.equals(region,"martinique")){
             this.region = representation.Image(chemin + "Martinique.png");
         }
-        else if (Objects.equals(region, "Mayotte")){
+        else if (Objects.equals(region, "mayotte")){
             this.region = representation.Image(chemin + "Mayotte.png");
         }
-        else if (Objects.equals(region,"Normandie")){
+        else if (Objects.equals(region,"normandie")){
             this.region = representation.Image(chemin + "Normandie.png");
         }
-        else if (Objects.equals(region,"Nouvelle-Aquitaine")){
+        else if (Objects.equals(region,"nouvelleaquitaine")){
             this.region = representation.Image(chemin + "Nouvelle Aquitaine.png");
         }
-        else if (Objects.equals(region,"Occitanie")){
+        else if (Objects.equals(region,"occitanie")){
             this.region = representation.Image(chemin + "Occitanie.png");
         }
-        else if (Objects.equals(region, "Pays de la Loire")){
+        else if (Objects.equals(region, "paysdelaloire")){
             this.region = representation.Image(chemin + "Pays de la Loire.png");
         }
-        else if (Objects.equals(region, "Provence-Alpes-Cote d'Azur")){
+        else if (Objects.equals(region, "provencealpescotedazur")){
             this.region = representation.Image(chemin + "Provence Alpes Cote d'Azur.png");
         }
         else
