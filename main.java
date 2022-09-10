@@ -19,6 +19,16 @@ import java.util.regex.Pattern;
 /*
 A réparer :
 
+Lignes 879 et tableaux en général, vérifier comment cela fonctionne exactement
+car si tableau = 100, erreur, si tableau = 99, chiffre incompréhensible en pourcentage
+si tableau = 26 ou 27, ça semble correct, pourquoi ?
+
+Si l'utilisateur cancel la supposition, erreur sur String.equals(Object) car supposition est null, un bon vieux NPE
+faire un try and catch sur NPE NullPointerException et soit revenir au menu (compteur = 5 probablement), soit refaire une supposition et ne
+rien faire
+
+Voir ce que ça fait si on enlève l'image
+
  */
 
 /*
@@ -162,12 +172,6 @@ public class main{
      */
 }
 class Parametres{
-
-    /*
-    On retrouve tous les paramètres ici modifiables, en private donc modifiables uniquement avec les
-    getter et les setter
-    c'est ici qu'on lance le message pour donner l'information à l'utilisateur du bon traitement
-     */
 
     private int choixdelaregion;
     private int choiximage;
@@ -348,7 +352,7 @@ class Region{
 
         lessai = lessai.toLowerCase();
 
-        //supprimer les accentuations
+        //supprimer les ponctuations
 
         lessai = lessai.replaceAll("\\p{Punct}", "");
 
@@ -384,9 +388,9 @@ class Region{
             case "hautsdefrance":
                 latitude = 50.62925;
                 longitude = 3.057256;
-                indiceun = "la bière";
-                indicedeux = "Charles de Gaulle";
-                indicetrois = "Lille";
+                indiceun = ("la bière");
+                indicedeux = ("Charles de Gaulle");
+                indicetrois = ("Lille");
                 vrainom = ("Hauts-de-France");
                 break;
             case "normandie" :
@@ -787,7 +791,7 @@ class Region{
             if (distance == 0) {
                 JOptionPane.showMessageDialog( null, "La saisie n'a pas été reconnue", "", JOptionPane.PLAIN_MESSAGE );
             } else {
-                int pourcentage = pourcentage(laregion, distance, lesparametres);
+                int pourcentage = pourcentage(laregion, distance);
                 //ici on doit rajouter la future flèche
                 JOptionPane.showMessageDialog( null, "Vous êtes à " + distance + " km. \n Votre pourcentage de proximité est de : " + pourcentage + "%", "", JOptionPane.PLAIN_MESSAGE );
                 this.message(laregion,compteur);
@@ -839,7 +843,7 @@ class Region{
     }
 
 
-    public int pourcentage(Region region, double ladistance, Parametres lesparametres){
+    public int pourcentage(Region region, double ladistance){
         int cas = 0;
         double distance;
         double [] tableaudemoyenne = new double[100];
@@ -865,7 +869,6 @@ class Region{
 
     public double[] tri_selection(double[] tab)
     {
-
         int test = 0;
         int cpt = 0;
         while (test==0){
