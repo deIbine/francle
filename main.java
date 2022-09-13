@@ -19,6 +19,10 @@ import java.util.regex.Pattern;
 /*
 A réparer :
 
+Lignes 879 et tableaux en général, vérifier comment cela fonctionne exactement
+car si tableau = 100, erreur, si tableau = 99, chiffre incompréhensible en pourcentage
+si tableau = 26 ou 27, ça semble correct, pourquoi ?
+
  */
 
 /*
@@ -162,12 +166,6 @@ public class main{
      */
 }
 class Parametres{
-
-    /*
-    On retrouve tous les paramètres ici modifiables, en private donc modifiables uniquement avec les
-    getter et les setter
-    c'est ici qu'on lance le message pour donner l'information à l'utilisateur du bon traitement
-     */
 
     private int choixdelaregion;
     private int choiximage;
@@ -348,7 +346,7 @@ class Region{
 
         lessai = lessai.toLowerCase();
 
-        //supprimer les accentuations
+        //supprimer les ponctuations
 
         lessai = lessai.replaceAll("\\p{Punct}", "");
 
@@ -384,9 +382,9 @@ class Region{
             case "hautsdefrance":
                 latitude = 50.62925;
                 longitude = 3.057256;
-                indiceun = "la bière";
-                indicedeux = "Charles de Gaulle";
-                indicetrois = "Lille";
+                indiceun = ("la bière");
+                indicedeux = ("Charles de Gaulle");
+                indicetrois = ("Lille");
                 vrainom = ("Hauts-de-France");
                 break;
             case "normandie" :
@@ -760,13 +758,23 @@ class Region{
 
 
     public int jeu(Region laregion, int compteur, Parametres lesparametres){
-
+        double distance;
         String supposition;
+        int abandon = 0;
         if (lesparametres.getChoixlaliste() == 0) {
-            supposition = JOptionPane.showInputDialog("Quelle est votre supposition ? (1 pour avoir la liste)");
+            supposition = JOptionPane.showInputDialog("Quelle est votre supposition ? (1 pour avoir la liste) (Echap pour abandonner)");
         }
         else{
-            supposition = JOptionPane.showInputDialog("Quelle est votre supposition ?");
+            supposition = JOptionPane.showInputDialog("Quelle est votre supposition ? (Echap pour abandonner)");
+        }
+        try {
+            if (supposition.equals("")){}
+        }
+        catch (NullPointerException npe)
+        {
+            compteur = 5;
+            supposition = "";
+            abandon = -1;
         }
         if ((supposition.equals("1")) && (lesparametres.getChoixdelaregion() == 1) && (lesparametres.getChoixlaliste() == 0))
         {
@@ -782,13 +790,17 @@ class Region{
         else {
             Region lasupposition = new Region();
             lasupposition = lasupposition.latitudeetlongitude(supposition, lesparametres.getChoixdelaregion());
-            double distance = verifdistance(laregion, lasupposition);
+            distance = verifdistance(laregion, lasupposition);
             JOptionPane.showMessageDialog( null, "Raté !", "", JOptionPane.PLAIN_MESSAGE );
+            if (abandon == -1){
+                JOptionPane.showMessageDialog( null, "Jeu abandonné !", "", JOptionPane.PLAIN_MESSAGE );
+                distance = -1;
+            }
             if (distance == 0) {
                 JOptionPane.showMessageDialog( null, "La saisie n'a pas été reconnue", "", JOptionPane.PLAIN_MESSAGE );
-            } else {
-                int pourcentage = pourcentage(laregion, distance, lesparametres);
-                //ici on doit rajouter la future flèche
+            } else if (distance != -1){
+                int pourcentage = pourcentage(laregion, distance);
+               // String fleche = this.fleche(laregion,lasupposition);
                 JOptionPane.showMessageDialog( null, "Vous êtes à " + distance + " km. \n Votre pourcentage de proximité est de : " + pourcentage + "%", "", JOptionPane.PLAIN_MESSAGE );
                 this.message(laregion,compteur);
                 compteur = compteur + 1;
@@ -839,7 +851,7 @@ class Region{
     }
 
 
-    public int pourcentage(Region region, double ladistance, Parametres lesparametres){
+    public int pourcentage(Region region, double ladistance){
         int cas = 0;
         double distance;
         double [] tableaudemoyenne = new double[100];
@@ -865,7 +877,6 @@ class Region{
 
     public double[] tri_selection(double[] tab)
     {
-
         int test = 0;
         int cpt = 0;
         while (test==0){
@@ -1011,81 +1022,23 @@ class Region{
         return letest;
     }
 
-
-    /*
-    public String veriffleche(String region, String supposition) {
-        //soustraire la latitude et la longitude de chacun pourrait nous donner un chiffre ?
-        double besoin;
-        double[] lasupposition;
-        double[] laregion;
-        int cas = 0;
-        lasupposition = veriflatlon(supposition,cas,cas);
-        laregion = veriflatlon(region,cas,cas);
-        double soustraction1;
-        double soustraction2;
-        String fleche;
-
-        double latregion = lasupposition[0]- laregion[0];
-        double longregion = lasupposition[1]-laregion[1];
-
-        //if (latregion
-
-        double carotte;
-        double x;
-        double y;
-        y = Math.sin(degresversradian(lasupposition[1])-degresversradian(laregion[1]))*Math.cos(degresversradian(lasupposition[0]));
-        x = Math.cos(degresversradian(laregion[0]))*Math.sin(degresversradian(lasupposition[0]))-Math.sin(degresversradian(laregion[0]))-Math.cos(degresversradian(lasupposition[0]))*Math.cos(degresversradian(lasupposition[1])-degresversradian(laregion[1]));
-        carotte = Math.atan2(y,x);
-        carotte = (carotte * 180/Math.PI+360)%360;
-
-     */
-
-        //9 éléments possibles, pour le moment on ne va mettre que 5 fleches
+    public String fleche(Region laregion, Region lasupposition){
         /*
-        if ((soustraction1 > 0) && (soustraction2 > 0)){
-            fleche = ("Fleche vers la droite");
-        }
-        else if ((soustraction1 > 0) && (soustraction2 < 0)){
-            fleche = ("Fleche vers le haut");
-        }
-        else if ((soustraction1 < 0) && (soustraction2 > 0)){
-            fleche = ("Fleche vers la gauche");
-        }
-        else if ((soustraction1 < 0) && (soustraction2 < 0)){
-            fleche = ("Fleche vers le bas");
-        }
-        else {
-            fleche = ("Felicitations !");
-        }
-        if (soustraction1 == soustraction2){
-            fleche = ("Felicitations !");
-        }
+        Tentative de calcul de l'azimut
 
+        Mettre les résultats non satisfaisants que l'on a depuis
          */
-        /*
-        if ((carotte > 179.5) && (carotte < 182)){
-            fleche = ("Le degre est de " + carotte + " la fleche est probablement au Nord");
-        }
-        else if ((carotte > 175) && (carotte < 179.5)){
-            fleche = ("Le degre est de " + carotte + " la fleche est probablement a l'Est");
-        }
-        else if ((carotte > 182) && (carotte < 190)){
-            fleche = ("Le degre est de " + carotte + " la fleche est probablement a l'Ouest");
-        }
-        else {
-            fleche = ("Le degre est de " + carotte + " la fleche est probablement au Sud");
-        }
-        //mettre des tues chauffes à la place ? Cela revient pas aux pourcentages ? Cela permettrait de simplifier les pourcentages...
+        String sens = "";
+        double resultat;
 
-         */
-        /*
-        System.out.println("Latitude de direction = " + latregion + " et la longitude de direction " + longregion);
-        fleche = "carotte";
+        double x = Math.cos(laregion.getLatitude())*Math.sin(lasupposition.getLatitude()) - Math.sin(laregion.getLatitude()) * Math.cos(lasupposition.getLatitude()) * Math.cos((lasupposition.getLongitude()) - (laregion.getLongitude()));
+        double y = Math.sin((lasupposition.getLongitude())-(laregion.getLongitude())) * Math.cos(lasupposition.getLatitude());
 
-        return fleche;
+        resultat = Math.atan2(y,x);
+
+        System.out.println(resultat);
+        return sens;
     }
-
-         */
 }
 
 class representation{
