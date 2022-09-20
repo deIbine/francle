@@ -8,9 +8,9 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.lang.Math;
-import java.util.Locale;
+//import java.util.Locale;
+import java.util.Random;
 import java.util.Objects;
-import java.util.Scanner;
 //import java.util.Scanner;
 import java.text.Normalizer;
 import java.util.regex.Pattern;
@@ -32,10 +32,7 @@ Avancées en cours :
 
 Choix des régions : OK, mais vérifier le cas 2, où le dé n'est pas codé à chaque fois, plus rajouter les images
 
-Amélioration de la production de l'aléatoire, je pense qu'elle ne fonctionne pas parfaitement,
-faire des calculs et voir d'autres possibilités
-dans le sens où on a régulièrement les mêmes guess même si l'aléatoire semble fonctionner
-cela fonctionnerait mieux avec plus de cas probablement
+Transformer le code en TypeScript pour une production sur Internet avant 2023 ?
 
 Frankle avec les régions des pays de l'empire de Charlemagne ?
 
@@ -52,10 +49,10 @@ public class main{
         lesparametres.setChoixdelaregion(1);
         lesparametres.setChoiximage(0);
         lesparametres.setChoixlaliste(0);
-        int findujeu;
-        findujeu = -1;
+        commentjouer didacticiel = new commentjouer();
+        int findujeu = - 1;
         while(findujeu !=0){
-            String lejeu = JOptionPane.showInputDialog("0 = arrêt, 1 = jeu, 2 = paramètres. Faites votre choix : ");
+            String lejeu = JOptionPane.showInputDialog("0 = arrêt, 1 = jeu, 2 = paramètres, 3 = didacticiel. Faites votre choix : ");
             try{
             findujeu = Integer.parseInt(lejeu);}
             catch(NumberFormatException nfe){
@@ -140,6 +137,23 @@ public class main{
 
                     }
                     break;
+                case 3 :
+                    representation didacticiele = new representation();
+                    int boucle = 1;
+                    didacticiele.setRegion(didacticiele.jpgjeu());
+                    frame = didacticiele.interfacesimple();
+                    frame.setVisible(true);
+                    while (boucle != 0){
+                    String fin = JOptionPane.showInputDialog("0 pour revenir au menu");
+                        try{
+                            boucle = Integer.parseInt(fin);
+                        }
+                        catch(NumberFormatException nfe){
+                            fin = "1";
+                        }
+                        boucle = Integer.parseInt(fin);
+                    }
+                    frame.setVisible(false);
                 default :
                     JOptionPane.showMessageDialog( null, "Retour au menu", "", JOptionPane.PLAIN_MESSAGE );
                     break;
@@ -632,11 +646,9 @@ class Region{
         return laregion;
 }
 
-
     public String aleatoire(int mode){
-        String aleatoire;
         int nombrederegion;
-        double chiffre;
+        Random notrealeatoire = new Random();
         if ((mode == 0) || (mode == 2))
         {
             nombrederegion = 26 + 1;
@@ -644,10 +656,8 @@ class Region{
         else {
             nombrederegion = 17 + 1;
         }
-        chiffre = Math.floor(Math.random()*nombrederegion);
-        int valeur = (int)chiffre;
-        aleatoire = choixpossible(mode, valeur);
-        return aleatoire;
+        int chiffre = notrealeatoire.nextInt(nombrederegion);
+        return choixpossible(mode, chiffre);
     }
 
 
@@ -1137,6 +1147,29 @@ class representation{
     public Image getRegion() {
         return region;
     }
+
+
+    public Image jpgjeu(){
+        this.region = representation.Image(chemin + "défaut.png");
+        //ajouter commentjouer.png
+        return this.region;
+    }
+
+}
+
+
+class commentjouer {
+
+    //class commentjouer extends JFrame implements ActionListener
+
+    /*
+    Objectif : mettre en place un code qui permet de mettre en avant comment jouer
+    Soit avec un bouton directement sur le JavaScript
+    Soit on niveau du menu avec un choix chiffré, en fonction de notre avancement
+    Et de la connaissance au niveau de l'utilisation des boutons JavaScript
+     */
+
+
 }
 
 /*
@@ -1189,12 +1222,6 @@ class Statistiques{
     possibilité d'avoir des utilisateurs différents ?
 }
 
-
-
-class commentjouer{
-
-    si l'utilisateur utilise cette fonction, on lui donne une image qui expkique ce qu'il doit faire, s'inspirer du screen
-}
 
 
 class internet ?{
