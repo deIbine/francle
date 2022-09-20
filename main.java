@@ -32,9 +32,15 @@ Avancées en cours :
 
 Choix des régions : OK, mais vérifier le cas 2, où le dé n'est pas codé à chaque fois, plus rajouter les images
 
-Transformer le code en TypeScript pour une production sur Internet avant 2023 ?
+Projet : apprendre Java EE pour mettre le code sur Internet
 
 Frankle avec les régions des pays de l'empire de Charlemagne ?
+
+Ajout 3 :
+
+Ajouter un dernier tableau avec toutes les suppositions de l'utilisateur avant de lui dire que le jeu est terminé
+Dans le code, cela peut peut-être se faire via un if compteur == x (probablement 4) plus supposition raté alors
+On change le message déjà noté
 
  */
 
@@ -50,6 +56,13 @@ public class main{
         lesparametres.setChoiximage(0);
         lesparametres.setChoixlaliste(0);
         commentjouer didacticiel = new commentjouer();
+        superinterface[] jeusympa = new superinterface[100];
+        superinterface temporaire = new superinterface();
+        int essai = 0;
+        while (essai !=5){
+            jeusympa[essai] = temporaire.superi();
+            essai = essai + 1;
+        }
         int findujeu = - 1;
         while(findujeu !=0){
             String lejeu = JOptionPane.showInputDialog("0 = arrêt, 1 = jeu, 2 = paramètres, 3 = didacticiel. Faites votre choix : ");
@@ -85,7 +98,7 @@ public class main{
                     }
                         frame = larep.interfacesimple();
                         while (compteur != 5) {
-                            compteur = Francaise.jeu(Francaise, compteur, lesparametres);
+                            compteur = Francaise.jeu(Francaise, compteur, lesparametres, jeusympa);
                         }
                         frame.setVisible(false);
                     break;
@@ -179,6 +192,7 @@ public class main{
     }
      */
 }
+
 class Parametres{
 
     private int choixdelaregion;
@@ -284,6 +298,54 @@ class Parametres{
      */
 }
 
+class superinterface{
+    private double distance;
+    private int pourcentage;
+    private String indice;
+    private String supposition;
+
+    public superinterface superi(){
+        superinterface linterface = new superinterface();
+        linterface.setDistance(0.0);
+        linterface.setDistance(0);
+        linterface.setIndice("");
+        linterface.setSupposition("");
+        return linterface;
+
+    }
+
+    public double getDistance() {
+        return distance;
+    }
+
+    public void setDistance(double distance) {
+        this.distance = distance;
+    }
+
+    public int getPourcentage() {
+        return pourcentage;
+    }
+
+    public void setPourcentage(int pourcentage) {
+        this.pourcentage = pourcentage;
+    }
+
+    public String getIndice() {
+        return indice;
+    }
+
+    public void setIndice(String indice) {
+        this.indice = indice;
+    }
+
+    public String getSupposition() {
+        return supposition;
+    }
+
+    public void setSupposition(String supposition) {
+        this.supposition = supposition;
+    }
+}
 class Region{
 
     private double latitude;
@@ -767,14 +829,56 @@ class Region{
     }
 
 
-    public int jeu(Region laregion, int compteur, Parametres lesparametres){
+    public String interfaceclassique(int compteur, superinterface [] jeusympa){
+        String supposition = "";
+        //Ajout 3
+        supposition = JOptionPane.showInputDialog("Quelle est votre supposition ? (1 pour avoir la liste) (Echap pour abandonner) \n \n" +
+                "Supposition 1 : " + jeusympa[0].getSupposition() + " " + jeusympa[0].getDistance() + "km " + jeusympa[0].getPourcentage() + "%\n" +
+                "Supposition 2 : " + jeusympa[1].getSupposition() + " " + jeusympa[1].getDistance() + "km " + jeusympa[1].getPourcentage() + "% Premier indice : " + jeusympa[1].getIndice() + "\n"+
+                "Supposition 3 : " + jeusympa[2].getSupposition() + " " + jeusympa[2].getDistance() + "km " + jeusympa[2].getPourcentage() + "% Deuxième indice : " + jeusympa[2].getIndice() + "\n"+
+                "Supposition 4 : " + jeusympa[3].getSupposition() + " " + jeusympa[3].getDistance() + "km " + jeusympa[3].getPourcentage() + "% Troisième indice : " + jeusympa[3].getIndice() + "\n");
+        return supposition;
+    }
+
+    public superinterface verifnotreinterface(superinterface jeusympa, int compteur, double distance, int pourcentage, Region laregion, Region lasupposition){
+
+        switch (compteur){
+            case 1 :
+                jeusympa.setDistance(distance);
+                jeusympa.setPourcentage(pourcentage);
+                jeusympa.setSupposition(lasupposition.getVrainom());
+                jeusympa.setIndice(laregion.getIndiceun());
+                break;
+            case 2 :
+                jeusympa.setDistance(distance);
+                jeusympa.setPourcentage(pourcentage);
+                jeusympa.setSupposition(lasupposition.getVrainom());
+                jeusympa.setIndice(laregion.getIndicedeux());
+                break;
+            case 3 :
+                jeusympa.setDistance(distance);
+                jeusympa.setPourcentage(pourcentage);
+                jeusympa.setSupposition(lasupposition.getVrainom());
+                jeusympa.setIndice(laregion.getIndicetrois());
+                break;
+            default :
+                jeusympa.setDistance(distance);
+                jeusympa.setPourcentage(pourcentage);
+                jeusympa.setSupposition(lasupposition.getVrainom());
+                break;
+        }
+
+        return jeusympa;
+    }
+
+    public int jeu(Region laregion, int compteur, Parametres lesparametres, superinterface[] jeusympa){
         double distance;
         String supposition;
         int abandon = 0;
         if (lesparametres.getChoixlaliste() == 0) {
-            supposition = JOptionPane.showInputDialog("Quelle est votre supposition ? (1 pour avoir la liste) (Echap pour abandonner)");
+            supposition = this.interfaceclassique(compteur, jeusympa);
         }
-        else{
+        else {
             supposition = JOptionPane.showInputDialog("Quelle est votre supposition ? (Echap pour abandonner)");
         }
         try {
@@ -813,9 +917,13 @@ class Region{
                // String fleche = this.fleche(laregion,lasupposition);
                 JOptionPane.showMessageDialog( null, "Vous êtes à " + distance + " km. \n Votre pourcentage de proximité est de : " + pourcentage + "%", "", JOptionPane.PLAIN_MESSAGE );
                 this.message(laregion,compteur);
+                superinterface lejeu = new superinterface();
+                lejeu = verifnotreinterface(lejeu,compteur,distance,pourcentage,laregion,lasupposition);
+                jeusympa[compteur] = lejeu;
                 compteur = compteur + 1;
             }
             if (compteur == 5) {
+                //Ajout 3
                 JOptionPane.showMessageDialog( null, "Jeu terminé, la réponse était " + laregion.getVrainom(), "", JOptionPane.PLAIN_MESSAGE );
             }
         }
