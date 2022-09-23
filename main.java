@@ -59,10 +59,6 @@ public class main{
         superinterface[] jeusympa = new superinterface[100];
         superinterface temporaire = new superinterface();
         int essai = 0;
-        while (essai !=5){
-            jeusympa[essai] = temporaire.superi();
-            essai = essai + 1;
-        }
         int findujeu = - 1;
         while(findujeu !=0){
             String lejeu = JOptionPane.showInputDialog("0 = arrêt, 1 = jeu, 2 = paramètres, 3 = didacticiel. Faites votre choix : ");
@@ -80,6 +76,10 @@ public class main{
                 case 1 :
                     Region Francaise = new Region();
                     int compteur=0;
+                    while (essai !=5){
+                        jeusympa[essai] = temporaire.superi();
+                        essai = essai + 1;
+                    }
                     JOptionPane.showMessageDialog( null, "Quelle est cette région française ?", "", JOptionPane.PLAIN_MESSAGE );
                     representation larep = new representation();
                     Francaise.setNomdelaregion(Francaise.aleatoire(lesparametres.getChoixdelaregion()));
@@ -833,40 +833,30 @@ class Region{
         String supposition = "";
         //Ajout 3
         supposition = JOptionPane.showInputDialog("Quelle est votre supposition ? (1 pour avoir la liste) (Echap pour abandonner) \n \n" +
-                "Supposition 1 : " + jeusympa[0].getSupposition() + " " + jeusympa[0].getDistance() + "km " + jeusympa[0].getPourcentage() + "%\n" +
-                "Supposition 2 : " + jeusympa[1].getSupposition() + " " + jeusympa[1].getDistance() + "km " + jeusympa[1].getPourcentage() + "% Premier indice : " + jeusympa[1].getIndice() + "\n"+
-                "Supposition 3 : " + jeusympa[2].getSupposition() + " " + jeusympa[2].getDistance() + "km " + jeusympa[2].getPourcentage() + "% Deuxième indice : " + jeusympa[2].getIndice() + "\n"+
-                "Supposition 4 : " + jeusympa[3].getSupposition() + " " + jeusympa[3].getDistance() + "km " + jeusympa[3].getPourcentage() + "% Troisième indice : " + jeusympa[3].getIndice() + "\n");
+                "Supposition 1 : " + jeusympa[0].getSupposition() + " " + jeusympa[0].getDistance() + " km " + jeusympa[0].getPourcentage() + "%\n" +
+                "Supposition 2 : " + jeusympa[1].getSupposition() + " " + jeusympa[1].getDistance() + " km " + jeusympa[1].getPourcentage() + "% Premier indice : " + jeusympa[1].getIndice() + "\n"+
+                "Supposition 3 : " + jeusympa[2].getSupposition() + " " + jeusympa[2].getDistance() + " km " + jeusympa[2].getPourcentage() + "% Deuxième indice : " + jeusympa[2].getIndice() + "\n"+
+                "Supposition 4 : " + jeusympa[3].getSupposition() + " " + jeusympa[3].getDistance() + " km " + jeusympa[3].getPourcentage() + "% Troisième indice : \n" + jeusympa[3].getIndice() + "\n");
         return supposition;
     }
 
     public superinterface verifnotreinterface(superinterface jeusympa, int compteur, double distance, int pourcentage, Region laregion, Region lasupposition){
 
+        //A améliorer très facilement en déplaçant tous les jeusympa.x sauf indice
         switch (compteur){
             case 1 :
-                jeusympa.setDistance(distance);
-                jeusympa.setPourcentage(pourcentage);
-                jeusympa.setSupposition(lasupposition.getVrainom());
                 jeusympa.setIndice(laregion.getIndiceun());
                 break;
             case 2 :
-                jeusympa.setDistance(distance);
-                jeusympa.setPourcentage(pourcentage);
-                jeusympa.setSupposition(lasupposition.getVrainom());
                 jeusympa.setIndice(laregion.getIndicedeux());
                 break;
             case 3 :
-                jeusympa.setDistance(distance);
-                jeusympa.setPourcentage(pourcentage);
-                jeusympa.setSupposition(lasupposition.getVrainom());
                 jeusympa.setIndice(laregion.getIndicetrois());
                 break;
-            default :
-                jeusympa.setDistance(distance);
-                jeusympa.setPourcentage(pourcentage);
-                jeusympa.setSupposition(lasupposition.getVrainom());
-                break;
         }
+        jeusympa.setDistance(distance);
+        jeusympa.setPourcentage(pourcentage);
+        jeusympa.setSupposition(lasupposition.getVrainom());
 
         return jeusympa;
     }
