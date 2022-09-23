@@ -1,0 +1,132 @@
+Indice des régions : 
+
+
+Hauts-de-France : 
+-	Spécialité culinaire : Les bières / Moules frites
+-	Capitale régionale : Lille
+-	Personnalité originaire de la région : Charles de Gaulle 
+-	Superficie en km2 : 31 814 
+
+Normandie : 
+-	Spécialité culinaire : Tarte normande /Matelote : poissons en morceaux cuisinés au vin rouge
+-	Capitale régionale : Rouen
+-	Personnalité originaire de la région : Guillaume le Conquérant 
+-	Superficie en km2 : 29 907
+
+
+Bretagne : 
+-	Spécialité culinaire : Crêpes / Galette bretonne
+-	Capitale régionale : Rennes
+-	Personnalité originaire de la région : Jeanne Bohec 
+-	Superficie en km2 : 27 208
+
+
+Pays de la Loire :
+-	Spécialité culinaire : La fouace nantaise
+-	Capitale régionale : Nantes
+-	Personnalité originaire de la région : Jules Verne 
+-	Superficie en km2 : 32 082
+
+
+Nouvelle- Aquitaine : 
+-	Spécialité culinaire : Huîtres du Bassin d’Arcachon
+-	Capitale régionale : Bordeaux
+-	Personnalité originaire de la région : Jacques Ellul 
+-	Superficie en km2 : 84 060
+
+
+Occitanie :
+-	Spécialité culinaire : Confit de canard / 
+-	Capitale régionale : Toulouse
+-	Célébrité originaire de la région : Vauban
+-	Superficie en km2 : 72 724
+
+
+Provence-Alpes-Cote d’Azur
+-	Spécialité culinaire : Bouillabaisse / Ratatouille
+-	Capitale régionale : Marseille
+-	Célébrité originaire de la région : Pierre Barthélemy  
+-	Superficie en km2 : 31 400
+
+
+Auvergne-Rhone-Alpes 
+-	Spécialité culinaire : Coq au vin 
+-	Capitale régionale : Lyon
+-	Célébrité originaire de la région : Jean Moulin 
+-	Superficie en km2 : 69 711
+
+
+
+Bourgogne-Franche-Comté 
+-	Spécialité culinaire : Bœuf Bourguignon
+-	Capitale régionale : Dijon
+-	Personnalité originaire de la région : Victor Hugo
+-	Superficie en km2 : 47 784
+ 
+
+Grand-Est : 
+-	Spécialité culinaire : Choucroute garnie / Quiche Lorraine
+-	Capitale régionale : Strasbourg
+-	Personnalité originaire de la région : Paul Verlaine 
+-	Superficie en km2 : 57 433
+
+
+Centre-Val de Loire :
+-	Spécialité culinaire : Tarte Tatin 
+-	Capitale régionale : Orléans
+-	Personnalité originaire de la région : Jeanne d’Arc 
+-	Superficie en km2 : 39 151
+
+
+Ile de France : 
+-	Spécialiste culinaire : Le macaron / Le croissant / Paris-Brest
+-	Capitale régionale : Paris
+-	Personnalité originaire de la région : Alexandre Dumas
+-	Superficie en km2 : 12 012
+ 
+
+Corse : 
+-	Spécialité  culinaire : Le figatellu 
+-	Capitale régionale : Ajaccio
+-	Personnalité originaire de la région : Napoléon Bonaparte 
+-	Superficie en km2 : 8 680
+
+
+Guadeloupe : 
+-	Spécialité culinaire : Les accras de morue 
+-	Capitale régionale : Basse-Terre
+-	Personnalité originaire de la région : Gerty Archimède (première femme avocate des Antilles) 
+-	Superficie en km2 : 1 703
+
+
+La Réunion : 
+-	Spécialité culinaire : Le Rhum arrangé 
+-	Capitale régionale : Saint-Denis
+-	Personnalité originaire de la région :  Sarda Garriga  ( Proclame l’abolition de l’esclavage à La Réunion)  
+-	Superficie en km2 : 2 504
+
+
+
+Martinique : 
+-	Spécialité culinaire : Gratin de bananes 
+-	 Capitale régionale : Fort-de-France
+-	Personnalité originaire de la Région : Aimé Césaire
+-	Superficie en km2 : 1 128
+ 
+
+
+Guyane : 
+-	Spécialité culinaire : le poulet boucané 
+-	Capitale régionale : Cayenne
+-	Personnalité originaire de la Région : Félix Eboué  
+-	Superficie en km2 : 83 534
+
+
+
+Mayotte : 
+-	Spécialité culinaire : le matsidza : riz cuit dans l’eau de coco 
+-	Capitale régionale : Mamoudzou 
+-	Célébrité originaire de la Mayotte : Zéna M’Déré  
+-	Superficie en km2 : 374
+
+
