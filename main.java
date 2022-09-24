@@ -14,6 +14,7 @@ import java.util.Objects;
 //import java.util.Scanner;
 import java.text.Normalizer;
 import java.util.regex.Pattern;
+import java.text.DecimalFormat;
 
 
 /*
@@ -36,11 +37,10 @@ Projet : apprendre Java EE pour mettre le code sur Internet
 
 Frankle avec les régions des pays de l'empire de Charlemagne ?
 
-Ajout 3 :
+Nouvel ajout :
 
-Ajouter un dernier tableau avec toutes les suppositions de l'utilisateur avant de lui dire que le jeu est terminé
-Dans le code, cela peut peut-être se faire via un if compteur == x (probablement 4) plus supposition raté alors
-On change le message déjà noté
+Faire moins de message, voire implémenter complétement une nouvelle classe utilisée uniquement pour les messages
+car clairement, pour le moment c'est relativement illisible
 
  */
 
@@ -299,26 +299,26 @@ class Parametres{
 }
 
 class superinterface{
-    private double distance;
+    private String distance;
     private int pourcentage;
     private String indice;
     private String supposition;
 
     public superinterface superi(){
         superinterface linterface = new superinterface();
-        linterface.setDistance(0.0);
-        linterface.setDistance(0);
+        linterface.setDistance("");
+        linterface.setPourcentage(0);
         linterface.setIndice("");
         linterface.setSupposition("");
         return linterface;
 
     }
 
-    public double getDistance() {
+    public String getDistance() {
         return distance;
     }
 
-    public void setDistance(double distance) {
+    public void setDistance(String distance) {
         this.distance = distance;
     }
 
@@ -355,6 +355,15 @@ class Region{
     private String indicetrois;
     private String nomdelaregion;
     private String vrainom;
+    private int superficie;
+
+    public int getSuperficie() {
+        return superficie;
+    }
+
+    public void setSuperficie(int superficie) {
+        this.superficie = superficie;
+    }
 
     public String getVrainom() {
         return vrainom;
@@ -443,6 +452,7 @@ class Region{
         String indicedeux;
         String indicetrois;
         String vrainom;
+        int superficie;
 
         if (verifchoix == 2){
             int de;
@@ -462,22 +472,25 @@ class Region{
                 indicedeux = ("Charles de Gaulle");
                 indicetrois = ("Lille");
                 vrainom = ("Hauts-de-France");
+                superficie = 31814;
                 break;
             case "normandie" :
                 latitude = 49.443232;
                 longitude = 1.099971;
                 indiceun = ("la matelote");
-                indicedeux = ("Thomas Pesquet");
+                indicedeux = ("Guillaume le Conquérant");
                 indicetrois = ("Rouen");
                 vrainom = ("Normandie");
+                superficie = 29907;
                 break;
             case "bretagne":
                 latitude = 48.117266;
                 longitude = -1.6777926;
                 indiceun = ("la crepe");
-                indicedeux = ("Anne-Claire Coudray");
+                indicedeux = ("Jeanne Bohec");
                 indicetrois = ("Rennes");
                 vrainom = ("Bretagne");
+                superficie = 27208;
                 break;
             case "paysdelaloire":
                 latitude = 47.218371;
@@ -486,14 +499,16 @@ class Region{
                 indicedeux = ("Jules Verne");
                 indicetrois = ("Nantes");
                 vrainom = ("Pays de la Loire");
+                superficie = 32082;
                 break;
             case "iledefrance":
                 latitude = 48.856614;
                 longitude = 2.3522219;
                 indiceun = ("le macaron");
-                indicedeux = ("Anne Hidalgo");
+                indicedeux = ("Alexandre Dumas");
                 indicetrois = ("Paris");
                 vrainom = ("Île-de-France");
+                superficie = 12012;
                 break;
             case "centrevaldeloire" :
                 latitude = 47.902964;
@@ -502,14 +517,16 @@ class Region{
                 indicedeux = ("Jeanne d'Arc");
                 indicetrois = ("Orleans");
                 vrainom = ("Centre-Val de Loire");
+                superficie = 39151;
                 break;
             case "grandest" :
                 latitude = 48.5734053;
                 longitude = 7.7521113;
                 indiceun = ("la choucroute");
-                indicedeux = ("Pierre Herme");
+                indicedeux = ("Paul Verlaine");
                 indicetrois = ("Strasbourg");
                 vrainom = ("Grand Est");
+                superficie = 57433;
                 break;
             case "bourgognefranchecomte":
                 latitude = 47.322047;
@@ -518,6 +535,7 @@ class Region{
                 indicedeux = ("Victor Hugo");
                 indicetrois = ("Dijon");
                 vrainom = ("Bourgogne-Franche-Comté");
+                superficie = 47784;
                 break;
             case "auvergnerhonealpes" :
                 latitude = 45.764043;
@@ -526,6 +544,7 @@ class Region{
                 indicedeux  = ("Jean Moulin");
                 indicetrois = ("Lyon");
                 vrainom = ("Auvergne-Rhône-Alpes");
+                superficie = 69711;
                 break;
             case "nouvelleaquitaine" :
                 latitude = 44.837789;
@@ -534,22 +553,25 @@ class Region{
                 indicedeux = ("Jacques Ellul");
                 indicetrois = ("Bordeaux");
                 vrainom = ("Nouvelle-Aquitaine");
+                superficie = 84060;
                 break;
             case "occitanie" :
                 latitude = 43.604652;
                 longitude = 1.444209;
                 indiceun = ("le confit de canard");
-                indicedeux = ("Bigflo et Oli");
+                indicedeux = ("Sébastien Le Prestre de Vauban");
                 indicetrois = ("Toulouse");
                 vrainom = ("Occitanie");
+                superficie = 72724;
                 break;
             case "provencealpescotedazur":
                 latitude = 43.296482;
                 longitude = 5.36978;
                 indiceun = ("la bouillabaisse");
-                indicedeux = ("Zinedine Zidane");
+                indicedeux = ("Pierre Barthélemy");
                 indicetrois = ("Marseille");
                 vrainom = ("Provence-Alpes-Côte d'Azur");
+                superficie = 31400;
                 break;
             case "corse":
                 latitude = 41.919229;
@@ -558,30 +580,34 @@ class Region{
                 indicedeux =  ("Napoleon Bonaparte");
                 indicetrois = ("Ajaccio");
                 vrainom = ("Corse");
+                superficie = 8680;
                 break;
             case "mayotte":
                 latitude = -12.780600;
                 longitude = 45.227800;
                 indiceun = ("le matsidza");
-                indicedeux = ("Geniale Attoumani");
+                indicedeux = ("Zéna M'Déré");
                 indicetrois = ("Mamoudzou");
                 vrainom = ("Mayotte");
+                superficie = 374;
                 break;
             case "lareunion":
                 latitude = -20.882057;
                 longitude = 55.450675;
                 indiceun = ("le rhum arrange");
-                indicedeux = ("Dimitri Payet");
+                indicedeux = ("Sarda Garriga");
                 indicetrois = ("Saint-Denis");
                 vrainom = ("La Réunion");
+                superficie = 2504;
                 break;
             case "guyane":
                 latitude = 4.9227;
                 longitude = -52.3269;
                 indiceun = ("le poulet boucane");
-                indicedeux = ("Christiane Taubira");
+                indicedeux = ("Félix Eboué");
                 indicetrois =  ("Cayenne");
                 vrainom = ("Guyane");
+                superficie = 83534;
                 break;
             case "martinique":
                 latitude = 14.6160647;
@@ -590,6 +616,7 @@ class Region{
                 indicedeux = ("Aime Cesaire");
                 indicetrois = ("Fort-de-France");
                 vrainom = ("Martinique");
+                superficie = 1128;
                 break;
             case "guadeloupe":
                 latitude = 17.302606;
@@ -598,6 +625,7 @@ class Region{
                 indicedeux = ("Teddy Riner");
                 indicetrois = ("Basse-Terre");
                 vrainom = ("Guadeloupe");
+                superficie = 1703;
                 break;
             default:
                 latitude = 0;
@@ -606,6 +634,7 @@ class Region{
                 indicedeux ="";
                 indicetrois ="";
                 vrainom = "";
+                superficie = 0;
                 break;}
                 int test = 0;
                 if (longitude != 0){test = 1;}
@@ -705,6 +734,7 @@ class Region{
         laregion.setLatitude(latitude);
         laregion.setLongitude(longitude);
         laregion.setVrainom(vrainom);
+        laregion.setSuperficie(superficie);
         return laregion;
 }
 
@@ -829,21 +859,32 @@ class Region{
     }
 
 
-    public String interfaceclassique(int compteur, superinterface [] jeusympa){
+    public String interfaceclassique(superinterface [] jeusympa){
         String supposition = "";
         //Ajout 3
+
+        //trouver un moyen de mettre la superficie après le guess 1 plus ajouter le dernier guess avant de noter quand c'est terminé pour le dernier guess
         supposition = JOptionPane.showInputDialog("Quelle est votre supposition ? (1 pour avoir la liste) (Echap pour abandonner) \n \n" +
-                "Supposition 1 : " + jeusympa[0].getSupposition() + " " + jeusympa[0].getDistance() + " km " + jeusympa[0].getPourcentage() + "%\n" +
+                "Supposition 1 : " + jeusympa[0].getSupposition() + " " + jeusympa[0].getDistance() + " km " + jeusympa[0].getPourcentage() + "%" + " Superficie : " + jeusympa[0].getIndice() + " km \n" +
                 "Supposition 2 : " + jeusympa[1].getSupposition() + " " + jeusympa[1].getDistance() + " km " + jeusympa[1].getPourcentage() + "% Premier indice : " + jeusympa[1].getIndice() + "\n"+
                 "Supposition 3 : " + jeusympa[2].getSupposition() + " " + jeusympa[2].getDistance() + " km " + jeusympa[2].getPourcentage() + "% Deuxième indice : " + jeusympa[2].getIndice() + "\n"+
-                "Supposition 4 : " + jeusympa[3].getSupposition() + " " + jeusympa[3].getDistance() + " km " + jeusympa[3].getPourcentage() + "% Troisième indice : \n" + jeusympa[3].getIndice() + "\n");
+                "Supposition 4 : " + jeusympa[3].getSupposition() + " " + jeusympa[3].getDistance() + " km " + jeusympa[3].getPourcentage() + "% Troisième indice : " + jeusympa[3].getIndice() + "\n" +
+                "Supposition 5 : " + jeusympa[4].getSupposition() + " " + jeusympa[4].getDistance() + " km " + jeusympa[4].getPourcentage() + "% \n");
         return supposition;
     }
 
     public superinterface verifnotreinterface(superinterface jeusympa, int compteur, double distance, int pourcentage, Region laregion, Region lasupposition){
 
-        //A améliorer très facilement en déplaçant tous les jeusympa.x sauf indice
+        String superficie = "";
+
+        if (compteur == 0){
+            int nombre = laregion.getSuperficie();
+            superficie = String.valueOf(nombre);
+        }
         switch (compteur){
+            case 0 :
+                jeusympa.setIndice(superficie);
+                break;
             case 1 :
                 jeusympa.setIndice(laregion.getIndiceun());
                 break;
@@ -854,9 +895,11 @@ class Region{
                 jeusympa.setIndice(laregion.getIndicetrois());
                 break;
         }
-        jeusympa.setDistance(distance);
+        String test = String.format("%.2f",distance);
+        jeusympa.setDistance(test);
         jeusympa.setPourcentage(pourcentage);
         jeusympa.setSupposition(lasupposition.getVrainom());
+
 
         return jeusympa;
     }
@@ -866,7 +909,7 @@ class Region{
         String supposition;
         int abandon = 0;
         if (lesparametres.getChoixlaliste() == 0) {
-            supposition = this.interfaceclassique(compteur, jeusympa);
+            supposition = this.interfaceclassique(jeusympa);
         }
         else {
             supposition = JOptionPane.showInputDialog("Quelle est votre supposition ? (Echap pour abandonner)");
@@ -914,7 +957,13 @@ class Region{
             }
             if (compteur == 5) {
                 //Ajout 3
-                JOptionPane.showMessageDialog( null, "Jeu terminé, la réponse était " + laregion.getVrainom(), "", JOptionPane.PLAIN_MESSAGE );
+                JOptionPane.showMessageDialog(null,"Voici vos essais : \n \n" +
+                        "Supposition 1 : " + jeusympa[0].getSupposition() + " " + jeusympa[0].getDistance() + " km " + jeusympa[0].getPourcentage() + "%" + " Superficie : " + jeusympa[0].getIndice() + " km \n" +
+                        "Supposition 2 : " + jeusympa[1].getSupposition() + " " + jeusympa[1].getDistance() + " km " + jeusympa[1].getPourcentage() + "% Premier indice : " + jeusympa[1].getIndice() + "\n"+
+                        "Supposition 3 : " + jeusympa[2].getSupposition() + " " + jeusympa[2].getDistance() + " km " + jeusympa[2].getPourcentage() + "% Deuxième indice : " + jeusympa[2].getIndice() + "\n"+
+                        "Supposition 4 : " + jeusympa[3].getSupposition() + " " + jeusympa[3].getDistance() + " km " + jeusympa[3].getPourcentage() + "% Troisième indice : " + jeusympa[3].getIndice() + "\n" +
+                        "Supposition 5 : " + jeusympa[4].getSupposition() + " " + jeusympa[4].getDistance() + " km " + jeusympa[4].getPourcentage() + "% \n \n" +
+                        "Jeu terminé, la réponse était " + laregion.getVrainom(),"",JOptionPane.PLAIN_MESSAGE);
             }
         }
         }
@@ -946,6 +995,10 @@ class Region{
     }
 
     public void message(Region laregion, int compteur){
+        if (compteur == 0)
+        {
+            JOptionPane.showMessageDialog(null,"La superficie de la région est de " + laregion.getSuperficie() + " km", "",JOptionPane.PLAIN_MESSAGE);
+        }
         if (compteur == 1)
         {
             JOptionPane.showMessageDialog( null, "La spécialité culinaire de la région en question est : " + laregion.getIndiceun(), "", JOptionPane.PLAIN_MESSAGE );
