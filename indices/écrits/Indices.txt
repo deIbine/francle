@@ -102,7 +102,7 @@ Guadeloupe :
 La Réunion : 
 -	Spécialité culinaire : Le Rhum arrangé 
 -	Capitale régionale : Saint-Denis
--	Personnalité originaire de la région :  Sarda Garriga  ( Proclame l’abolition de l’esclavage à La Réunion)  
+-	Personnalité originaire de la région :  Sarda Garriga  ( Proclame l’abolition de l’esclavage à La Réunion) - Michel Houllebecq 
 -	Superficie en km2 : 2 504
 
 
@@ -110,7 +110,7 @@ La Réunion :
 Martinique : 
 -	Spécialité culinaire : Gratin de bananes 
 -	 Capitale régionale : Fort-de-France
--	Personnalité originaire de la Région : Aimé Césaire
+-	Personnalité originaire de la Région : Aimé Césaire - Audrey Pulvar
 -	Superficie en km2 : 1 128
  
 
@@ -118,7 +118,7 @@ Martinique :
 Guyane : 
 -	Spécialité culinaire : le poulet boucané 
 -	Capitale régionale : Cayenne
--	Personnalité originaire de la Région : Félix Eboué  
+-	Personnalité originaire de la Région : Félix Eboué - Henri Salvador - Christine Taubira  
 -	Superficie en km2 : 83 534
 
 
@@ -126,7 +126,7 @@ Guyane :
 Mayotte : 
 -	Spécialité culinaire : le matsidza : riz cuit dans l’eau de coco 
 -	Capitale régionale : Mamoudzou 
--	Célébrité originaire de la Mayotte : Zéna M’Déré  
+-	Célébrité originaire de la Mayotte : Zéna M’Déré  - Géniale Attoumani
 -	Superficie en km2 : 374
 
 
