@@ -955,9 +955,11 @@ class Region{
     }
 
     public int jeu(Region laregion, int compteur, Parametres lesparametres, superinterface[] jeusympa){
-        double distance;
+        double distance = 0.0;
         String supposition;
         int abandon = 0;
+        int pourcentage = 0;
+        int code = -1;
         Message lemessage = new Message();
         if (lesparametres.getChoixlaliste() == 0) {
             supposition = this.interfaceclassique(jeusympa);
@@ -982,6 +984,7 @@ class Region{
         {
             supposition = this.convertisseur(supposition);
         if (supposition.equals(laregion.getNomdelaregion())){
+            code = 0;
             lemessage.message(0, 0.0, 0, compteur, laregion);
             compteur = 5;
         }
@@ -990,31 +993,38 @@ class Region{
             lasupposition = lasupposition.latitudeetlongitude(supposition, lesparametres.getChoixdelaregion());
             distance = verifdistance(laregion, lasupposition);
             if (abandon == -1){
+                code = 1;
                 lemessage.message(1,0.0, 0, compteur, laregion);
                 distance = -1;
             }
             if (distance == 0) {
+                code = 2;
                 lemessage.message(2,0.0, 0, compteur, laregion);
             } else if (distance != -1){
-                int pourcentage = pourcentage(laregion, distance);
+                code = 3;
+                pourcentage = pourcentage(laregion, distance);
                 //String fleche = this.fleche(laregion,lasupposition);
-                lemessage.message(3, distance, pourcentage, compteur, laregion);
                 superinterface lejeu = new superinterface();
                 lejeu = verifnotreinterface(lejeu,compteur,distance,pourcentage,laregion,lasupposition);
                 jeusympa[compteur] = lejeu;
-                compteur = compteur + 1;
-            }
-            if (compteur == 5) {
-                JOptionPane.showMessageDialog(null,"C'est raté ! \n \n" +
-                        "Voici vos essais : \n \n" +
-                        "Supposition 1 : " + jeusympa[0].getSupposition() + " " + jeusympa[0].getDistance() + " km " + jeusympa[0].getPourcentage() + "%" + " Superficie : " + jeusympa[0].getIndice() + " km \n" +
-                        "Supposition 2 : " + jeusympa[1].getSupposition() + " " + jeusympa[1].getDistance() + " km " + jeusympa[1].getPourcentage() + "% Premier indice : " + jeusympa[1].getIndice() + "\n"+
-                        "Supposition 3 : " + jeusympa[2].getSupposition() + " " + jeusympa[2].getDistance() + " km " + jeusympa[2].getPourcentage() + "% Deuxième indice : " + jeusympa[2].getIndice() + "\n"+
-                        "Supposition 4 : " + jeusympa[3].getSupposition() + " " + jeusympa[3].getDistance() + " km " + jeusympa[3].getPourcentage() + "% Troisième indice : " + jeusympa[3].getIndice() + "\n" +
-                        "Supposition 5 : " + jeusympa[4].getSupposition() + " " + jeusympa[4].getDistance() + " km " + jeusympa[4].getPourcentage() + "% \n \n" +
-                        "Jeu terminé, la réponse était " + laregion.getVrainom(),"Fin du jeu",JOptionPane.PLAIN_MESSAGE);
             }
         }
+        }
+        if (compteur !=5){
+            lemessage.message(code, distance, pourcentage, compteur, laregion);
+            if (code == 3){
+                compteur = compteur + 1;
+            }
+        }
+        if (compteur == 5) {
+            JOptionPane.showMessageDialog(null,"C'est raté ! \n \n" +
+                    "Voici vos essais : \n \n" +
+                    "Supposition 1 : " + jeusympa[0].getSupposition() + " " + jeusympa[0].getDistance() + " km " + jeusympa[0].getPourcentage() + "%" + " Superficie : " + jeusympa[0].getIndice() + " km \n" +
+                    "Supposition 2 : " + jeusympa[1].getSupposition() + " " + jeusympa[1].getDistance() + " km " + jeusympa[1].getPourcentage() + "% Premier indice : " + jeusympa[1].getIndice() + "\n"+
+                    "Supposition 3 : " + jeusympa[2].getSupposition() + " " + jeusympa[2].getDistance() + " km " + jeusympa[2].getPourcentage() + "% Deuxième indice : " + jeusympa[2].getIndice() + "\n"+
+                    "Supposition 4 : " + jeusympa[3].getSupposition() + " " + jeusympa[3].getDistance() + " km " + jeusympa[3].getPourcentage() + "% Troisième indice : " + jeusympa[3].getIndice() + "\n" +
+                    "Supposition 5 : " + jeusympa[4].getSupposition() + " " + jeusympa[4].getDistance() + " km " + jeusympa[4].getPourcentage() + "% \n \n" +
+                    "Jeu terminé, la réponse était " + laregion.getVrainom(),"Fin du jeu",JOptionPane.PLAIN_MESSAGE);
         }
         return compteur;
 
