@@ -193,6 +193,56 @@ public class main{
      */
 }
 
+class Message{
+    public void message(int code, double distanceux, int pourcentage, int compteur, Region laregion){
+        String distance = String.format("%.2f",distanceux);
+        switch (code){
+            case 0 :
+                JOptionPane.showMessageDialog( null, "Vous êtes à 0 km, 100%. C'est trouvé, bravo !", "Victoire", JOptionPane.PLAIN_MESSAGE );
+                break;
+            case 1 :
+                JOptionPane.showMessageDialog( null, "Raté ! \n \n" +
+                        "Vous avez abandonné le jeu !", "Abandon", JOptionPane.PLAIN_MESSAGE );
+                break;
+            case 2 :
+                JOptionPane.showMessageDialog( null, "La saisie n'a pas été reconnue \n \n" +
+                        "Veuillez réessayer", "Saisie non reconnue", JOptionPane.PLAIN_MESSAGE );
+                break;
+            case 3 :
+                switch (compteur){
+                    case 0 :
+                        JOptionPane.showMessageDialog(null,
+                                "C'est raté ! " +
+                                        "\nVous êtes à " + distance + " km." +
+                                        "\nVotre pourcentage de proximité est de : " + pourcentage + "%." +
+                                        "\nLa superficie de la région recherchée est de " + laregion.getSuperficie() + " km.", "Essai un",JOptionPane.PLAIN_MESSAGE);
+                        break;
+                    case 1 :
+                        JOptionPane.showMessageDialog(null,
+                                "C'est raté ! " +
+                                        "\nVous êtes à " + distance + " km." +
+                                        "\nVotre pourcentage de proximité est de : " + pourcentage + "%." +
+                                        "\nLa spécialité culinaire de la région recherchée est : " + laregion.getIndiceun() + ".", "Essai deux",JOptionPane.PLAIN_MESSAGE);
+                        break;
+                    case 2 :
+                        JOptionPane.showMessageDialog(null,
+                                "C'est raté ! " +
+                                        "\nVous êtes à " + distance + " km." +
+                                        "\nVotre pourcentage de proximité est de : " + pourcentage + "%." +
+                                        "\nLa personnalité connue régionale de la région recherchée est : " + laregion.getIndicedeux() + ".", "Essai trois",JOptionPane.PLAIN_MESSAGE);
+                        break;
+                    case 3 :
+                        JOptionPane.showMessageDialog(null,
+                                "C'est raté ! " +
+                                        "\nVous êtes à " + distance + " km." +
+                                        "\nVotre pourcentage de proximité est de : " + pourcentage + "%." +
+                                        "\nLa capitale régionale de la région recherchée est : " + laregion.getIndicetrois() + ".", "Essai quatre",JOptionPane.PLAIN_MESSAGE);
+                        break;
+                }
+        }
+    }
+}
+
 class Parametres{
 
     private int choixdelaregion;
@@ -908,6 +958,7 @@ class Region{
         double distance;
         String supposition;
         int abandon = 0;
+        Message lemessage = new Message();
         if (lesparametres.getChoixlaliste() == 0) {
             supposition = this.interfaceclassique(jeusympa);
         }
@@ -931,39 +982,37 @@ class Region{
         {
             supposition = this.convertisseur(supposition);
         if (supposition.equals(laregion.getNomdelaregion())){
-            JOptionPane.showMessageDialog( null, "Vous êtes à 0 km, 100%. C'est trouvé, bravo !", "", JOptionPane.PLAIN_MESSAGE );
+            lemessage.message(0, 0.0, 0, compteur, laregion);
             compteur = 5;
         }
         else {
             Region lasupposition = new Region();
             lasupposition = lasupposition.latitudeetlongitude(supposition, lesparametres.getChoixdelaregion());
             distance = verifdistance(laregion, lasupposition);
-            JOptionPane.showMessageDialog( null, "Raté !", "", JOptionPane.PLAIN_MESSAGE );
             if (abandon == -1){
-                JOptionPane.showMessageDialog( null, "Jeu abandonné !", "", JOptionPane.PLAIN_MESSAGE );
+                lemessage.message(1,0.0, 0, compteur, laregion);
                 distance = -1;
             }
             if (distance == 0) {
-                JOptionPane.showMessageDialog( null, "La saisie n'a pas été reconnue", "", JOptionPane.PLAIN_MESSAGE );
+                lemessage.message(2,0.0, 0, compteur, laregion);
             } else if (distance != -1){
                 int pourcentage = pourcentage(laregion, distance);
-               // String fleche = this.fleche(laregion,lasupposition);
-                JOptionPane.showMessageDialog( null, "Vous êtes à " + distance + " km. \n Votre pourcentage de proximité est de : " + pourcentage + "%", "", JOptionPane.PLAIN_MESSAGE );
-                this.message(laregion,compteur);
+                //String fleche = this.fleche(laregion,lasupposition);
+                lemessage.message(3, distance, pourcentage, compteur, laregion);
                 superinterface lejeu = new superinterface();
                 lejeu = verifnotreinterface(lejeu,compteur,distance,pourcentage,laregion,lasupposition);
                 jeusympa[compteur] = lejeu;
                 compteur = compteur + 1;
             }
             if (compteur == 5) {
-                //Ajout 3
-                JOptionPane.showMessageDialog(null,"Voici vos essais : \n \n" +
+                JOptionPane.showMessageDialog(null,"C'est raté ! \n \n" +
+                        "Voici vos essais : \n \n" +
                         "Supposition 1 : " + jeusympa[0].getSupposition() + " " + jeusympa[0].getDistance() + " km " + jeusympa[0].getPourcentage() + "%" + " Superficie : " + jeusympa[0].getIndice() + " km \n" +
                         "Supposition 2 : " + jeusympa[1].getSupposition() + " " + jeusympa[1].getDistance() + " km " + jeusympa[1].getPourcentage() + "% Premier indice : " + jeusympa[1].getIndice() + "\n"+
                         "Supposition 3 : " + jeusympa[2].getSupposition() + " " + jeusympa[2].getDistance() + " km " + jeusympa[2].getPourcentage() + "% Deuxième indice : " + jeusympa[2].getIndice() + "\n"+
                         "Supposition 4 : " + jeusympa[3].getSupposition() + " " + jeusympa[3].getDistance() + " km " + jeusympa[3].getPourcentage() + "% Troisième indice : " + jeusympa[3].getIndice() + "\n" +
                         "Supposition 5 : " + jeusympa[4].getSupposition() + " " + jeusympa[4].getDistance() + " km " + jeusympa[4].getPourcentage() + "% \n \n" +
-                        "Jeu terminé, la réponse était " + laregion.getVrainom(),"",JOptionPane.PLAIN_MESSAGE);
+                        "Jeu terminé, la réponse était " + laregion.getVrainom(),"Fin du jeu",JOptionPane.PLAIN_MESSAGE);
             }
         }
         }
@@ -972,7 +1021,7 @@ class Region{
     }
 
     public void touteslesregions(){
-        JOptionPane.showMessageDialog( null, "Voici les régions possiblent : \n Auvergne-Rhone-Alpes \n Bretagne \n Centre-Val de Loire \n Corse \n Grand Est \n Guadeloupe \n Guyane \n Hauts-de-France \n Ile-de-France \n La Reunion \n Martinique \n Mayotte \n Normandie \n Nouvelle-Aquitaine \n Occitanie \n Pays de la Loire \n Provence-Alpes-Cote d'Azur", "", JOptionPane.PLAIN_MESSAGE );}
+        JOptionPane.showMessageDialog( null, "Voici les régions possibles : \n Auvergne-Rhone-Alpes \n Bretagne \n Centre-Val de Loire \n Corse \n Grand Est \n Guadeloupe \n Guyane \n Hauts-de-France \n Ile-de-France \n La Reunion \n Martinique \n Mayotte \n Normandie \n Nouvelle-Aquitaine \n Occitanie \n Pays de la Loire \n Provence-Alpes-Cote d'Azur", "", JOptionPane.PLAIN_MESSAGE );}
 
 
     public double verifdistance(Region laaregion, Region laasupposition){
@@ -993,24 +1042,6 @@ class Region{
         degre = latoulon *(pi/180);
         return degre;
     }
-
-    public void message(Region laregion, int compteur){
-        if (compteur == 0)
-        {
-            JOptionPane.showMessageDialog(null,"La superficie de la région est de " + laregion.getSuperficie() + " km", "",JOptionPane.PLAIN_MESSAGE);
-        }
-        if (compteur == 1)
-        {
-            JOptionPane.showMessageDialog( null, "La spécialité culinaire de la région en question est : " + laregion.getIndiceun(), "", JOptionPane.PLAIN_MESSAGE );
-        }
-        else if (compteur == 2){
-            JOptionPane.showMessageDialog( null, "La personnalité connue régionale de la région en question est : " + laregion.getIndicedeux(), "", JOptionPane.PLAIN_MESSAGE );
-        }
-        else if (compteur == 3){
-            JOptionPane.showMessageDialog( null, "La capitale régionale de la région en question est : " + laregion.getIndicetrois(), "", JOptionPane.PLAIN_MESSAGE );
-        }
-    }
-
 
     public int pourcentage(Region region, double ladistance){
         int cas = 0;
