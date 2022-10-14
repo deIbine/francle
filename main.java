@@ -985,7 +985,6 @@ class Region{
             supposition = this.convertisseur(supposition);
         if (supposition.equals(laregion.getNomdelaregion())){
             code = 0;
-            lemessage.message(0, 0.0, 0, compteur, laregion);
             compteur = 5;
         }
         else {
@@ -994,12 +993,10 @@ class Region{
             distance = verifdistance(laregion, lasupposition);
             if (abandon == -1){
                 code = 1;
-                lemessage.message(1,0.0, 0, compteur, laregion);
                 distance = -1;
             }
             if (distance == 0) {
                 code = 2;
-                lemessage.message(2,0.0, 0, compteur, laregion);
             } else if (distance != -1){
                 code = 3;
                 pourcentage = pourcentage(laregion, distance);
