@@ -239,6 +239,7 @@ class Message{
                                         "\nLa capitale régionale de la région recherchée est : " + laregion.getIndicetrois() + ".", "Essai quatre",JOptionPane.PLAIN_MESSAGE);
                         break;
                 }
+        break;
         }
     }
 }
