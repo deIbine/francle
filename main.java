@@ -242,6 +242,36 @@ class Message{
         break;
         }
     }
+    public void messagedefin(superinterface [] jeusympa, Region laregion){
+        JOptionPane.showMessageDialog(null,"C'est raté ! \n \n" +
+                "Voici vos essais : \n \n" +
+                "Supposition 1 : " + jeusympa[0].getSupposition() + " " + jeusympa[0].getDistance() + " km " + jeusympa[0].getPourcentage() + "%" + " Superficie : " + jeusympa[0].getIndice() + " km \n" +
+                "Supposition 2 : " + jeusympa[1].getSupposition() + " " + jeusympa[1].getDistance() + " km " + jeusympa[1].getPourcentage() + "% Premier indice : " + jeusympa[1].getIndice() + "\n"+
+                "Supposition 3 : " + jeusympa[2].getSupposition() + " " + jeusympa[2].getDistance() + " km " + jeusympa[2].getPourcentage() + "% Deuxième indice : " + jeusympa[2].getIndice() + "\n"+
+                "Supposition 4 : " + jeusympa[3].getSupposition() + " " + jeusympa[3].getDistance() + " km " + jeusympa[3].getPourcentage() + "% Troisième indice : " + jeusympa[3].getIndice() + "\n" +
+                "Supposition 5 : " + jeusympa[4].getSupposition() + " " + jeusympa[4].getDistance() + " km " + jeusympa[4].getPourcentage() + "% \n \n" +
+                "Jeu terminé, la réponse était " + laregion.getVrainom(),"Fin du jeu",JOptionPane.PLAIN_MESSAGE);
+    }
+
+
+    public String interfaceclassique(superinterface [] jeusympa){
+        String supposition = "";
+        //Ajout 3
+
+        //trouver un moyen de mettre la superficie après le guess 1 plus ajouter le dernier guess avant de noter quand c'est terminé pour le dernier guess
+        supposition = JOptionPane.showInputDialog("Quelle est votre supposition ? (1 pour avoir la liste) (Echap pour abandonner) \n \n" +
+                "Supposition 1 : " + jeusympa[0].getSupposition() + " " + jeusympa[0].getDistance() + " km " + jeusympa[0].getPourcentage() + "%" + " Superficie : " + jeusympa[0].getIndice() + " km \n" +
+                "Supposition 2 : " + jeusympa[1].getSupposition() + " " + jeusympa[1].getDistance() + " km " + jeusympa[1].getPourcentage() + "% Premier indice : " + jeusympa[1].getIndice() + "\n"+
+                "Supposition 3 : " + jeusympa[2].getSupposition() + " " + jeusympa[2].getDistance() + " km " + jeusympa[2].getPourcentage() + "% Deuxième indice : " + jeusympa[2].getIndice() + "\n"+
+                "Supposition 4 : " + jeusympa[3].getSupposition() + " " + jeusympa[3].getDistance() + " km " + jeusympa[3].getPourcentage() + "% Troisième indice : " + jeusympa[3].getIndice() + "\n" +
+                "Supposition 5 : " + jeusympa[4].getSupposition() + " " + jeusympa[4].getDistance() + " km " + jeusympa[4].getPourcentage() + "% \n");
+        return supposition;
+    }
+
+    public void touteslesregions(){
+        JOptionPane.showMessageDialog( null, "Voici les régions possibles : \nAuvergne-Rhône-Alpes \nBretagne \nCentre-Val de Loire \nCorse \nGrand Est \nGuadeloupe \nGuyane \nHauts-de-France \nÎle-de-France \nLa Réunion \nMartinique \nMayotte \nNormandie \nNouvelle-Aquitaine \nOccitanie \nPays de la Loire \nProvence-Alpes-Côte d'Azur", "", JOptionPane.PLAIN_MESSAGE );}
+
+
 }
 
 class Parametres{
@@ -909,21 +939,6 @@ class Region{
                 return aleatoire;
     }
 
-
-    public String interfaceclassique(superinterface [] jeusympa){
-        String supposition = "";
-        //Ajout 3
-
-        //trouver un moyen de mettre la superficie après le guess 1 plus ajouter le dernier guess avant de noter quand c'est terminé pour le dernier guess
-        supposition = JOptionPane.showInputDialog("Quelle est votre supposition ? (1 pour avoir la liste) (Echap pour abandonner) \n \n" +
-                "Supposition 1 : " + jeusympa[0].getSupposition() + " " + jeusympa[0].getDistance() + " km " + jeusympa[0].getPourcentage() + "%" + " Superficie : " + jeusympa[0].getIndice() + " km \n" +
-                "Supposition 2 : " + jeusympa[1].getSupposition() + " " + jeusympa[1].getDistance() + " km " + jeusympa[1].getPourcentage() + "% Premier indice : " + jeusympa[1].getIndice() + "\n"+
-                "Supposition 3 : " + jeusympa[2].getSupposition() + " " + jeusympa[2].getDistance() + " km " + jeusympa[2].getPourcentage() + "% Deuxième indice : " + jeusympa[2].getIndice() + "\n"+
-                "Supposition 4 : " + jeusympa[3].getSupposition() + " " + jeusympa[3].getDistance() + " km " + jeusympa[3].getPourcentage() + "% Troisième indice : " + jeusympa[3].getIndice() + "\n" +
-                "Supposition 5 : " + jeusympa[4].getSupposition() + " " + jeusympa[4].getDistance() + " km " + jeusympa[4].getPourcentage() + "% \n");
-        return supposition;
-    }
-
     public superinterface verifnotreinterface(superinterface jeusympa, int compteur, double distance, int pourcentage, Region laregion, Region lasupposition){
 
         String superficie = "";
@@ -963,7 +978,7 @@ class Region{
         int code = -1;
         Message lemessage = new Message();
         if (lesparametres.getChoixlaliste() == 0) {
-            supposition = this.interfaceclassique(jeusympa);
+            supposition = lemessage.interfaceclassique(jeusympa);
         }
         else {
             supposition = JOptionPane.showInputDialog("Quelle est votre supposition ? (Echap pour abandonner)");
@@ -979,7 +994,7 @@ class Region{
         }
         if ((supposition.equals("1")) && (lesparametres.getChoixdelaregion() == 1) && (lesparametres.getChoixlaliste() == 0))
         {
-            touteslesregions();
+            lemessage.touteslesregions();
         }
         else
         {
@@ -1015,22 +1030,11 @@ class Region{
             }
         }
         if (compteur == 5) {
-            JOptionPane.showMessageDialog(null,"C'est raté ! \n \n" +
-                    "Voici vos essais : \n \n" +
-                    "Supposition 1 : " + jeusympa[0].getSupposition() + " " + jeusympa[0].getDistance() + " km " + jeusympa[0].getPourcentage() + "%" + " Superficie : " + jeusympa[0].getIndice() + " km \n" +
-                    "Supposition 2 : " + jeusympa[1].getSupposition() + " " + jeusympa[1].getDistance() + " km " + jeusympa[1].getPourcentage() + "% Premier indice : " + jeusympa[1].getIndice() + "\n"+
-                    "Supposition 3 : " + jeusympa[2].getSupposition() + " " + jeusympa[2].getDistance() + " km " + jeusympa[2].getPourcentage() + "% Deuxième indice : " + jeusympa[2].getIndice() + "\n"+
-                    "Supposition 4 : " + jeusympa[3].getSupposition() + " " + jeusympa[3].getDistance() + " km " + jeusympa[3].getPourcentage() + "% Troisième indice : " + jeusympa[3].getIndice() + "\n" +
-                    "Supposition 5 : " + jeusympa[4].getSupposition() + " " + jeusympa[4].getDistance() + " km " + jeusympa[4].getPourcentage() + "% \n \n" +
-                    "Jeu terminé, la réponse était " + laregion.getVrainom(),"Fin du jeu",JOptionPane.PLAIN_MESSAGE);
+            lemessage.messagedefin(jeusympa,laregion);
         }
         return compteur;
 
     }
-
-    public void touteslesregions(){
-        JOptionPane.showMessageDialog( null, "Voici les régions possibles : \n Auvergne-Rhone-Alpes \n Bretagne \n Centre-Val de Loire \n Corse \n Grand Est \n Guadeloupe \n Guyane \n Hauts-de-France \n Ile-de-France \n La Reunion \n Martinique \n Mayotte \n Normandie \n Nouvelle-Aquitaine \n Occitanie \n Pays de la Loire \n Provence-Alpes-Cote d'Azur", "", JOptionPane.PLAIN_MESSAGE );}
-
 
     public double verifdistance(Region laaregion, Region laasupposition){
         double distance;
