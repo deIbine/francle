@@ -17,7 +17,7 @@ Normandie :
 Bretagne : 
 -	Spécialité culinaire : Crêpes / Galette bretonne
 -	Capitale régionale : Rennes
--	Personnalité originaire de la région : Jeanne Bohec 
+-	Personnalité originaire de la région : Louis Guilloux
 -	Superficie en km2 : 27 208
 
 
@@ -38,14 +38,14 @@ Nouvelle- Aquitaine :
 Occitanie :
 -	Spécialité culinaire : Confit de canard / 
 -	Capitale régionale : Toulouse
--	Célébrité originaire de la région : Vauban
+-	Célébrité originaire de la région : Jean Jaurès
 -	Superficie en km2 : 72 724
 
 
 Provence-Alpes-Cote d’Azur
 -	Spécialité culinaire : Bouillabaisse / Ratatouille
 -	Capitale régionale : Marseille
--	Célébrité originaire de la région : Pierre Barthélemy  
+-	Célébrité originaire de la région : Fernandel 
 -	Superficie en km2 : 31 400
 
 
@@ -95,14 +95,14 @@ Corse :
 Guadeloupe : 
 -	Spécialité culinaire : Les accras de morue 
 -	Capitale régionale : Basse-Terre
--	Personnalité originaire de la région : Gerty Archimède (première femme avocate des Antilles) 
+-	Personnalité originaire de la région : Teddy Riner 
 -	Superficie en km2 : 1 703
 
 
 La Réunion : 
 -	Spécialité culinaire : Le Rhum arrangé 
 -	Capitale régionale : Saint-Denis
--	Personnalité originaire de la région :  Sarda Garriga  ( Proclame l’abolition de l’esclavage à La Réunion)  
+-	Personnalité originaire de la région :  Michel Houellebecq
 -	Superficie en km2 : 2 504
 
 
@@ -118,7 +118,7 @@ Martinique :
 Guyane : 
 -	Spécialité culinaire : le poulet boucané 
 -	Capitale régionale : Cayenne
--	Personnalité originaire de la Région : Félix Eboué  
+-	Personnalité originaire de la Région : Henri Salvador 
 -	Superficie en km2 : 83 534
 
 
@@ -126,7 +126,7 @@ Guyane :
 Mayotte : 
 -	Spécialité culinaire : le matsidza : riz cuit dans l’eau de coco 
 -	Capitale régionale : Mamoudzou 
--	Célébrité originaire de la Mayotte : Zéna M’Déré  
+-	Célébrité originaire de la Mayotte : Taambati Moussa  
 -	Superficie en km2 : 374
 
 
