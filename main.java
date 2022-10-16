@@ -1,51 +1,13 @@
 import javax.swing.*;
 import java.awt.*;
-//import java.awt.event.ActionEvent;
-//import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
-//import java.awt.image.ImageObserver;
-//import java.awt.image.ImageProducer;
 import java.io.File;
 import java.io.IOException;
 import java.lang.Math;
-//import java.util.Locale;
 import java.util.Random;
 import java.util.Objects;
-//import java.util.Scanner;
 import java.text.Normalizer;
 import java.util.regex.Pattern;
-import java.text.DecimalFormat;
-
-
-/*
-A réparer :
-
-Lignes 879 et tableaux en général, vérifier comment cela fonctionne exactement
-car si tableau = 100, erreur, si tableau = 99, chiffre incompréhensible en pourcentage
-si tableau = 26 ou 27, ça semble correct, pourquoi ?
-
- */
-
-/*
-Avancées en cours :
-
-"Réparer" les différents choix de paramètres
-
-Choix des régions : OK, mais vérifier le cas 2, où le dé n'est pas codé à chaque fois, plus rajouter les images
-
-Projet : apprendre Java EE pour mettre le code sur Internet
-
-Frankle avec les régions des pays de l'empire de Charlemagne ?
-
-Nouvel ajout :
-
-Faire moins de message, voire implémenter complétement une nouvelle classe utilisée uniquement pour les messages
-car clairement, pour le moment c'est relativement illisible
-
- */
-
-
-
 
 public class main{
 
@@ -197,9 +159,6 @@ class Message{
     public void message(int code, double distanceux, int pourcentage, int compteur, Region laregion){
         String distance = String.format("%.2f",distanceux);
         switch (code){
-            case 0 :
-                JOptionPane.showMessageDialog( null, "Vous êtes à 0 km, 100%. C'est trouvé, bravo !", "Victoire", JOptionPane.PLAIN_MESSAGE );
-                break;
             case 1 :
                 JOptionPane.showMessageDialog( null, "Raté ! \n \n" +
                         "Vous avez abandonné le jeu !", "Abandon", JOptionPane.PLAIN_MESSAGE );
@@ -242,15 +201,25 @@ class Message{
         break;
         }
     }
-    public void messagedefin(superinterface [] jeusympa, Region laregion){
-        JOptionPane.showMessageDialog(null,"C'est raté ! \n \n" +
+    public void messagedefin(superinterface [] jeusympa, Region laregion, int code){
+        String felicitations = "";
+        String message = "";
+        if (code == 0){
+            felicitations = "Bravo ! \n \n";
+            message = "Vous avez trouvé la bonne réponse ! \nFélicitations et à demain !";
+        }
+        else {
+            felicitations = "C'est raté ! \n \n";
+            message = "La réponse était " + laregion.getVrainom() + "\nBon courage et à demain !";
+        }
+        JOptionPane.showMessageDialog(null,felicitations +
                 "Voici vos essais : \n \n" +
                 "Supposition 1 : " + jeusympa[0].getSupposition() + " " + jeusympa[0].getDistance() + " km " + jeusympa[0].getPourcentage() + "%" + " Superficie : " + jeusympa[0].getIndice() + " km \n" +
                 "Supposition 2 : " + jeusympa[1].getSupposition() + " " + jeusympa[1].getDistance() + " km " + jeusympa[1].getPourcentage() + "% Premier indice : " + jeusympa[1].getIndice() + "\n"+
                 "Supposition 3 : " + jeusympa[2].getSupposition() + " " + jeusympa[2].getDistance() + " km " + jeusympa[2].getPourcentage() + "% Deuxième indice : " + jeusympa[2].getIndice() + "\n"+
                 "Supposition 4 : " + jeusympa[3].getSupposition() + " " + jeusympa[3].getDistance() + " km " + jeusympa[3].getPourcentage() + "% Troisième indice : " + jeusympa[3].getIndice() + "\n" +
                 "Supposition 5 : " + jeusympa[4].getSupposition() + " " + jeusympa[4].getDistance() + " km " + jeusympa[4].getPourcentage() + "% \n \n" +
-                "Jeu terminé, la réponse était " + laregion.getVrainom(),"Fin du jeu",JOptionPane.PLAIN_MESSAGE);
+                message,"Fin du jeu",JOptionPane.PLAIN_MESSAGE);
     }
 
 
@@ -970,6 +939,15 @@ class Region{
         return jeusympa;
     }
 
+    public superinterface reussite(superinterface jeusympa, Region laregion){
+        jeusympa.setDistance("0");
+        jeusympa.setPourcentage(100);
+        jeusympa.setSupposition(laregion.getVrainom());
+        jeusympa.setIndice("");
+
+        return jeusympa;
+    }
+
     public int jeu(Region laregion, int compteur, Parametres lesparametres, superinterface[] jeusympa){
         double distance = 0.0;
         String supposition;
@@ -977,6 +955,7 @@ class Region{
         int pourcentage = 0;
         int code = -1;
         Message lemessage = new Message();
+        Region lasupposition = new Region();
         if (lesparametres.getChoixlaliste() == 0) {
             supposition = lemessage.interfaceclassique(jeusympa);
         }
@@ -1001,10 +980,12 @@ class Region{
             supposition = this.convertisseur(supposition);
         if (supposition.equals(laregion.getNomdelaregion())){
             code = 0;
+            superinterface lejeu = new superinterface();
+            lejeu = reussite(lejeu,laregion);
+            jeusympa[compteur] = lejeu;
             compteur = 5;
         }
         else {
-            Region lasupposition = new Region();
             lasupposition = lasupposition.latitudeetlongitude(supposition, lesparametres.getChoixdelaregion());
             distance = verifdistance(laregion, lasupposition);
             if (abandon == -1){
@@ -1023,14 +1004,14 @@ class Region{
             }
         }
         }
-        if (compteur !=5){
+        if ((compteur !=5) || (code == 0)){
             lemessage.message(code, distance, pourcentage, compteur, laregion);
             if (code == 3){
                 compteur = compteur + 1;
             }
         }
         if (compteur == 5) {
-            lemessage.messagedefin(jeusympa,laregion);
+            lemessage.messagedefin(jeusympa,laregion,code);
         }
         return compteur;
 
