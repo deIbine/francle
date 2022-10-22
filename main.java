@@ -537,7 +537,7 @@ class Region{
                 latitude = 48.117266;
                 longitude = -1.6777926;
                 indiceun = ("la crepe");
-                indicedeux = ("Jeanne Bohec");
+                indicedeux = ("Louis Guilloux");
                 indicetrois = ("Rennes");
                 vrainom = ("Bretagne");
                 superficie = 27208;
@@ -609,7 +609,7 @@ class Region{
                 latitude = 43.604652;
                 longitude = 1.444209;
                 indiceun = ("le confit de canard");
-                indicedeux = ("Sébastien Le Prestre de Vauban");
+                indicedeux = ("Jean Jaurès");
                 indicetrois = ("Toulouse");
                 vrainom = ("Occitanie");
                 superficie = 72724;
@@ -618,7 +618,7 @@ class Region{
                 latitude = 43.296482;
                 longitude = 5.36978;
                 indiceun = ("la bouillabaisse");
-                indicedeux = ("Pierre Barthélemy");
+                indicedeux = ("Fernandel");
                 indicetrois = ("Marseille");
                 vrainom = ("Provence-Alpes-Côte d'Azur");
                 superficie = 31400;
@@ -636,7 +636,7 @@ class Region{
                 latitude = -12.780600;
                 longitude = 45.227800;
                 indiceun = ("le matsidza");
-                indicedeux = ("Zéna M'Déré");
+                indicedeux = ("Taambati Moussa");
                 indicetrois = ("Mamoudzou");
                 vrainom = ("Mayotte");
                 superficie = 374;
@@ -645,7 +645,7 @@ class Region{
                 latitude = -20.882057;
                 longitude = 55.450675;
                 indiceun = ("le rhum arrange");
-                indicedeux = ("Sarda Garriga");
+                indicedeux = ("Michel Houellebecq");
                 indicetrois = ("Saint-Denis");
                 vrainom = ("La Réunion");
                 superficie = 2504;
@@ -654,7 +654,7 @@ class Region{
                 latitude = 4.9227;
                 longitude = -52.3269;
                 indiceun = ("le poulet boucane");
-                indicedeux = ("Félix Eboué");
+                indicedeux = ("Henri Salvador");
                 indicetrois =  ("Cayenne");
                 vrainom = ("Guyane");
                 superficie = 83534;
@@ -663,7 +663,7 @@ class Region{
                 latitude = 14.6160647;
                 longitude = -61.0587804;
                 indiceun = ("le gratin de bananes");
-                indicedeux = ("Aime Cesaire");
+                indicedeux = ("Aimé Césaire");
                 indicetrois = ("Fort-de-France");
                 vrainom = ("Martinique");
                 superficie = 1128;
