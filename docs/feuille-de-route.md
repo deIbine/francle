@@ -9,7 +9,7 @@ Chaque phase associe une amélioration du jeu à une notion Java à apprendre.
 |---|---|---|
 | 0.5 | Dépôt Git propre | ✅ Fait (PR #16) |
 | 0 | Environnement de développement | ✅ Fait (JDK 21, IntelliJ 2026.2) |
-| 1 | Corriger les bugs | ⬜ À faire |
+| 1 | Corriger les bugs | ✅ Fait (4 bugs corrigés) |
 | 2 | Centraliser les données des régions | ⬜ À faire |
 | 3 | Séparer logique et affichage, tests, Maven/Gradle | ⬜ À faire |
 | 4 | Interface Swing en une seule fenêtre | ⬜ À faire |
@@ -71,22 +71,34 @@ Fait dans la PR [#16](https://github.com/deIbine/francle/pull/16) :
 
 ---
 
-## Phase 1 : corriger les bugs
+## Phase 1 : corriger les bugs ✅
 
-| Bug | Où (`main.java`) | Effet visible |
-|---|---|---|
-| Latitude et longitude inversées dans la formule de distance | `verifdistance` | Rennes → Strasbourg : environ 1050 km au lieu de 700 km ; pourcentages incohérents |
-| `essai` jamais remis à 0 | `main`, `case 1` | Une nouvelle partie affiche les essais de la précédente |
-| Le dé est relancé pendant la vérification en mode « toutes les régions » | `latitudeetlongitude` | « Alsace » n'est reconnue qu'une fois sur deux |
-| `break` manquant après le didacticiel | `main`, `case 3` | Message « Retour au menu » en trop |
+Méthode appliquée à chaque bug : **reproduire** (prouver le bug par un test), **corriger**,
+puis **revérifier avec le même test**. Un commit par bug.
+
+| Bug | Comment il a été repéré | Correction | Réflexe à retenir |
+|---|---|---|---|
+| Latitude et longitude inversées dans `verifdistance` : est-ouest surestimé de 50 % (Rennes → Strasbourg à 1050 km au lieu de 700 km) | Comparaison avec des distances réelles connues. L'écart vaut 1 / cos(48°) ≈ 1,5 : un degré de longitude compté 111 km au lieu de 74 km | Formule découpée en variables nommées (`lat1`, `lat2`, `deltaLon`), protection contre `acos(>1)` = `NaN` (3,8 % des cas sur des coordonnées aléatoires) | Vérifier une formule contre une valeur connue ; ne jamais comparer des `double` avec `==` |
+| `essai` jamais remis à 0 : une nouvelle partie gardait l'historique de la précédente | Exécution à la main de la variable sur deux parties | Compteur local d'une boucle `for` au lieu d'une variable globale au programme | Une variable doit vivre aussi longtemps que ce qu'elle représente ; corriger la racine plutôt que poser un pansement |
+| Dé relancé dans `latitudeetlongitude` en mode « toutes les régions » : Alsace reconnue 1 fois sur 2, y compris comme région à deviner | Méthode appelée 1000 fois (496/1000) | Recherche dans les anciennes régions pour tout mode sauf 1 | Une méthode qui cherche doit être déterministe ; se méfier du copier-coller hors contexte |
+| `break` manquant après le didacticiel : message « Retour au menu » en trop | `javac -Xlint:fallthrough` signale la ligne exacte | Ajout du `break` | Les `case` sont des étiquettes, pas des blocs ; écouter les avertissements du compilateur |
 
 La bonne formule (loi des cosinus sphérique) :
 `d = R · acos(sin φ1 · sin φ2 + cos φ1 · cos φ2 · cos(λ1 − λ2))`,
 avec φ la latitude, λ la longitude et R = 6371 km.
-Le code actuel utilise la longitude à la place de la latitude.
 
 **Ce que tu apprends :** comparer une formule mathématique au code, la portée et la
-réinitialisation des variables, le *fall-through* d'un `switch`.
+réinitialisation des variables, le *fall-through* d'un `switch`, les avertissements de `javac`.
+
+**Découvertes à traiter plus tard :**
+
+- **Pourcentage de proximité peu parlant** (question de *game design*) : il est calculé par rapport
+  à la région la plus éloignée de la cible, souvent un département d'outre-mer à plus de 9000 km.
+  Toute la métropole se retrouve entre 88 % et 98 % (pour la Bretagne : Corse 88 %, Normandie 97 %).
+  Options : calcul limité à la métropole, distance maximale fixe, ou autre formule.
+- **`distance == 0` signifie « région inconnue »** : fragile, une vraie distance pourrait valoir 0.
+  À remplacer en Phase 2 par une vraie notion de région introuvable.
+- **`parseInt` en double dans le didacticiel** (`main`, `case 3`) : code redondant à simplifier.
 
 ---
 

@@ -71,7 +71,7 @@ Le détail de chaque phase est dans [docs/feuille-de-route.md](docs/feuille-de-r
 
 - [x] **Phase 0.5** : dépôt Git propre (README, `.gitignore`, arborescence)
 - [x] **Phase 0** : environnement de développement (JDK, IDE)
-- [ ] **Phase 1** : corriger les bugs (calcul de distance, réinitialisation des parties…)
+- [x] **Phase 1** : corriger les bugs (calcul de distance, réinitialisation des parties…)
 - [ ] **Phase 2** : centraliser les données des régions (`enum`, collections)
 - [ ] **Phase 3** : séparer la logique du jeu de l'affichage, tests JUnit, Maven/Gradle
 - [ ] **Phase 4** : interface Swing en une seule fenêtre, flèche de direction
