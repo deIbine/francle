@@ -7,7 +7,7 @@ Chaque phase associe une amélioration du jeu à une notion Java à apprendre.
 
 | Phase | Sujet | État |
 |---|---|---|
-| 0.5 | Dépôt Git propre | ✅ Fait (PR #16), 2 actions restantes (voir ci-dessous) |
+| 0.5 | Dépôt Git propre | ✅ Fait (PR #16) |
 | 0 | Environnement de développement | 🟡 JDK 21 installé, IntelliJ à mettre à jour |
 | 1 | Corriger les bugs | ⬜ À faire |
 | 2 | Centraliser les données des régions | ⬜ À faire |
@@ -25,17 +25,9 @@ Fait dans la PR [#16](https://github.com/deIbine/francle/pull/16) :
 - `.gitattributes` : fins de ligne normalisées (le dépôt mélangeait CRLF et LF) ;
 - `oldcode/` déplacé dans `archive/projet-universitaire/`, indices dans `docs/indices.md`,
   images renommées sans espaces ni accents, `LICENCE.MD` renommé en `LICENSE` ;
-- README réécrit.
-
-**Reste à faire :**
-
-1. Relire et fusionner la PR #16 sur GitHub.
-2. Supprimer les 16 branches `patch-*` devenues inutiles. Elles ont toutes été vérifiées :
-   13 ont été fusionnées via PR, et le contenu utile des 3 autres a été récupéré dans `docs/indices.md`.
-
-   ```bash
-   git push origin --delete Guitzoy-patch-1 Guitzoy-patch-2 Guitzoy-patch-3 Guitzoy-patch-4 Guitzoy-patch-5 Guitzoy-patch-6 deIbine-patch-1 deIbine-patch-2 deIbine-patch-3 deIbine-patch-4 deIbine-patch-5 deIbine-patch-6 deIbine-patch-7 deIbine-patch-8 deIbine-patch-9 deIbine-patch-10
-   ```
+- README réécrit ;
+- suppression des 16 branches `patch-*` créées par l'éditeur web de GitHub
+  (le contenu utile des PR non fusionnées a été récupéré dans `docs/indices.md`).
 
 **Conventions adoptées pour la suite :**
 

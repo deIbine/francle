@@ -62,7 +62,7 @@ francle/
 Le détail de chaque phase est dans [docs/feuille-de-route.md](docs/feuille-de-route.md).
 
 - [x] **Phase 0.5** : dépôt Git propre (README, `.gitignore`, arborescence)
-- [ ] **Phase 0** : environnement de développement (JDK, IDE)
+- [ ] **Phase 0** (en cours) : environnement de développement (JDK, IDE)
 - [ ] **Phase 1** : corriger les bugs (calcul de distance, réinitialisation des parties…)
 - [ ] **Phase 2** : centraliser les données des régions (`enum`, collections)
 - [ ] **Phase 3** : séparer la logique du jeu de l'affichage, tests JUnit, Maven/Gradle
