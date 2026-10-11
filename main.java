@@ -1272,62 +1272,62 @@ class representation{
     public Image onmetlimage(String region){
 
         if (Objects.equals(region, "corse")){
-            this.region = representation.Image(chemin + "Corse.png");
+            this.region = representation.Image(chemin + "corse.png");
         }
         else if (Objects.equals(region, "bourgognefranchecomte")){
-            this.region = representation.Image(chemin + "Bourgogne Franche-Comté.png");
+            this.region = representation.Image(chemin + "bourgogne-franche-comte.png");
         }
         else if (Objects.equals(region, "hautsdefrance")){
-            this.region = representation.Image(chemin + "Hauts de France.png");
+            this.region = representation.Image(chemin + "hauts-de-france.png");
         }
         else if (Objects.equals(region, "auvergnerhonealpes")){
-            this.region = representation.Image(chemin + "Auvergne Rhone Alpes.png");
+            this.region = representation.Image(chemin + "auvergne-rhone-alpes.png");
         }
         else if (Objects.equals(region,"bretagne")){
-            this.region = representation.Image(chemin + "Bretagne.png");
+            this.region = representation.Image(chemin + "bretagne.png");
         }
         else if (Objects.equals(region, "centrevaldeloire")){
-            this.region = representation.Image(chemin + "Centre-Val De Loire.png");
+            this.region = representation.Image(chemin + "centre-val-de-loire.png");
         }
         else if (Objects.equals(region, "grandest")){
-            this.region = representation.Image(chemin + "Grand Est.png");
+            this.region = representation.Image(chemin + "grand-est.png");
         }
         else if (Objects.equals(region,"guadeloupe")){
-            this.region = representation.Image(chemin + "Guadeloupe.png");
+            this.region = representation.Image(chemin + "guadeloupe.png");
         }
         else if (Objects.equals(region,"guyane")){
-            this.region = representation.Image(chemin + "Guyane.png");
+            this.region = representation.Image(chemin + "guyane.png");
         }
         else if (Objects.equals(region, "iledefrance")){
-            this.region = representation.Image(chemin + "Ile-de-France.png");
+            this.region = representation.Image(chemin + "ile-de-france.png");
         }
         else if (Objects.equals(region,"lareunion")){
-            this.region = representation.Image(chemin + "La Réunion.png");
+            this.region = representation.Image(chemin + "la-reunion.png");
         }
         else if (Objects.equals(region,"martinique")){
-            this.region = representation.Image(chemin + "Martinique.png");
+            this.region = representation.Image(chemin + "martinique.png");
         }
         else if (Objects.equals(region, "mayotte")){
-            this.region = representation.Image(chemin + "Mayotte.png");
+            this.region = representation.Image(chemin + "mayotte.png");
         }
         else if (Objects.equals(region,"normandie")){
-            this.region = representation.Image(chemin + "Normandie.png");
+            this.region = representation.Image(chemin + "normandie.png");
         }
         else if (Objects.equals(region,"nouvelleaquitaine")){
-            this.region = representation.Image(chemin + "Nouvelle Aquitaine.png");
+            this.region = representation.Image(chemin + "nouvelle-aquitaine.png");
         }
         else if (Objects.equals(region,"occitanie")){
-            this.region = representation.Image(chemin + "Occitanie.png");
+            this.region = representation.Image(chemin + "occitanie.png");
         }
         else if (Objects.equals(region, "paysdelaloire")){
-            this.region = representation.Image(chemin + "Pays de la Loire.png");
+            this.region = representation.Image(chemin + "pays-de-la-loire.png");
         }
         else if (Objects.equals(region, "provencealpescotedazur")){
-            this.region = representation.Image(chemin + "Provence Alpes Cote d'Azur.png");
+            this.region = representation.Image(chemin + "provence-alpes-cote-dazur.png");
         }
         else
         {
-            this.region = representation.Image(chemin + "défaut.png");
+            this.region = representation.Image(chemin + "defaut.png");
         }
 
         return this.region;
@@ -1338,7 +1338,7 @@ class representation{
 
 
     public Image jpgjeu(){
-        this.region = representation.Image(chemin + "défaut.png");
+        this.region = representation.Image(chemin + "defaut.png");
         //ajouter commentjouer.png
         return this.region;
     }
