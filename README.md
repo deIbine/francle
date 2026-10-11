@@ -43,6 +43,14 @@ java -cp out main
 - `javac` compile le code source en *bytecode* (`.class`) dans le dossier `out/`.
 - `java` lance la classe `main` en cherchant les `.class` dans `out/` (`-cp` = *classpath*).
 
+### Avec IntelliJ IDEA
+
+1. *File > Project Structure* : choisir un JDK 21 comme SDK.
+2. Clic droit sur le dossier `archive` → *Mark Directory as > Excluded*
+   (il contient une seconde classe `main` qui entrerait en conflit).
+3. Lancer `main.java` avec le **dossier du projet comme répertoire de travail**
+   (*Working directory* dans la configuration de lancement), sinon les images ne sont pas trouvées.
+
 ## Structure du projet
 
 ```
@@ -62,7 +70,7 @@ francle/
 Le détail de chaque phase est dans [docs/feuille-de-route.md](docs/feuille-de-route.md).
 
 - [x] **Phase 0.5** : dépôt Git propre (README, `.gitignore`, arborescence)
-- [ ] **Phase 0** (en cours) : environnement de développement (JDK, IDE)
+- [x] **Phase 0** : environnement de développement (JDK, IDE)
 - [ ] **Phase 1** : corriger les bugs (calcul de distance, réinitialisation des parties…)
 - [ ] **Phase 2** : centraliser les données des régions (`enum`, collections)
 - [ ] **Phase 3** : séparer la logique du jeu de l'affichage, tests JUnit, Maven/Gradle

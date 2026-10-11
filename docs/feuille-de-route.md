@@ -8,7 +8,7 @@ Chaque phase associe une amélioration du jeu à une notion Java à apprendre.
 | Phase | Sujet | État |
 |---|---|---|
 | 0.5 | Dépôt Git propre | ✅ Fait (PR #16) |
-| 0 | Environnement de développement | 🟡 JDK 21 installé, IntelliJ à mettre à jour |
+| 0 | Environnement de développement | ✅ Fait (JDK 21, IntelliJ 2026.2) |
 | 1 | Corriger les bugs | ⬜ À faire |
 | 2 | Centraliser les données des régions | ⬜ À faire |
 | 3 | Séparer logique et affichage, tests, Maven/Gradle | ⬜ À faire |
@@ -37,7 +37,7 @@ Fait dans la PR [#16](https://github.com/deIbine/francle/pull/16) :
 
 ---
 
-## Phase 0 : environnement de développement 🟡
+## Phase 0 : environnement de développement ✅
 
 **Notions :**
 
@@ -46,25 +46,28 @@ Fait dans la PR [#16](https://github.com/deIbine/francle/pull/16) :
 - **`JAVA_HOME`** : indique aux outils de build (Maven, Gradle) où se trouve le JDK.
 - **LTS** (*Long Term Support*) : seules certaines versions de Java sont maintenues plusieurs
   années (17, 21, 25…). Les versions 18 et 19 ne l'étaient que 6 mois.
+- **Configuration d'un projet IntelliJ** (`.idea/`, propre à chaque machine) : le *source root*
+  (où est le code), les dossiers exclus (ici `archive/`, qui contient une deuxième classe `main`),
+  le *SDK* (le JDK utilisé) et la *run configuration* (quelle classe lancer, depuis quel dossier).
 
 **Fait :**
 
-- JDK 21 Temurin installé (`C:\Program Files\Eclipse Adoptium\jdk-21.0.12.101-hotspot`),
-  avec `PATH` et `JAVA_HOME` configurés ;
-- jeu compilé et lancé avec succès (`javac -encoding UTF-8 -d out main.java` puis `java -cp out main`).
+- JDK 21 Temurin installé, avec `PATH` et `JAVA_HOME` configurés ;
+- jeu compilé et lancé en ligne de commande
+  (`javac -encoding UTF-8 -d out main.java` puis `java -cp out main`) ;
+- IntelliJ IDEA 2026.2.3 installé et configuré : le jeu se lance depuis l'IDE.
+  JetBrains a arrêté l'édition Community après la version 2025.2 ; la version unifiée
+  reste gratuite pour le développement Java, Maven, Gradle et Git.
 
-**Reste à faire : mettre à jour IntelliJ.** La version installée (2022.1) ne connaît pas Java 21.
+**Leçons retenues :**
 
-- JetBrains a arrêté l'édition Community après la version 2025.2. La version unifiée,
-  « IntelliJ IDEA », reste gratuite pour le développement Java, Maven, Gradle et Git.
-- ⚠️ Le téléchargement via `winget` a bloqué (le service *Delivery Optimization* de Windows
-  ne signalait pas la fin du téléchargement). Le plus simple : télécharger l'installeur
-  depuis [jetbrains.com/idea](https://www.jetbrains.com/idea/download/), environ 1,1 Go,
-  avec une bonne connexion.
-- Après l'installation : ouvrir le projet, choisir le JDK 21 dans
-  *File > Project Structure > SDK*, et vérifier que le jeu se lance depuis l'IDE.
-- Facultatif : désinstaller IntelliJ 2022.1, PyCharm 2022.1 et les anciens JDK
-  (`~/.jdks/openjdk-18`, `openjdk-19`, `C:\Program Files\Java\jdk1.8` et `jre1.8`).
+- un installeur lancé en mode `/quiet` ne peut pas afficher la fenêtre UAC : il échoue sans rien dire ;
+- `winget` peut rester bloqué à la fin d'un téléchargement (service *Delivery Optimization*) ;
+  `curl -C -` permet de reprendre un téléchargement interrompu ;
+- toujours vérifier l'empreinte SHA-256 d'un installeur téléchargé.
+
+**Facultatif :** désinstaller IntelliJ 2022.1, PyCharm 2022.1 et les anciens JDK
+(`~/.jdks/openjdk-18`, `openjdk-19`, `C:\Program Files\Java\jdk1.8` et `jre1.8`).
 
 ---
 
