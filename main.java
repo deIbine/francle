@@ -24,6 +24,10 @@ public class main{
         int findujeu = - 1;
         while(findujeu !=0){
             String lejeu = JOptionPane.showInputDialog("0 = arrêt, 1 = jeu, 2 = paramètres, 3 = didacticiel. Faites votre choix : ");
+            // Echap ou Annuler renvoie null : on quitte le jeu
+            if (lejeu == null){
+                lejeu = "0";
+            }
             try{
             findujeu = Integer.parseInt(lejeu);}
             catch(NumberFormatException nfe){
@@ -120,6 +124,10 @@ public class main{
                     frame.setVisible(true);
                     while (boucle != 0){
                     String fin = JOptionPane.showInputDialog("0 pour revenir au menu");
+                        // Echap ou Annuler renvoie null : on revient au menu
+                        if (fin == null){
+                            fin = "0";
+                        }
                         try{
                             boucle = Integer.parseInt(fin);
                         }
