@@ -136,6 +136,7 @@ public class main{
                         boucle = Integer.parseInt(fin);
                     }
                     frame.setVisible(false);
+                    break;
                 default :
                     JOptionPane.showMessageDialog( null, "Retour au menu", "", JOptionPane.PLAIN_MESSAGE );
                     break;
