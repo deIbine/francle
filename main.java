@@ -20,7 +20,6 @@ public class main{
         commentjouer didacticiel = new commentjouer();
         superinterface[] jeusympa = new superinterface[100];
         superinterface temporaire = new superinterface();
-        int essai = 0;
         int findujeu = - 1;
         while(findujeu !=0){
             String lejeu = JOptionPane.showInputDialog("0 = arrêt, 1 = jeu, 2 = paramètres, 3 = didacticiel. Faites votre choix : ");
@@ -42,9 +41,9 @@ public class main{
                 case 1 :
                     Region Francaise = new Region();
                     int compteur=0;
-                    while (essai !=5){
-                        jeusympa[essai] = temporaire.superi();
-                        essai = essai + 1;
+                    // on repart de 5 essais vierges à chaque partie
+                    for (int i = 0; i < 5; i++){
+                        jeusympa[i] = temporaire.superi();
                     }
                     JOptionPane.showMessageDialog( null, "Quelle est cette région française ?", "", JOptionPane.PLAIN_MESSAGE );
                     representation larep = new representation();
