@@ -511,13 +511,6 @@ class Region{
         String vrainom;
         int superficie;
 
-        if (verifchoix == 2){
-            int de;
-            double lareponse = Math.floor(Math.random()*2);
-            de = (int)lareponse;
-            if (de == 0) {verifchoix = 0;}
-            else {verifchoix = 1;}
-        }
         region = this.convertisseur(region);
 
         switch (region)
@@ -695,7 +688,8 @@ class Region{
                 break;}
                 int test = 0;
                 if (longitude != 0){test = 1;}
-                if ((verifchoix == 0) && (test == 0)){
+                // les anciennes régions sont reconnues dans tous les modes, sauf "nouvelles régions uniquement" (1)
+                if ((verifchoix != 1) && (test == 0)){
                     switch (region) {
                         case "nordpasdecalais":
                             latitude = 50.62925;
