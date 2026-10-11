@@ -720,7 +720,7 @@ class Region{
                             longitude = 1.909251;
                             vrainom = ("Centre");
                             break;
-                        case "chmpagneardenne":
+                        case "champagneardenne":
                             latitude = 48.956682;
                             longitude = 4.363073;
                             vrainom = ("Champagne-Ardenne");
@@ -769,6 +769,11 @@ class Region{
                             latitude = 43.604652;
                             longitude = 1.444209;
                             vrainom = ("Midi-Pyrénées");
+                            break;
+                        case "languedocroussillon":
+                            latitude = 43.610769;
+                            longitude = 3.876716;
+                            vrainom = ("Languedoc-Roussillon");
                             break;
                         default :
                             latitude = 0;
@@ -1230,9 +1235,9 @@ class representation{
 
     /*
     class permettant de charger les images
-    la ligne en-dessous est à modifier en fonction du chemin de l'utilisateur
+    le chemin est relatif : lancer le jeu depuis le dossier du projet
      */
-    String chemin = "C:/Users/cleme/Desktop/Francle/PNG des régions/";
+    String chemin = "regions/";
     public static BufferedImage Image(String path) {
         BufferedImage img = null;
         try {
