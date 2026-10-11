@@ -1,45 +1,78 @@
-# francle
+# Francle
 
-WIP
+**Un jeu de devinettes des régions françaises, inspiré de [Worldle](https://worldle.teuteuf.fr/).**
 
-Travail en cours
+Une silhouette de région s'affiche : à toi de la reconnaître en 5 essais maximum.
 
-Voir oldcode pour le code rendu pour le projet universitaire, ainsi que la majorité de la documentation
+<p align="center">
+  <img src="regions/bretagne.png" alt="Silhouette d'une région à deviner" width="300">
+  <br><em>Quelle est cette région ?</em>
+</p>
 
-Le code retravaillé est présent dans le main
+## Règles
 
+- Tu as **5 essais** pour trouver la région.
+- Après chaque essai raté, le jeu t'indique :
+  - la **distance** (en km) entre ta proposition et la région à trouver ;
+  - un **pourcentage de proximité** (100 % = trouvé) ;
+  - un **indice** qui se dévoile au fil des essais : superficie, spécialité culinaire,
+    personnalité, puis capitale régionale ([liste des indices](docs/indices.md)).
+- La saisie est tolérante : majuscules, accents, espaces et tirets sont ignorés
+  (`ile de france` = `Île-de-France`).
 
+### Options (menu *Paramètres*)
 
-/*
-A réparer :
+| Option | Choix |
+|---|---|
+| Régions jouées | Nouvelles (depuis 2016), anciennes (avant 2016), ou toutes |
+| Images | Avec ou sans silhouette (sans = plus difficile) |
+| Liste des régions | Afficher ou non l'historique et la liste des régions possibles |
 
-Lignes 879 et tableaux en général, vérifier comment cela fonctionne exactement
-car si tableau = 100, erreur, si tableau = 99, chiffre incompréhensible en pourcentage
-si tableau = 26 ou 27, ça semble correct, pourquoi ?
+## Lancer le jeu
 
-Quand on recommence une nouvelle partie, les anciennes informations de la partie d'avant sont toujours là
-peut-être pas un problème si on réalise le projet de faire un code où l'on peut jouer qu'une fois par jour
-dans le cas où l'application recommencerait à zéro chaque jour
-et si l'utilisateur revient sur le site sur un jour où il a déjà joué, on lui remet simplement ces essais
-ou
-il peut jouer plusieurs fois par jour (pas besoin de récupérer l'information de si l'utilisateur a déjà joué)
-il faut résoudre le bug (problème, pas de statistiques non plus pour le moment).
-Bref, c'est à réfléchir
+**Prérequis :** un JDK (Java Development Kit) en version 17 ou plus.
+Vérifie avec `javac -version`.
 
- */
+Depuis la racine du projet (les images sont chargées avec un chemin relatif) :
 
-/*
-Avancées en cours :
+```bash
+javac -encoding UTF-8 -d out main.java
+java -cp out main
+```
 
-"Réparer" les différents choix de paramètres
+- `javac` compile le code source en *bytecode* (`.class`) dans le dossier `out/`.
+- `java` lance la classe `main` en cherchant les `.class` dans `out/` (`-cp` = *classpath*).
 
-Choix des régions : OK, mais vérifier le cas 2, où le dé n'est pas codé à chaque fois, plus rajouter les images
+## Structure du projet
 
-Projet : apprendre Java EE pour mettre le code sur Internet
+```
+francle/
+├── main.java                  Code source du jeu
+├── regions/                   Silhouettes des régions affichées en jeu
+├── indices/                   Cartes de localisation des régions (pas encore utilisées)
+├── docs/
+│   └── indices.md             Indices de chaque région
+└── archive/
+    └── projet-universitaire/  Version rendue en 2022 et sa documentation
+```
 
-Frankle avec les régions des pays de l'empire de Charlemagne ?
+## Feuille de route
 
- */
+- [x] **Phase 0.5** : dépôt Git propre (README, `.gitignore`, arborescence)
+- [ ] **Phase 0** : environnement de développement (JDK, IDE)
+- [ ] **Phase 1** : corriger les bugs (calcul de distance, réinitialisation des parties…)
+- [ ] **Phase 2** : centraliser les données des régions (`enum`, collections)
+- [ ] **Phase 3** : séparer la logique du jeu de l'affichage, tests JUnit, Maven/Gradle
+- [ ] **Phase 4** : interface Swing en une seule fenêtre, flèche de direction
+- [ ] **Phase 5** : statistiques, région du jour, indices des anciennes régions
 
+## Historique
 
+Francle est né en 2022 comme projet universitaire, réalisé par
+[deIbine](https://github.com/deIbine) et [Guitzoy](https://github.com/Guitzoy).
+La version rendue est conservée dans [`archive/projet-universitaire`](archive/projet-universitaire).
+Le projet est aujourd'hui repris pour être amélioré.
 
+## Licence
+
+Distribué sous licence MIT : voir [LICENSE](LICENSE).

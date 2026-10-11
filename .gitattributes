@@ -1,0 +1,13 @@
+# Fins de ligne normalisées en LF dans le dépôt,
+# converties selon le système de chacun à l'extraction.
+* text=auto
+
+*.java text diff=java
+*.md   text
+*.txt  text
+
+# Fichiers binaires : aucune conversion
+*.png  binary
+*.jpg  binary
+*.docx binary
+*.pptx binary
