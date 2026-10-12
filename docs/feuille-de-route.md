@@ -2,6 +2,7 @@
 
 Plan d'amélioration de Francle, établi le 11 octobre 2026.
 Chaque phase associe une amélioration du jeu à une notion Java à apprendre.
+Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons.md).
 
 ## État d'avancement
 

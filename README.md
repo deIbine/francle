@@ -60,14 +60,16 @@ francle/
 ├── indices/                   Cartes de localisation des régions (pas encore utilisées)
 ├── docs/
 │   ├── indices.md             Indices de chaque région
-│   └── feuille-de-route.md    Plan d'amélioration détaillé
+│   ├── feuille-de-route.md    Plan d'amélioration détaillé
+│   └── lecons.md              Leçons de Java et de Git apprises à chaque phase
 └── archive/
     └── projet-universitaire/  Version rendue en 2022 et sa documentation
 ```
 
 ## Feuille de route
 
-Le détail de chaque phase est dans [docs/feuille-de-route.md](docs/feuille-de-route.md).
+Le détail de chaque phase est dans [docs/feuille-de-route.md](docs/feuille-de-route.md),
+et ce qu'elle a permis d'apprendre dans [docs/lecons.md](docs/lecons.md).
 
 - [x] **Phase 0.5** : dépôt Git propre (README, `.gitignore`, arborescence)
 - [x] **Phase 0** : environnement de développement (JDK, IDE)
