@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.text.Collator;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.Normalizer;
 import java.util.regex.Pattern;
 
@@ -134,9 +136,9 @@ public class main{
                             boucle = Integer.parseInt(fin);
                         }
                         catch(NumberFormatException nfe){
-                            fin = "1";
+                            // saisie qui n'est pas un nombre : on reste dans le didacticiel
+                            boucle = 1;
                         }
-                        boucle = Integer.parseInt(fin);
                     }
                     frame.setVisible(false);
                     break;
@@ -185,7 +187,7 @@ class Message{
                                 "C'est raté ! " +
                                         "\nVous êtes à " + distance + " km." +
                                         "\nVotre pourcentage de proximité est de : " + pourcentage + "%." +
-                                        "\nLa superficie de la région recherchée est de " + laregion.getSuperficie() + " km².", "Essai un",JOptionPane.PLAIN_MESSAGE);
+                                        "\nLa superficie de la région recherchée est de " + Message.avecmilliers(laregion.getSuperficie()) + " km².", "Essai un",JOptionPane.PLAIN_MESSAGE);
                         break;
                     case 1 :
                         JOptionPane.showMessageDialog(null,
@@ -246,6 +248,14 @@ class Message{
                 "Supposition 4 : " + jeusympa[3].getSupposition() + " " + jeusympa[3].getDistance() + " km " + jeusympa[3].getPourcentage() + "% Troisième indice : " + jeusympa[3].getIndice() + "\n" +
                 "Supposition 5 : " + jeusympa[4].getSupposition() + " " + jeusympa[4].getDistance() + " km " + jeusympa[4].getPourcentage() + "% \n");
         return supposition;
+    }
+
+    // 27208 -> "27 208" : séparateur de milliers à la française. On impose l'espace insécable (U+00A0),
+    // car l'espace fine (U+202F) du format français de Java s'affiche en carré vide avec certaines polices.
+    public static String avecmilliers(int nombre){
+        DecimalFormatSymbols symboles = new DecimalFormatSymbols(Locale.FRENCH);
+        symboles.setGroupingSeparator(' ');
+        return new DecimalFormat("#,##0", symboles).format(nombre);
     }
 
     public void touteslesregions(ModeRegions mode){
@@ -685,7 +695,7 @@ class Region{
 
         if (compteur == 0){
             int nombre = laregion.getSuperficie();
-            superficie = String.valueOf(nombre);
+            superficie = Message.avecmilliers(nombre);
         }
         switch (compteur){
             case 0 :

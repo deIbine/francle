@@ -13,6 +13,7 @@ Le détail de ce qui a été fait dans le jeu se trouve dans la [feuille de rout
 - [Phase 0 : l'environnement de développement](#phase-0--lenvironnement-de-développement)
 - [Phase 1 : corriger des bugs](#phase-1--corriger-des-bugs)
 - [Phase 2 : centraliser les données (refactoring)](#phase-2--centraliser-les-données-refactoring)
+- [Petits correctifs](#petits-correctifs)
 - [Aide-mémoire](#aide-mémoire)
 
 ---
@@ -347,6 +348,40 @@ du shell. Pour modifier un texte littéral, préférer l'éditeur ou l'outil de 
   et `java.lang` (`String`, `Math`…) est importé automatiquement.
 - **Un champ plutôt qu'une liste à part** : ajouter la `Zone` dans chaque ligne de l'`enum` oblige chaque future
   région à la préciser, et le compilateur refuse celle qui l'oublie.
+
+---
+
+## Petits correctifs
+
+### Dire directement ce qu'on veut
+
+Le didacticiel remplaçait une saisie invalide par le texte `"1"`, pour la **reconvertir** ensuite en nombre.
+L'intention était « rester dans le didacticiel » : on l'écrit directement, `boucle = 1;` dans le `catch`.
+
+> *La question à se poser :* « Est-ce que je fabrique une donnée intermédiaire juste pour la retransformer ? »
+> Si oui, il y a sans doute un chemin plus direct. Et un même problème (une saisie invalide) devrait se traiter
+> de la même façon partout dans le programme.
+
+### Tous les espaces ne se valent pas
+
+Un nombre comme « 27 208 » contient un espace **insécable** : il ne doit pas être coupé en fin de ligne.
+Unicode en propose plusieurs : U+00A0 (insécable classique) et U+202F (fine insécable, utilisée par le format
+français de Java depuis la version 13). Certaines polices affichent U+202F comme un carré vide : on choisit donc
+explicitement le séparateur avec `DecimalFormatSymbols`. Et comme la superficie est affichée à deux endroits,
+le formatage est écrit **une seule fois**, dans `Message.avecmilliers` (DRY, même pour un petit détail).
+
+### Séparer deux modifications en deux commits
+
+Quand un fichier contient deux corrections indépendantes, on peut les commiter séparément :
+
+- dans IntelliJ, la fenêtre *Commit* permet de cocher les morceaux (*hunks*) à inclure ;
+- en ligne de commande : `git add -p` propose chaque morceau, un par un ;
+- sans ces outils : mettre de côté le fichier final, repartir de la version commitée (`git checkout fichier`),
+  réappliquer la première correction et commiter, puis remettre le fichier final et commiter le reste.
+  Vérifier à la fin que le diff total est identique à celui de départ.
+
+Attention : après un `git checkout`, Git réécrit le fichier selon le `.gitattributes`, avec des fins de ligne
+CRLF sous Windows. Un script qui cherche des `\n` seuls ne trouvera plus rien.
 
 ---
 

@@ -98,7 +98,7 @@ réinitialisation des variables, le *fall-through* d'un `switch`, les avertissem
   Toute la métropole se retrouve entre 88 % et 98 % (pour la Bretagne : Corse 88 %, Normandie 97 %).
   Options : calcul limité à la métropole, distance maximale fixe, ou autre formule.
 - ~~**`distance == 0` signifie « région inconnue »**~~ : réglé en Phase 2 (`Optional`).
-- **`parseInt` en double dans le didacticiel** (`main`, `case 3`) : code redondant à simplifier.
+- ~~**`parseInt` en double dans le didacticiel**~~ : réglé (petits correctifs après la Phase 2).
 
 ---
 
@@ -150,40 +150,97 @@ Résultat : `main.java` passe de 1421 à 955 lignes ; ajouter une région = **1 
 
 ---
 
+## Petits correctifs (entre les phases 2 et 3) ✅
+
+- **Double conversion dans le didacticiel** : une saisie non numérique était remplacée par `"1"` puis reconvertie ;
+  le `catch` affecte désormais directement `boucle = 1`, comme le menu principal.
+- **Superficie avec séparateur de milliers** (« 27 208 km² ») : une seule méthode, `Message.avecmilliers`,
+  pour les deux affichages. Espace insécable U+00A0 imposée, car l'espace fine U+202F du format français
+  de Java s'affiche en carré vide avec certaines polices.
+
+---
+
 ## Phase 3 : séparer la logique de l'affichage, et ajouter des tests
 
-- Une classe `Partie` contient les règles (essais, victoire, indices) sans aucune
-  `JOptionPane`. L'interface ne fait que l'appeler.
-- Des tests JUnit : `distance(Paris, Lille) ≈ 204 km`, « après 5 échecs, la partie est perdue »…
-- Passage à **Maven ou Gradle** : `src/main/java`, `src/main/resources` pour les images, packages.
-- Une **GitHub Action** qui compile et teste chaque Pull Request.
+**Pourquoi.** Tout est encore mélangé dans `main.java` :
 
-**Ce que tu apprends :** la séparation des responsabilités (une version légère de MVC),
-les tests unitaires, les outils de build, l'intégration continue.
+- les règles du jeu affichent elles-mêmes des popups : `Region.jeu()` décide si la proposition est bonne
+  *et* appelle `JOptionPane`. On ne peut donc pas la tester automatiquement : en Phases 1 et 2, il a fallu
+  tester à côté (exécution à la main, comparaison des décisions) ou jouer à la main ;
+- deux classes pour une même région : `RegionFr` (les données) et `Region` (l'objet de jeu, une copie
+  modifiable). C'est le détour laissé exprès en Phase 2, avec par exemple `pourcentage` qui doit retrouver
+  la `RegionFr` à partir de la clé de la `Region` ;
+- `superinterface` stocke la distance sous forme de `String`, et l'historique des essais vit dans un tableau
+  de 100 cases dont 5 servent ;
+- tout est dans un seul fichier, d'où les avertissements `auxiliary class … should not be accessed from
+  outside its own source file` ;
+- les tests de caractérisation des Phases 1 et 2 vivaient dans un dossier temporaire : ils ne sont ni
+  versionnés ni relançables par quelqu'un d'autre.
+
+**Ce qu'on ferait** (sans doute en 3 ou 4 PR) :
+
+1. une classe **`Partie`** qui contient les règles (essais restants, victoire, abandon, indice à révéler),
+   sans aucun affichage ; l'interface lui transmet la saisie et affiche ce qu'elle renvoie ;
+2. un **`record Essai`** (proposition, distance, pourcentage, indice) à la place de `superinterface`,
+   et une `List<Essai>` à la place du tableau de 100 cases ; le jeu manipule directement les `RegionFr` ;
+3. **un fichier par classe**, rangées dans des **packages** (`francle.donnees`, `francle.jeu`, `francle.interface`…) ;
+4. **Maven ou Gradle** : un fichier `pom.xml` décrit le projet (version de Java, dépendances, images
+   dans `src/main/resources`). N'importe quel IDE l'ouvre sans réglage manuel : ça remplace la
+   configuration IntelliJ faite à la main en Phase 0 ;
+5. de vrais **tests JUnit**, versionnés, qui reprennent les vérifications faites à la main : distances
+   connues, recherche dans les 3 modes, pourcentages entre 0 et 100, 5 échecs = défaite… ;
+6. une **GitHub Action** qui compile et lance les tests à chaque PR (✅ ou ❌ directement sur la PR).
+
+**Comment le penser.** *Séparation des responsabilités* : une classe = une raison de changer (les règles
+changent avec le *game design*, l'affichage avec l'interface). *Testabilité* : « si je ne peux pas tester
+une règle sans cliquer, c'est qu'elle est mal rangée ».
+
+**Ce que tu apprends :** `record`, packages et visibilité (`public`, `private`, visibilité du package),
+JUnit 5 (`@Test`, `assertEquals`), Maven (cycle `compile` / `test` / `package`, `src/main/java` et
+`src/test/java`), les ressources (`getResource`) au lieu des chemins relatifs fragiles, l'intégration continue.
+C'est la phase la plus formatrice sur l'architecture, et la plus grosse.
 
 ---
 
 ## Phase 4 : une vraie interface Swing
 
-Une seule fenêtre au lieu de la cascade de popups :
+**Pourquoi.** Le jeu est une cascade de popups (saisir, valider, lire, OK, recommencer) ; l'historique
+est un texte dans la question suivante, et l'image s'ouvre dans une fenêtre séparée.
 
-- l'image de la région ;
-- un champ de saisie avec autocomplétion des noms de régions ;
-- un tableau des essais (`JTable`) qui se remplit au fur et à mesure ;
-- une **flèche de direction**, comme dans Worldle. La méthode `fleche()` est presque prête :
-  il manque la conversion des degrés en radians, puis le découpage de l'azimut en 8 directions.
+**Ce qu'on ferait :**
 
-**Ce que tu apprends :** la programmation événementielle (`ActionListener`), les layouts
-et la trigonométrie appliquée.
+- une seule fenêtre : l'image de la région, un champ de saisie, un **tableau des essais** (`JTable`)
+  qui se remplit au fur et à mesure ;
+- l'**autocomplétion** des noms de régions pendant la frappe ;
+- la **flèche de direction**, comme dans Worldle : la méthode `fleche()` existe déjà. Il manque la
+  conversion des degrés en radians (le même piège qu'en Phase 1), puis le découpage de l'azimut
+  en 8 directions (↑ ↗ → ↘ ↓ ↙ ← ↖) ;
+- les menus (paramètres, didacticiel) dans la fenêtre, au lieu de taper 0, 1, 2 ou 3.
+
+**Comment le penser.** La *programmation événementielle* : le programme ne déroule plus ses lignes dans
+l'ordre, il **réagit** à des événements (`ActionListener`). Le *fil de Swing* (*Event Dispatch Thread*) :
+tout ce qui touche à l'interface s'exécute sur un fil précis, première rencontre avec la programmation
+concurrente. **La Phase 3 est un prérequis** : avec une classe `Partie` indépendante, la nouvelle
+interface ne fait que la brancher ; sans elle, il faudrait réécrire les règles une seconde fois.
+
+**Ce que tu apprends :** les événements, les layouts, `JTable`, l'EDT, la trigonométrie appliquée (azimut).
 
 ---
 
 ## Phase 5 : nouvelles fonctionnalités
 
-- **Statistiques à la Wordle**, sauvegardées dans un fichier : parties jouées,
-  pourcentage de victoires, répartition par nombre d'essais.
-- **Région du jour**, la même pour tout le monde, choisie à partir de la date
-  (`new Random(LocalDate.now().toEpochDay())`).
-- **Indices pour les anciennes régions** : elles n'en ont pas aujourd'hui, et leur superficie vaut 0.
-- **Indices variés** : piocher parmi les personnalités alternatives de `docs/indices.md`.
-- Plus tard : une version web avec Spring Boot, ou une variante sur l'empire de Charlemagne.
+| Fonctionnalité | Ce que ça apprend | Difficulté après la Phase 2 |
+|---|---|---|
+| **Indices des anciennes régions** (aujourd'hui ni superficie ni indices) | Recherche de données | Très facile : 1 ligne par région dans `RegionFr` |
+| **Indices variés**, tirés parmi les personnalités alternatives de `docs/indices.md` | `List` dans un `enum`, hasard | Facile |
+| **Statistiques à la Wordle** : parties jouées, % de victoires, répartition par nombre d'essais | Lire et écrire des fichiers (`java.nio.file`), JSON ou propriétés | Moyen |
+| **Région du jour**, la même pour tout le monde | `LocalDate`, hasard reproductible avec une graine (`new Random(date.toEpochDay())`) | Moyen : piège subtil, l'ordre de la liste fait partie du résultat |
+| **Version web** avec Spring Boot | Serveur HTTP, API, HTML | Gros projet, réaliste après la Phase 3 |
+| **Variante Charlemagne** (ou départements, pays européens) | Généraliser `RegionFr` en jeu de données interchangeable | Moyen à gros |
+
+**Comment le penser.** La plupart de ces fonctionnalités sont devenues faciles grâce aux Phases 2 et 3 :
+c'est la récompense d'une bonne architecture, chaque nouvelle fonctionnalité coûte moins cher que la
+précédente. Les ajouter *avant* la Phase 3 voudrait dire tester encore en cliquant, dans un fichier déjà trop gros.
+
+**Ordre recommandé : 3 → 4 → 5**, en commençant la Phase 3 par la classe `Partie` et les tests JUnit.
+Exception possible : les indices des anciennes régions, faisables à tout moment pour un résultat visible rapide.
