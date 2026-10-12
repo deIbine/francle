@@ -134,9 +134,9 @@ public class main{
                             boucle = Integer.parseInt(fin);
                         }
                         catch(NumberFormatException nfe){
-                            fin = "1";
+                            // saisie qui n'est pas un nombre : on reste dans le didacticiel
+                            boucle = 1;
                         }
-                        boucle = Integer.parseInt(fin);
                     }
                     frame.setVisible(false);
                     break;
