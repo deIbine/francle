@@ -1,7 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
+import java.net.URL;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -705,16 +705,22 @@ class representation{
 
     /*
     class permettant de charger les images
-    le chemin est relatif : lancer le jeu depuis le dossier du projet
+    Les images sont des ressources : Maven les copie depuis src/main/resources à côté des classes compilées
+    (et dans le .jar). On les cherche donc dans le classpath, quel que soit le dossier d'où le jeu est lancé.
      */
     String chemin = "regions/";
+    // l'image, ou null si la ressource n'existe pas ou ne se lit pas
     public static BufferedImage Image(String path) {
-        BufferedImage img = null;
-        try {
-            img = javax.imageio.ImageIO.read(new File(path));
-        } catch (IOException e) {
+        // "/" au début : chemin depuis la racine du classpath, et non depuis le package de la classe
+        URL ressource = representation.class.getResource("/" + path);
+        if (ressource == null) {
+            return null;
         }
-        return img;
+        try {
+            return javax.imageio.ImageIO.read(ressource);
+        } catch (IOException e) {
+            return null;
+        }
     }
     private Image region = representation.Image("toto");
 

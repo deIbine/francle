@@ -5,7 +5,7 @@
 Une silhouette de région s'affiche : à toi de la reconnaître en 5 essais maximum.
 
 <p align="center">
-  <img src="regions/bretagne.png" alt="Silhouette d'une région à deviner" width="300">
+  <img src="src/main/resources/regions/bretagne.png" alt="Silhouette d'une région à deviner" width="300">
   <br><em>Quelle est cette région ?</em>
 </p>
 
@@ -30,34 +30,38 @@ Une silhouette de région s'affiche : à toi de la reconnaître en 5 essais maxi
 
 ## Lancer le jeu
 
-**Prérequis :** un JDK (Java Development Kit) en version 17 ou plus.
-Vérifie avec `javac -version`.
+**Prérequis :** un JDK (Java Development Kit) en version 21 ou plus. Vérifie avec `javac -version`.
+Pas besoin d'installer Maven : le *Maven Wrapper* (`mvnw.cmd` sous Windows, `./mvnw` sous macOS et Linux)
+télécharge la bonne version au premier lancement.
 
-Depuis la racine du projet (les images sont chargées avec un chemin relatif) :
+Depuis la racine du projet :
 
 ```bash
-javac -encoding UTF-8 -d out main.java
-java -cp out main
+mvnw.cmd package
+java -jar target/francle.jar
 ```
 
-- `javac` compile le code source en *bytecode* (`.class`) dans le dossier `out/`.
-- `java` lance la classe `main` en cherchant les `.class` dans `out/` (`-cp` = *classpath*).
+- `mvnw.cmd package` compile le code, lance les tests, puis assemble le jeu et ses images dans `target/francle.jar`.
+- `java -jar` lance ce fichier, depuis n'importe quel dossier : les images sont lues à l'intérieur du `.jar`.
+- `mvnw.cmd test` lance seulement les tests.
 
 ### Avec IntelliJ IDEA
 
-1. *File > Project Structure* : choisir un JDK 21 comme SDK.
-2. Clic droit sur le dossier `archive` → *Mark Directory as > Excluded*
-   (il contient une seconde classe `main` qui entrerait en conflit).
-3. Lancer `main.java` avec le **dossier du projet comme répertoire de travail**
-   (*Working directory* dans la configuration de lancement), sinon les images ne sont pas trouvées.
+*File > Open*, puis choisir le fichier `pom.xml` (*Open as Project*). IntelliJ lit le `pom.xml` et configure
+seul le JDK, les dossiers de code, de ressources et de tests, et JUnit. Lancer ensuite la classe `main`, ou les
+tests par un clic droit sur `src/test/java` → *Run 'All Tests'*.
 
 ## Structure du projet
 
 ```
 francle/
-├── main.java                  Code source du jeu
-├── regions/                   Silhouettes des régions affichées en jeu
-├── indices/                   Cartes de localisation des régions (pas encore utilisées)
+├── pom.xml                    Description du projet pour Maven (Java 21, JUnit, .jar)
+├── mvnw, mvnw.cmd, .mvn/      Maven Wrapper
+├── src/
+│   ├── main/java/             Code source du jeu
+│   ├── main/resources/        Images : silhouettes (regions/) et cartes de localisation (indices/, pas encore utilisées)
+│   └── test/java/             Tests JUnit
+├── .github/workflows/         Intégration continue : compilation et tests à chaque PR
 ├── docs/
 │   ├── indices.md             Indices de chaque région
 │   ├── feuille-de-route.md    Plan d'amélioration détaillé
