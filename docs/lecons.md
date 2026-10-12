@@ -47,6 +47,15 @@ on doit pouvoir dire quel commit l'a introduit. Messages en français, à l'imp�
 Le compilateur et l'IDE voient ce que l'œil rate, à condition de le leur demander et de lire leurs messages :
 `javac -Xlint:all`, les soulignements jaunes et le code grisé d'IntelliJ.
 
+### 5. Si c'est difficile à tester, c'est mal rangé
+
+La difficulté à tester un morceau de code est un **diagnostic** : elle mesure à quel point ses responsabilités
+sont mélangées. En Phase 3.1, vérifier l'ancien `jeu()` a demandé de fausses fenêtres et 300 sessions rejouées ;
+une fois les règles rangées dans `Partie`, quelques lignes suffisent, sans écran ni clavier.
+
+> *La question à se poser :* « Puis-je vérifier cette règle sans cliquer ? » Si non, sépare d'abord ce qui
+> **décide** (les règles) de ce qui **montre** (l'affichage), puis teste ce qui décide.
+
 ---
 
 ## Phase 0.5 : un dépôt Git propre
@@ -349,6 +358,10 @@ du shell. Pour modifier un texte littéral, préférer l'éditeur ou l'outil de 
   et `java.lang` (`String`, `Math`…) est importé automatiquement.
 - **Un champ plutôt qu'une liste à part** : ajouter la `Zone` dans chaque ligne de l'`enum` oblige chaque future
   région à la préciser, et le compilateur refuse celle qui l'oublie.
+
+> *Note (Phase 3.1) :* la classe `Region` citée ici n'existe plus. `Region.convertisseur` est devenue
+> `RegionFr.simplifier`, et `Region.depuis` a disparu avec la classe : le jeu manipule directement les `RegionFr`.
+> Les notions, elles, restent valables.
 
 ---
 
