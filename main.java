@@ -630,6 +630,20 @@ class Region{
     }
 
 
+    // fabrique une Region de jeu à partir des données de l'enum
+    public static Region depuis(RegionFr source){
+        Region laregion = new Region();
+        laregion.setNomdelaregion(source.getCle());
+        laregion.setVrainom(source.getNom());
+        laregion.setLatitude(source.getLatitude());
+        laregion.setLongitude(source.getLongitude());
+        laregion.setSuperficie(source.getSuperficie());
+        laregion.setIndiceun(source.getSpecialite());
+        laregion.setIndicedeux(source.getPersonnalite());
+        laregion.setIndicetrois(source.getCapitale());
+        return laregion;
+    }
+
     public static String convertisseur(String region){
 
         //supprimer les espaces
@@ -1134,7 +1148,7 @@ class Region{
         }
         else
         {
-            supposition = this.convertisseur(supposition);
+            supposition = Region.convertisseur(supposition);
         if (supposition.equals(laregion.getNomdelaregion())){
             code = 0;
             superinterface lejeu = new superinterface();
@@ -1143,15 +1157,17 @@ class Region{
             compteur = 5;
         }
         else {
-            lasupposition = lasupposition.latitudeetlongitude(supposition, lesparametres.getChoixdelaregion());
-            distance = verifdistance(laregion, lasupposition);
+            ModeRegions mode = ModeRegions.depuisCode(lesparametres.getChoixdelaregion());
+            Optional<RegionFr> trouvee = RegionFr.chercher(supposition, mode);
             if (abandon == -1){
                 code = 1;
                 distance = -1;
             }
-            if (distance == 0) {
+            else if (trouvee.isEmpty()) {
                 code = 2;
-            } else if (distance != -1){
+            } else {
+                lasupposition = Region.depuis(trouvee.get());
+                distance = verifdistance(laregion, lasupposition);
                 code = 3;
                 pourcentage = pourcentage(laregion, distance);
                 //String fleche = this.fleche(laregion,lasupposition);
