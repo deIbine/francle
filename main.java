@@ -4,6 +4,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -25,8 +26,6 @@ public class main{
         lesparametres.setChoiximage(0);
         lesparametres.setChoixlaliste(0);
         commentjouer didacticiel = new commentjouer();
-        superinterface[] jeusympa = new superinterface[100];
-        superinterface temporaire = new superinterface();
         int findujeu = - 1;
         while(findujeu !=0){
             String lejeu = JOptionPane.showInputDialog("0 = arrêt, 1 = jeu, 2 = paramètres, 3 = didacticiel. Faites votre choix : ");
@@ -46,12 +45,9 @@ public class main{
                     System.exit(0);
                     break;
                 case 1 :
-                    Region Francaise = Region.depuis(RegionFr.tirer(ModeRegions.depuisCode(lesparametres.getChoixdelaregion())));
-                    int compteur=0;
-                    // on repart de 5 essais vierges à chaque partie
-                    for (int i = 0; i < 5; i++){
-                        jeusympa[i] = temporaire.superi();
-                    }
+                    ModeRegions mode = ModeRegions.depuisCode(lesparametres.getChoixdelaregion());
+                    // une nouvelle Partie à chaque fois : rien ne peut traîner de la partie précédente
+                    Partie partie = new Partie(RegionFr.tirer(mode), mode);
                     JOptionPane.showMessageDialog( null, "Quelle est cette région française ?", "", JOptionPane.PLAIN_MESSAGE );
                     representation larep = new representation();
                     if (lesparametres.getChoiximage() == 0) {
@@ -60,16 +56,18 @@ public class main{
                             larep.setRegion(larep.onmetlimage("autre"));
                         }
                         else{
-                            larep.setRegion(larep.onmetlimage(Francaise.getNomdelaregion()));
+                            larep.setRegion(larep.onmetlimage(partie.getCible().getCle()));
                         }
                     }
                     else {
                         larep.setRegion(larep.onmetlimage("autre"));
                     }
                         frame = larep.interfacesimple();
-                        while (compteur != 5) {
-                            compteur = Francaise.jeu(Francaise, compteur, lesparametres, jeusympa);
+                        Message lemessage = new Message();
+                        while (partie.enCours()) {
+                            lemessage.tour(partie, lesparametres);
                         }
+                        lemessage.messagedefin(partie);
                         frame.setVisible(false);
                     break;
                 case 2 :
@@ -169,85 +167,125 @@ public class main{
 }
 
 class Message{
-    public void message(int code, double distanceux, int pourcentage, int compteur, Region laregion){
-        String distance = String.format("%.2f",distanceux);
-        switch (code){
-            case 1 :
-                JOptionPane.showMessageDialog( null, "Raté ! \n \n" +
-                        "Vous avez abandonné le jeu !", "Abandon", JOptionPane.PLAIN_MESSAGE );
-                break;
-            case 2 :
-                JOptionPane.showMessageDialog( null, "La saisie n'a pas été reconnue \n \n" +
-                        "Veuillez réessayer", "Saisie non reconnue", JOptionPane.PLAIN_MESSAGE );
-                break;
-            case 3 :
-                switch (compteur){
-                    case 0 :
-                        JOptionPane.showMessageDialog(null,
-                                "C'est raté ! " +
-                                        "\nVous êtes à " + distance + " km." +
-                                        "\nVotre pourcentage de proximité est de : " + pourcentage + "%." +
-                                        "\nLa superficie de la région recherchée est de " + Message.avecmilliers(laregion.getSuperficie()) + " km².", "Essai un",JOptionPane.PLAIN_MESSAGE);
-                        break;
-                    case 1 :
-                        JOptionPane.showMessageDialog(null,
-                                "C'est raté ! " +
-                                        "\nVous êtes à " + distance + " km." +
-                                        "\nVotre pourcentage de proximité est de : " + pourcentage + "%." +
-                                        "\nLa spécialité culinaire de la région recherchée est : " + laregion.getIndiceun() + ".", "Essai deux",JOptionPane.PLAIN_MESSAGE);
-                        break;
-                    case 2 :
-                        JOptionPane.showMessageDialog(null,
-                                "C'est raté ! " +
-                                        "\nVous êtes à " + distance + " km." +
-                                        "\nVotre pourcentage de proximité est de : " + pourcentage + "%." +
-                                        "\nLa personnalité connue régionale de la région recherchée est : " + laregion.getIndicedeux() + ".", "Essai trois",JOptionPane.PLAIN_MESSAGE);
-                        break;
-                    case 3 :
-                        JOptionPane.showMessageDialog(null,
-                                "C'est raté ! " +
-                                        "\nVous êtes à " + distance + " km." +
-                                        "\nVotre pourcentage de proximité est de : " + pourcentage + "%." +
-                                        "\nLa capitale régionale de la région recherchée est : " + laregion.getIndicetrois() + ".", "Essai quatre",JOptionPane.PLAIN_MESSAGE);
-                        break;
-                }
-        break;
+
+    private static final String[] TITRES = {"Essai un", "Essai deux", "Essai trois", "Essai quatre"};
+    private static final String[] LIBELLES = {" Superficie : ", " Premier indice : ", " Deuxième indice : ", " Troisième indice : "};
+
+    // un tour de jeu : demande une proposition, la transmet à la partie, puis affiche ce qu'elle répond
+    public void tour(Partie partie, Parametres lesparametres){
+        String saisie;
+        if (lesparametres.getChoixlaliste() == 0) {
+            saisie = JOptionPane.showInputDialog("Quelle est votre supposition ? (1 pour avoir la liste) (Echap pour abandonner) \n \n"
+                    + historique(partie));
+        }
+        else {
+            saisie = JOptionPane.showInputDialog("Quelle est votre supposition ? (Echap pour abandonner)");
+        }
+        // Echap ou Annuler renvoie null : le joueur abandonne
+        if (saisie == null){
+            partie.abandonner();
+            return;
+        }
+        // la liste existe dans les trois modes : "1" n'est plus réservé au mode "nouvelles régions"
+        if (saisie.equals("1") && (lesparametres.getChoixlaliste() == 0)){
+            touteslesregions(ModeRegions.depuisCode(lesparametres.getChoixdelaregion()));
+            return;
+        }
+        Optional<Essai> essai = partie.proposer(saisie);
+        if (essai.isEmpty()){
+            JOptionPane.showMessageDialog( null, "La saisie n'a pas été reconnue \n \n" +
+                    "Veuillez réessayer", "Saisie non reconnue", JOptionPane.PLAIN_MESSAGE );
+        }
+        // partie terminée (victoire ou 5e essai raté) : c'est le message de fin qui s'affiche
+        else if (partie.enCours()){
+            essairate(partie, essai.get());
         }
     }
-    public void messagedefin(superinterface [] jeusympa, Region laregion, int code){
+
+    private void essairate(Partie partie, Essai essai){
+        int numero = partie.getEssais().size() - 1;
+        Indice indice = Indice.apresEssai(numero).orElseThrow();
+        JOptionPane.showMessageDialog(null,
+                "C'est raté ! " +
+                        "\nVous êtes à " + String.format("%.2f", essai.distance()) + " km." +
+                        "\nVotre pourcentage de proximité est de : " + essai.pourcentage() + "%." +
+                        "\n" + phrase(indice, partie.getCible()), TITRES[numero], JOptionPane.PLAIN_MESSAGE);
+    }
+
+    // l'indice rédigé en phrase, pour le message qui suit un essai raté
+    private static String phrase(Indice indice, RegionFr cible){
+        switch (indice){
+            case SUPERFICIE : return "La superficie de la région recherchée est de " + valeur(indice, cible) + " km².";
+            case SPECIALITE : return "La spécialité culinaire de la région recherchée est : " + valeur(indice, cible) + ".";
+            case PERSONNALITE : return "La personnalité connue régionale de la région recherchée est : " + valeur(indice, cible) + ".";
+            default : return "La capitale régionale de la région recherchée est : " + valeur(indice, cible) + ".";
+        }
+    }
+
+    // la valeur brute de l'indice, pour l'historique des essais
+    private static String valeur(Indice indice, RegionFr cible){
+        switch (indice){
+            case SUPERFICIE : return avecmilliers(cible.getSuperficie());
+            case SPECIALITE : return cible.getSpecialite();
+            case PERSONNALITE : return cible.getPersonnalite();
+            default : return cible.getCapitale();
+        }
+    }
+
+    public void messagedefin(Partie partie){
         String felicitations = "";
         String message = "";
-        if (code == 0){
+        if (partie.getEtat() == Partie.Etat.GAGNEE){
             felicitations = "Bravo ! \n \n";
             message = "Vous avez trouvé la bonne réponse ! \nFélicitations et à demain !";
         }
+        else if (partie.getEtat() == Partie.Etat.ABANDONNEE){
+            felicitations = "Vous avez abandonné ! \n \n";
+            message = "La réponse était " + partie.getCible().getNom() + "\nBon courage et à demain !";
+        }
         else {
             felicitations = "C'est raté ! \n \n";
-            message = "La réponse était " + laregion.getVrainom() + "\nBon courage et à demain !";
+            message = "La réponse était " + partie.getCible().getNom() + "\nBon courage et à demain !";
         }
         JOptionPane.showMessageDialog(null,felicitations +
                 "Voici vos essais : \n \n" +
-                "Supposition 1 : " + jeusympa[0].getSupposition() + " " + jeusympa[0].getDistance() + " km " + jeusympa[0].getPourcentage() + "%" + " Superficie : " + jeusympa[0].getIndice() + " km² \n" +
-                "Supposition 2 : " + jeusympa[1].getSupposition() + " " + jeusympa[1].getDistance() + " km " + jeusympa[1].getPourcentage() + "% Premier indice : " + jeusympa[1].getIndice() + "\n"+
-                "Supposition 3 : " + jeusympa[2].getSupposition() + " " + jeusympa[2].getDistance() + " km " + jeusympa[2].getPourcentage() + "% Deuxième indice : " + jeusympa[2].getIndice() + "\n"+
-                "Supposition 4 : " + jeusympa[3].getSupposition() + " " + jeusympa[3].getDistance() + " km " + jeusympa[3].getPourcentage() + "% Troisième indice : " + jeusympa[3].getIndice() + "\n" +
-                "Supposition 5 : " + jeusympa[4].getSupposition() + " " + jeusympa[4].getDistance() + " km " + jeusympa[4].getPourcentage() + "% \n \n" +
+                historique(partie) + " \n" +
                 message,"Fin du jeu",JOptionPane.PLAIN_MESSAGE);
     }
 
-
-    public String interfaceclassique(superinterface [] jeusympa){
-        String supposition = "";
-        //Ajout 3
-
-        //trouver un moyen de mettre la superficie après le guess 1 plus ajouter le dernier guess avant de noter quand c'est terminé pour le dernier guess
-        supposition = JOptionPane.showInputDialog("Quelle est votre supposition ? (1 pour avoir la liste) (Echap pour abandonner) \n \n" +
-                "Supposition 1 : " + jeusympa[0].getSupposition() + " " + jeusympa[0].getDistance() + " km " + jeusympa[0].getPourcentage() + "%" + " Superficie : " + jeusympa[0].getIndice() + " km² \n" +
-                "Supposition 2 : " + jeusympa[1].getSupposition() + " " + jeusympa[1].getDistance() + " km " + jeusympa[1].getPourcentage() + "% Premier indice : " + jeusympa[1].getIndice() + "\n"+
-                "Supposition 3 : " + jeusympa[2].getSupposition() + " " + jeusympa[2].getDistance() + " km " + jeusympa[2].getPourcentage() + "% Deuxième indice : " + jeusympa[2].getIndice() + "\n"+
-                "Supposition 4 : " + jeusympa[3].getSupposition() + " " + jeusympa[3].getDistance() + " km " + jeusympa[3].getPourcentage() + "% Troisième indice : " + jeusympa[3].getIndice() + "\n" +
-                "Supposition 5 : " + jeusympa[4].getSupposition() + " " + jeusympa[4].getDistance() + " km " + jeusympa[4].getPourcentage() + "% \n");
-        return supposition;
+    // les 5 lignes "Supposition n : région distance km pourcentage% indice", vides pour les essais pas encore joués
+    public static String historique(Partie partie){
+        List<Essai> essais = partie.getEssais();
+        StringBuilder texte = new StringBuilder();
+        for (int i = 0; i < Partie.ESSAIS_MAX; i++){
+            String proposition = "";
+            String distance = "";
+            int pourcentage = 0;
+            String indice = "";
+            if (i < essais.size()){
+                Essai essai = essais.get(i);
+                proposition = essai.proposition().getNom();
+                boolean trouve = essai.proposition() == partie.getCible();
+                distance = trouve ? "0" : String.format("%.2f", essai.distance());
+                pourcentage = essai.pourcentage();
+                // un essai réussi ne révèle pas d'indice
+                if (!trouve){
+                    indice = Indice.apresEssai(i).map(lindice -> valeur(lindice, partie.getCible())).orElse("");
+                }
+            }
+            texte.append("Supposition ").append(i + 1).append(" : ").append(proposition).append(" ")
+                    .append(distance).append(" km ").append(pourcentage).append("%");
+            if (i == 0){
+                texte.append(LIBELLES[i]).append(indice).append(" km² \n");
+            }
+            else if (i < LIBELLES.length){
+                texte.append(LIBELLES[i]).append(indice).append("\n");
+            }
+            else {
+                texte.append(" \n");
+            }
+        }
+        return texte.toString();
     }
 
     // 27208 -> "27 208" : séparateur de milliers à la française. On impose l'espace insécable (U+00A0),
@@ -379,54 +417,6 @@ class Parametres{
      */
 }
 
-class superinterface{
-    private String distance;
-    private int pourcentage;
-    private String indice;
-    private String supposition;
-
-    public superinterface superi(){
-        superinterface linterface = new superinterface();
-        linterface.setDistance("");
-        linterface.setPourcentage(0);
-        linterface.setIndice("");
-        linterface.setSupposition("");
-        return linterface;
-
-    }
-
-    public String getDistance() {
-        return distance;
-    }
-
-    public void setDistance(String distance) {
-        this.distance = distance;
-    }
-
-    public int getPourcentage() {
-        return pourcentage;
-    }
-
-    public void setPourcentage(int pourcentage) {
-        this.pourcentage = pourcentage;
-    }
-
-    public String getIndice() {
-        return indice;
-    }
-
-    public void setIndice(String indice) {
-        this.indice = indice;
-    }
-
-    public String getSupposition() {
-        return supposition;
-    }
-
-    public void setSupposition(String supposition) {
-        this.supposition = supposition;
-    }
-}
 /*
 Les régions jouables : chaque information n'est écrite qu'ici, une seule fois.
 Le reste du code vient chercher ses données dans cet enum.
@@ -533,6 +523,10 @@ enum RegionFr {
         this(nom, latitude, longitude, Epoque.ANCIENNE, Zone.METROPOLE, 0, "", "", "", null);
     }
 
+    // compilée une seule fois, et non à chaque saisie. Déclarée AVANT le bloc static ci-dessous, qui s'en sert
+    // via getCle() : les initialisations static s'exécutent dans l'ordre du fichier.
+    private static final Pattern ACCENTS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+
     // index des régions par nom simplifié ("bretagne", "iledefrance"...), construit une seule fois
     private static final Map<String, RegionFr> PAR_CLE = new HashMap<>();
     static {
@@ -545,7 +539,7 @@ enum RegionFr {
 
     // la région correspondant à la saisie du joueur, ou Optional.empty() si elle est inconnue ou refusée dans ce mode
     public static Optional<RegionFr> chercher(String saisie, ModeRegions mode) {
-        return Optional.ofNullable(PAR_CLE.get(Region.convertisseur(saisie))).filter(mode::reconnait);
+        return Optional.ofNullable(PAR_CLE.get(simplifier(saisie))).filter(mode::reconnait);
     }
 
     public static List<RegionFr> tirables(ModeRegions mode) {
@@ -563,7 +557,30 @@ enum RegionFr {
         return liste.get(HASARD.nextInt(liste.size()));
     }
 
-    public String getCle() { return Region.convertisseur(nom); }
+    // distance à vol d'oiseau entre les deux capitales régionales, en km
+    // loi des cosinus sphérique : d = R * acos(sin(lat1)*sin(lat2) + cos(lat1)*cos(lat2)*cos(lon1 - lon2))
+    public double distance(RegionFr autre) {
+        double lat1 = Math.toRadians(latitude);
+        double lat2 = Math.toRadians(autre.latitude);
+        double deltaLon = Math.toRadians(longitude - autre.longitude);
+        double cosAngle = Math.sin(lat1) * Math.sin(lat2) + Math.cos(lat1) * Math.cos(lat2) * Math.cos(deltaLon);
+        // les arrondis des double peuvent donner 1.0000000000000002, et acos(>1) renvoie NaN
+        cosAngle = Math.min(1.0, cosAngle);
+        return Math.acos(cosAngle) * RAYON_TERRE;
+    }
+
+    private static final int RAYON_TERRE = 6371;
+
+    // "Île-de-France " -> "iledefrance" : sans espaces, majuscules, ponctuation ni accents
+    public static String simplifier(String saisie) {
+        String texte = saisie.replaceAll("\\s", "");
+        texte = texte.toLowerCase();
+        texte = texte.replaceAll("\\p{Punct}", "");
+        texte = Normalizer.normalize(texte, Normalizer.Form.NFD);
+        return ACCENTS.matcher(texte).replaceAll("");
+    }
+
+    public String getCle() { return simplifier(nom); }
     public String getNom() { return nom; }
     public double getLatitude() { return latitude; }
     public double getLongitude() { return longitude; }
@@ -577,272 +594,105 @@ enum RegionFr {
     public String getImage() { return image; }
 }
 
-class Region{
+/*
+Les règles du jeu, sans aucun affichage : Partie reçoit les saisies du joueur et dit ce qui s'est passé.
+C'est l'interface (main, Message) qui demande les saisies et affiche les résultats.
+ */
 
-    private double latitude;
-    private double longitude;
-    private String indiceun;
-    private String indicedeux;
-    private String indicetrois;
-    private String nomdelaregion;
-    private String vrainom;
-    private int superficie;
+// une proposition jouée : la région proposée, sa distance à la cible (km) et le pourcentage de proximité
+record Essai(RegionFr proposition, double distance, int pourcentage) {}
 
-    public int getSuperficie() {
-        return superficie;
-    }
+// les indices, dans l'ordre où ils sont révélés : un après chacun des quatre premiers essais ratés
+enum Indice {
+    SUPERFICIE, SPECIALITE, PERSONNALITE, CAPITALE;
 
-    public void setSuperficie(int superficie) {
-        this.superficie = superficie;
-    }
-
-    public String getVrainom() {
-        return vrainom;
-    }
-
-    public void setVrainom(String vrainom) {
-        this.vrainom = vrainom;
-    }
-
-    public double getLatitude() {
-        return latitude;
-    }
-
-    public void setLatitude(double latitude) {
-        this.latitude = latitude;
-    }
-
-    public double getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(double longitude) {
-        this.longitude = longitude;
-    }
-
-    public String getIndiceun() {
-        return indiceun;
-    }
-
-    public void setIndiceun(String indiceun) {
-        this.indiceun = indiceun;
-    }
-
-    public String getIndicedeux() {
-        return indicedeux;
-    }
-
-    public void setIndicedeux(String indicedeux) {
-        this.indicedeux = indicedeux;
-    }
-
-    public String getIndicetrois() {
-        return indicetrois;
-    }
-
-    public void setIndicetrois(String indicetrois) {
-        this.indicetrois = indicetrois;
-    }
-
-    public String getNomdelaregion() {
-        return nomdelaregion;
-    }
-
-    public void setNomdelaregion(String nomdelaregion) {
-        this.nomdelaregion = nomdelaregion;
-    }
-
-
-    // fabrique une Region de jeu à partir des données de l'enum
-    public static Region depuis(RegionFr source){
-        Region laregion = new Region();
-        laregion.setNomdelaregion(source.getCle());
-        laregion.setVrainom(source.getNom());
-        laregion.setLatitude(source.getLatitude());
-        laregion.setLongitude(source.getLongitude());
-        laregion.setSuperficie(source.getSuperficie());
-        laregion.setIndiceun(source.getSpecialite());
-        laregion.setIndicedeux(source.getPersonnalite());
-        laregion.setIndicetrois(source.getCapitale());
-        return laregion;
-    }
-
-    public static String convertisseur(String region){
-
-        //supprimer les espaces
-        String lessai = region.replaceAll("\\s","");
-
-        //supprimer les majuscules
-
-        lessai = lessai.toLowerCase();
-
-        //supprimer les ponctuations
-
-        lessai = lessai.replaceAll("\\p{Punct}", "");
-
-        //supprimer les accents
-
-        lessai = Normalizer.normalize(lessai,Normalizer.Form.NFD);
-        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
-
-        return pattern.matcher(lessai).replaceAll("");
-    }
-
-
-    public superinterface verifnotreinterface(superinterface jeusympa, int compteur, double distance, int pourcentage, Region laregion, Region lasupposition){
-
-        String superficie = "";
-
-        if (compteur == 0){
-            int nombre = laregion.getSuperficie();
-            superficie = Message.avecmilliers(nombre);
+    // l'indice révélé après l'essai raté numéro "numero" (0 = le premier), rien après le quatrième
+    public static Optional<Indice> apresEssai(int numero) {
+        if (numero < 0 || numero >= values().length) {
+            return Optional.empty();
         }
-        switch (compteur){
-            case 0 :
-                jeusympa.setIndice(superficie);
-                break;
-            case 1 :
-                jeusympa.setIndice(laregion.getIndiceun());
-                break;
-            case 2 :
-                jeusympa.setIndice(laregion.getIndicedeux());
-                break;
-            case 3 :
-                jeusympa.setIndice(laregion.getIndicetrois());
-                break;
-        }
-        String test = String.format("%.2f",distance);
-        jeusympa.setDistance(test);
-        jeusympa.setPourcentage(pourcentage);
-        jeusympa.setSupposition(lasupposition.getVrainom());
+        return Optional.of(values()[numero]);
+    }
+}
 
+class Partie {
 
-        return jeusympa;
+    public static final int ESSAIS_MAX = 5;
+
+    enum Etat { EN_COURS, GAGNEE, PERDUE, ABANDONNEE }
+
+    private final RegionFr cible;
+    private final ModeRegions mode;
+    private final List<Essai> essais = new ArrayList<>();
+    private Etat etat = Etat.EN_COURS;
+
+    public Partie(RegionFr cible, ModeRegions mode) {
+        this.cible = cible;
+        this.mode = mode;
     }
 
-    public superinterface reussite(superinterface jeusympa, Region laregion){
-        jeusympa.setDistance("0");
-        jeusympa.setPourcentage(100);
-        jeusympa.setSupposition(laregion.getVrainom());
-        jeusympa.setIndice("");
-
-        return jeusympa;
+    // joue la saisie du joueur : renvoie l'essai joué, ou Optional.empty() si la saisie n'est pas reconnue
+    // (une saisie non reconnue ne coûte pas d'essai)
+    public Optional<Essai> proposer(String saisie) {
+        verifierEnCours();
+        Optional<RegionFr> trouvee = RegionFr.chercher(saisie, mode);
+        if (trouvee.isEmpty()) {
+            return Optional.empty();
+        }
+        RegionFr proposition = trouvee.get();
+        double distance = cible.distance(proposition);
+        Essai essai = new Essai(proposition, distance, pourcentage(cible, distance));
+        essais.add(essai);
+        if (proposition == cible) {
+            etat = Etat.GAGNEE;
+        } else if (essais.size() == ESSAIS_MAX) {
+            etat = Etat.PERDUE;
+        }
+        return Optional.of(essai);
     }
 
-    public int jeu(Region laregion, int compteur, Parametres lesparametres, superinterface[] jeusympa){
-        double distance = 0.0;
-        String supposition;
-        int abandon = 0;
-        int pourcentage = 0;
-        int code = -1;
-        Message lemessage = new Message();
-        Region lasupposition = new Region();
-        if (lesparametres.getChoixlaliste() == 0) {
-            supposition = lemessage.interfaceclassique(jeusympa);
-        }
-        else {
-            supposition = JOptionPane.showInputDialog("Quelle est votre supposition ? (Echap pour abandonner)");
-        }
-        try {
-            if (supposition.equals("")){}
-        }
-        catch (NullPointerException npe)
-        {
-            compteur = 5;
-            supposition = "";
-            abandon = -1;
-        }
-        if ((supposition.equals("1")) && (lesparametres.getChoixdelaregion() == 1) && (lesparametres.getChoixlaliste() == 0))
-        {
-            lemessage.touteslesregions(ModeRegions.depuisCode(lesparametres.getChoixdelaregion()));
-        }
-        else
-        {
-            supposition = Region.convertisseur(supposition);
-        if (supposition.equals(laregion.getNomdelaregion())){
-            code = 0;
-            superinterface lejeu = new superinterface();
-            lejeu = reussite(lejeu,laregion);
-            jeusympa[compteur] = lejeu;
-            compteur = 5;
-        }
-        else {
-            ModeRegions mode = ModeRegions.depuisCode(lesparametres.getChoixdelaregion());
-            Optional<RegionFr> trouvee = RegionFr.chercher(supposition, mode);
-            if (abandon == -1){
-                code = 1;
-                distance = -1;
-            }
-            else if (trouvee.isEmpty()) {
-                code = 2;
-            } else {
-                lasupposition = Region.depuis(trouvee.get());
-                distance = verifdistance(laregion, lasupposition);
-                code = 3;
-                pourcentage = pourcentage(laregion, distance);
-                //String fleche = this.fleche(laregion,lasupposition);
-                superinterface lejeu = new superinterface();
-                lejeu = verifnotreinterface(lejeu,compteur,distance,pourcentage,laregion,lasupposition);
-                jeusympa[compteur] = lejeu;
-            }
-        }
-        }
-        if ((compteur !=5) || (code == 0)){
-            lemessage.message(code, distance, pourcentage, compteur, laregion);
-            if (code == 3){
-                compteur = compteur + 1;
-            }
-        }
-        if (compteur == 5) {
-            lemessage.messagedefin(jeusympa,laregion,code);
-        }
-        return compteur;
-
+    public void abandonner() {
+        verifierEnCours();
+        etat = Etat.ABANDONNEE;
     }
 
-    public double verifdistance(Region laaregion, Region laasupposition){
-        double distance;
-        int r;
-        r = 6371;
-        // loi des cosinus sphérique : d = R * acos(sin(lat1)*sin(lat2) + cos(lat1)*cos(lat2)*cos(lon1 - lon2))
-        double lat1 = Math.toRadians(laaregion.getLatitude());
-        double lat2 = Math.toRadians(laasupposition.getLatitude());
-        double deltaLon = Math.toRadians(laaregion.getLongitude() - laasupposition.getLongitude());
-        double cosAngle = Math.sin(lat1) * Math.sin(lat2) + Math.cos(lat1) * Math.cos(lat2) * Math.cos(deltaLon);
-        // les arrondis des double peuvent donner 1.0000000000000002, et acos(>1) renvoie NaN
-        cosAngle = Math.min(1.0, cosAngle);
-        distance = Math.acos(cosAngle) * r;
-        return distance;
+    // jouer dans une partie terminée est une erreur de programmation, pas une saisie du joueur
+    private void verifierEnCours() {
+        if (etat != Etat.EN_COURS) {
+            throw new IllegalStateException("La partie est terminée : " + etat);
+        }
     }
+
+    public RegionFr getCible() { return cible; }
+    public Etat getEtat() { return etat; }
+    public boolean enCours() { return etat == Etat.EN_COURS; }
+    // une vue en lecture seule : l'interface peut lire les essais, pas en ajouter
+    public List<Essai> getEssais() { return Collections.unmodifiableList(essais); }
 
     // pourcentage de proximité : 100 % à 0 km, 0 % pour la région de référence la plus éloignée de la cible.
     // Pour une cible en métropole, seules les régions de métropole servent de référence : sinon l'outre-mer,
     // à plus de 6000 km, écrase toute la métropole entre 88 % et 98 %.
-    public int pourcentage(Region region, double ladistance){
-        RegionFr cible = RegionFr.chercher(region.getNomdelaregion(), ModeRegions.TOUTES).orElseThrow();
+    public static int pourcentage(RegionFr cible, double distance) {
         double distanceMax = 0;
         for (RegionFr autre : RegionFr.values()) {
             if (cible.getZone() == Zone.OUTRE_MER || autre.getZone() == Zone.METROPOLE) {
-                distanceMax = Math.max(distanceMax, verifdistance(region, Region.depuis(autre)));
+                distanceMax = Math.max(distanceMax, cible.distance(autre));
             }
         }
         // arrondi et non troncature : (int) 99.9999 donnerait 99 % pour une distance de quelques centimètres
-        int pourcentage = (int) Math.round((distanceMax - ladistance) * 100 / distanceMax);
+        int pourcentage = (int) Math.round((distanceMax - distance) * 100 / distanceMax);
         // une proposition en outre-mer pour une cible en métropole dépasse la référence : 0 %, pas un pourcentage négatif
         return Math.max(0, pourcentage);
     }
 
-    public String fleche(Region laregion, Region lasupposition){
-        /*
-        Tentative de calcul de l'azimut
-
-        Mettre les résultats non satisfaisants que l'on a depuis
-         */
+    // Brouillon de la flèche de direction (à reprendre en Phase 4), recopié tel quel depuis l'ancienne classe Region :
+    // les degrés ne sont pas convertis en radians, et l'azimut n'est pas encore découpé en 8 directions.
+    public static String fleche(RegionFr cible, RegionFr proposition){
         String sens = "";
         double resultat;
 
-        double x = Math.cos(laregion.getLatitude())*Math.sin(lasupposition.getLatitude()) - Math.sin(laregion.getLatitude()) * Math.cos(lasupposition.getLatitude()) * Math.cos((lasupposition.getLongitude()) - (laregion.getLongitude()));
-        double y = Math.sin((lasupposition.getLongitude())-(laregion.getLongitude())) * Math.cos(lasupposition.getLatitude());
+        double x = Math.cos(cible.getLatitude())*Math.sin(proposition.getLatitude()) - Math.sin(cible.getLatitude()) * Math.cos(proposition.getLatitude()) * Math.cos((proposition.getLongitude()) - (cible.getLongitude()));
+        double y = Math.sin((proposition.getLongitude())-(cible.getLongitude())) * Math.cos(proposition.getLatitude());
 
         resultat = Math.atan2(y,x);
 

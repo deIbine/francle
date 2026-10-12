@@ -14,6 +14,7 @@ Le détail de ce qui a été fait dans le jeu se trouve dans la [feuille de rout
 - [Phase 1 : corriger des bugs](#phase-1--corriger-des-bugs)
 - [Phase 2 : centraliser les données (refactoring)](#phase-2--centraliser-les-données-refactoring)
 - [Petits correctifs](#petits-correctifs)
+- [Phase 3.1 : séparer les règles de l'affichage](#phase-31--séparer-les-règles-de-laffichage)
 - [Aide-mémoire](#aide-mémoire)
 
 ---
@@ -45,6 +46,15 @@ on doit pouvoir dire quel commit l'a introduit. Messages en français, à l'imp�
 
 Le compilateur et l'IDE voient ce que l'œil rate, à condition de le leur demander et de lire leurs messages :
 `javac -Xlint:all`, les soulignements jaunes et le code grisé d'IntelliJ.
+
+### 5. Si c'est difficile à tester, c'est mal rangé
+
+La difficulté à tester un morceau de code est un **diagnostic** : elle mesure à quel point ses responsabilités
+sont mélangées. En Phase 3.1, vérifier l'ancien `jeu()` a demandé de fausses fenêtres et 300 sessions rejouées ;
+une fois les règles rangées dans `Partie`, quelques lignes suffisent, sans écran ni clavier.
+
+> *La question à se poser :* « Puis-je vérifier cette règle sans cliquer ? » Si non, sépare d'abord ce qui
+> **décide** (les règles) de ce qui **montre** (l'affichage), puis teste ce qui décide.
 
 ---
 
@@ -349,6 +359,10 @@ du shell. Pour modifier un texte littéral, préférer l'éditeur ou l'outil de 
 - **Un champ plutôt qu'une liste à part** : ajouter la `Zone` dans chaque ligne de l'`enum` oblige chaque future
   région à la préciser, et le compilateur refuse celle qui l'oublie.
 
+> *Note (Phase 3.1) :* la classe `Region` citée ici n'existe plus. `Region.convertisseur` est devenue
+> `RegionFr.simplifier`, et `Region.depuis` a disparu avec la classe : le jeu manipule directement les `RegionFr`.
+> Les notions, elles, restent valables.
+
 ---
 
 ## Petits correctifs
@@ -385,6 +399,104 @@ CRLF sous Windows. Un script qui cherche des `\n` seuls ne trouvera plus rien.
 
 ---
 
+## Phase 3.1 : séparer les règles de l'affichage
+
+### Une classe, une raison de changer
+
+`Region.jeu()` faisait tout à la fois : demander la saisie, chercher la région, calculer la distance, choisir l'indice,
+compter les essais **et** afficher les popups. On ne pouvait donc pas vérifier une règle (« 5 échecs = défaite »)
+sans cliquer. Désormais :
+
+- **`Partie`** contient les règles et ne connaît pas `JOptionPane` : elle reçoit une saisie (`proposer`) et répond
+  (un `Essai`, ou rien si la saisie est inconnue) ;
+- **`Message`** demande, transmet et affiche : il ne décide de rien.
+
+Les règles changent avec le *game design* (6 essais ? un indice de plus ?), l'affichage avec l'interface (Swing en
+Phase 4, une page web un jour). Deux raisons de changer, deux classes. C'est le **principe de responsabilité unique**.
+
+> *La question à se poser :* « Puis-je tester cette règle sans écran ni clavier ? » Si non, elle est mal rangée.
+> Le signe qui ne trompe pas : un `if` de règle du jeu juste à côté d'un `showMessageDialog`.
+
+### Un objet qui protège ses règles (encapsulation)
+
+L'ancien code signalait la fin de partie en forçant `compteur = 5`, que la victoire, la défaite et l'abandon
+utilisaient tous les trois. Résultat : impossible de les distinguer ensuite, d'où le bug du message d'abandon.
+`Partie` remplace ce nombre magique par un `enum Etat { EN_COURS, GAGNEE, PERDUE, ABANDONNEE }` et protège
+ses **invariants** (ce qui doit toujours être vrai) :
+
+- les champs sont `private` : personne ne peut modifier l'état de l'extérieur ;
+- `getEssais()` renvoie `Collections.unmodifiableList(essais)` : une vue en lecture seule, l'interface peut lire
+  les essais mais pas en ajouter ;
+- jouer dans une partie terminée lève une `IllegalStateException` : c'est une **erreur de programmation**, pas une
+  saisie du joueur, donc on échoue tout de suite et bruyamment au lieu de continuer dans un état absurde.
+
+> *La question à se poser :* « Qu'est-ce qui doit toujours être vrai pour cet objet, et qui pourrait le casser ? »
+
+### Ranger chaque calcul chez celui qui possède les données
+
+- La **distance** entre deux régions ne dépend que de leurs coordonnées : elle va dans `RegionFr` (`a.distance(b)`).
+- Le **pourcentage** est une règle du jeu (la formule B) : il va dans `Partie`.
+- La **phrase** « La capitale régionale de la région recherchée est… » est de l'affichage : elle reste dans `Message`.
+  `Indice` ne porte que l'**ordre** des indices, qui est une règle.
+
+Le détour de la Phase 2 disparaît : `pourcentage` n'a plus besoin de retrouver la `RegionFr` à partir d'une clé,
+puisque le jeu manipule directement les `RegionFr`. `Region` (copie modifiable) et `superinterface` (distance
+stockée en `String`, tableau de 100 cases dont 5 servaient) sont supprimées.
+
+### Tester ce qui n'était pas testable : les doublures
+
+Pour photographier l'ancien `jeu()`, plein de popups, on a remplacé `JOptionPane` et `JFrame` par des **doublures**
+(*test doubles*) : de fausses classes, de même nom et de mêmes méthodes, qui lisent des saisies écrites à l'avance
+et écrivent chaque message dans un fichier. Elles sont glissées à la place des vraies au lancement, sans toucher
+au code du jeu :
+
+```
+javac --patch-module java.desktop=doublures -d doublures-out doublures/javax/swing/*.java
+java  --patch-module java.desktop=doublures-out -Djava.awt.headless=true -Dscript=s1.txt -cp out Lanceur 1
+```
+
+Le tirage au hasard est rendu reproductible en fixant la graine du `Random`. 300 sessions générées au hasard
+(101 victoires, 225 défaites, abandons, liste, 3 modes) ont été jouées sur l'ancienne et la nouvelle version :
+**77 752 lignes identiques**. C'est un moyen de dernier recours : une fois les règles dans `Partie`, un simple
+test les vérifie en quelques millisecondes, sans aucune doublure. La difficulté du filet *mesure* le mélange
+des responsabilités.
+
+### Le filet révèle des bugs d'origine
+
+En lisant l'ancien code pour le reproduire exactement, deux bugs présents depuis le début sont apparus. Ils ont
+été corrigés **après** le refactoring, chacun dans son commit, avec un `diff` qui montre exactement ce qui change :
+
+- le message « Vous avez abandonné » n'a jamais été affiché (le `compteur = 5` sautait la condition) :
+  199 fins de partie concernées dans les scénarios ;
+- « 1 pour avoir la liste » ne marchait qu'en mode « nouvelles régions » : 18 cas où « Saisie non reconnue »
+  devient la liste.
+
+### Le piège de l'ordre d'initialisation `static`
+
+Premier lancement après le déplacement de `simplifier` dans `RegionFr` : `ExceptionInInitializerError`. Les champs
+et blocs `static` s'initialisent **dans l'ordre du fichier**. Le bloc `static` qui remplit l'index `PAR_CLE` appelle
+`getCle()`, donc `simplifier()`, qui utilise le `Pattern ACCENTS`… déclaré plus bas, et encore `null` à ce moment-là.
+Correction : déclarer `ACCENTS` avant le bloc. (Une constante comme `RAYON_TERRE = 6371` n'a pas ce problème :
+le compilateur recopie directement sa valeur partout où elle sert.)
+
+> *La question à se poser :* quand un bloc `static` appelle une méthode, « de quels champs `static` dépend-elle,
+> et sont-ils déclarés avant ? »
+
+### Les notions Java rencontrées
+
+- **`record`** (Java 16) : `record Essai(RegionFr proposition, double distance, int pourcentage) {}` écrit en une
+  ligne le constructeur, les accesseurs (`essai.distance()`), `equals`, `hashCode` et `toString`. Ses champs sont
+  `final` : un essai joué ne change plus. C'est la bonne forme pour une donnée qui n'a pas de comportement.
+- **`enum` imbriqué** : `Partie.Etat` n'a de sens qu'à l'intérieur d'une partie.
+- **`Collections.unmodifiableList`** : une vue en lecture seule (toute modification lève `UnsupportedOperationException`).
+- **Les exceptions de programmation** : `IllegalStateException` (l'objet n'est pas dans le bon état),
+  `IllegalArgumentException` (un paramètre est invalide).
+- **`StringBuilder`** : construire un texte en plusieurs morceaux dans une boucle.
+- **`==` entre constantes d'`enum`** : chaque constante existe en un seul exemplaire, `proposition == cible`
+  est donc correct (contrairement à deux `String`, à comparer avec `equals`).
+
+---
+
 ## Aide-mémoire
 
 ### Raccourcis IntelliJ
@@ -396,6 +508,7 @@ CRLF sous Windows. Un script qui cherche des `\n` seuls ne trouvera plus rien.
 | `Shift+F6` | *Rename* : renommer partout d'un coup |
 | `Ctrl+Alt+M` | *Extract Method* : transformer une sélection en méthode |
 | `Alt+Suppr` | *Safe Delete* : supprimer, sauf si c'est encore utilisé |
+| `F6` | *Move* : déplacer une méthode `static` vers une autre classe |
 | `Ctrl+Alt+O` | *Optimize Imports* : retirer les imports inutiles |
 | Icône 🐞 | Lancer en *Debug* (avec points d'arrêt) |
 
@@ -421,3 +534,4 @@ CRLF sous Windows. Un script qui cherche des `\n` seuls ne trouvera plus rien.
 | `javac -encoding UTF-8 -d out main.java` | Compiler dans `out/` |
 | `javac -Xlint:all …` | Afficher tous les avertissements |
 | `java -cp out main` | Lancer le programme |
+| `java --patch-module java.desktop=dossier …` | Remplacer des classes du JDK par des doublures (tests) |

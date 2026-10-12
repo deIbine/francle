@@ -12,7 +12,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 0 | Environnement de développement | ✅ Fait (JDK 21, IntelliJ 2026.2) |
 | 1 | Corriger les bugs | ✅ Fait (4 bugs corrigés) |
 | 2 | Centraliser les données des régions | ✅ Fait (enum RegionFr, −466 lignes) |
-| 3 | Séparer logique et affichage, tests, Maven/Gradle | ⬜ À faire |
+| 3 | Séparer logique et affichage, tests, Maven | 🟡 En cours (3.1 faite : classe `Partie`) |
 | 4 | Interface Swing en une seule fenêtre | ⬜ À faire |
 | 5 | Nouvelles fonctionnalités | ⬜ À faire |
 
@@ -177,7 +177,11 @@ Résultat : `main.java` passe de 1421 à 955 lignes ; ajouter une région = **1 
 - les tests de caractérisation des Phases 1 et 2 vivaient dans un dossier temporaire : ils ne sont ni
   versionnés ni relançables par quelqu'un d'autre.
 
-**Ce qu'on ferait** (sans doute en 3 ou 4 PR) :
+**Découpage choisi** (le 12 octobre 2026) : **3.1** `Partie` d'abord, testée hors dépôt comme en Phase 2 ;
+**3.2** Maven, JUnit (les tests de la 3.1 y sont réécrits) et intégration continue ; **3.3** un fichier par classe
+et des packages.
+
+**Ce qu'on ferait :**
 
 1. une classe **`Partie`** qui contient les règles (essais restants, victoire, abandon, indice à révéler),
    sans aucun affichage ; l'interface lui transmet la saisie et affiche ce qu'elle renvoie ;
@@ -190,6 +194,23 @@ Résultat : `main.java` passe de 1421 à 955 lignes ; ajouter une région = **1 
 5. de vrais **tests JUnit**, versionnés, qui reprennent les vérifications faites à la main : distances
    connues, recherche dans les 3 modes, pourcentages entre 0 et 100, 5 échecs = défaite… ;
 6. une **GitHub Action** qui compile et lance les tests à chaque PR (✅ ou ❌ directement sur la PR).
+
+### 3.1 : la classe `Partie` ✅
+
+- **`Partie`** : les règles (essais, victoire, défaite, abandon), sans aucun affichage. `proposer(saisie)` renvoie
+  l'`Essai` joué, ou `Optional.empty()` pour une saisie inconnue (qui ne coûte pas d'essai). L'état est un
+  `enum Etat` (`EN_COURS`, `GAGNEE`, `PERDUE`, `ABANDONNEE`) au lieu du `compteur = 5` qui servait à tout.
+- **`record Essai`** (proposition, distance, pourcentage) et une `List<Essai>` à la place de `superinterface`
+  et de son tableau de 100 cases ; **`enum Indice`** pour l'ordre des indices.
+- La distance passe dans `RegionFr` (`a.distance(b)`), le pourcentage dans `Partie`, la simplification des saisies
+  dans `RegionFr.simplifier`. **`Region` et `superinterface` sont supprimées.**
+- `Message.tour()` demande la saisie, la transmet à `Partie` et affiche la réponse.
+- **Filet** : `JOptionPane` et `JFrame` remplacés par des doublures (`--patch-module`), 300 sessions rejouées :
+  77 752 lignes identiques. Un mini-banc de 13 vérifications teste `Partie` sans aucun clic.
+- **Bugs d'origine corrigés ensuite**, chacun dans son commit : le message d'abandon n'était jamais affiché
+  (« C'est raté ! » à la place) ; « 1 pour avoir la liste » ne marchait qu'en mode « nouvelles régions ».
+
+Résultat : `main.java` passe de 978 à 828 lignes.
 
 **Comment le penser.** *Séparation des responsabilités* : une classe = une raison de changer (les règles
 changent avec le *game design*, l'affichage avec l'interface). *Testabilité* : « si je ne peux pas tester
@@ -212,7 +233,7 @@ est un texte dans la question suivante, et l'image s'ouvre dans une fenêtre sé
 - une seule fenêtre : l'image de la région, un champ de saisie, un **tableau des essais** (`JTable`)
   qui se remplit au fur et à mesure ;
 - l'**autocomplétion** des noms de régions pendant la frappe ;
-- la **flèche de direction**, comme dans Worldle : la méthode `fleche()` existe déjà. Il manque la
+- la **flèche de direction**, comme dans Worldle : le brouillon `Partie.fleche()` existe déjà. Il manque la
   conversion des degrés en radians (le même piège qu'en Phase 1), puis le découpage de l'azimut
   en 8 directions (↑ ↗ → ↘ ↓ ↙ ← ↖) ;
 - les menus (paramètres, didacticiel) dans la fenêtre, au lieu de taper 0, 1, 2 ou 3.
