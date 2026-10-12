@@ -4,6 +4,11 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.lang.Math;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Objects;
 import java.text.Normalizer;
@@ -404,6 +409,151 @@ class superinterface{
         this.supposition = supposition;
     }
 }
+/*
+Les régions jouables : chaque information n'est écrite qu'ici, une seule fois.
+Le reste du code vient chercher ses données dans cet enum.
+ */
+enum Epoque { ANCIENNE, NOUVELLE, LES_DEUX }
+
+enum ModeRegions {
+    ANCIENNES, NOUVELLES, TOUTES;
+
+    // correspondance avec le choix tapé dans le menu des paramètres (0, 1 ou 2)
+    public static ModeRegions depuisCode(int code) {
+        switch (code) {
+            case 0 : return ANCIENNES;
+            case 2 : return TOUTES;
+            default : return NOUVELLES;
+        }
+    }
+
+    // les régions que le jeu peut faire deviner dans ce mode
+    public boolean peutTirer(RegionFr region) {
+        switch (this) {
+            case ANCIENNES : return region.getEpoque() != Epoque.NOUVELLE;
+            case NOUVELLES : return region.getEpoque() != Epoque.ANCIENNE;
+            default : return true;
+        }
+    }
+
+    // les régions acceptées comme proposition du joueur : tout, sauf les anciennes en mode "nouvelles"
+    public boolean reconnait(RegionFr region) {
+        return this != NOUVELLES || region.getEpoque() != Epoque.ANCIENNE;
+    }
+}
+
+enum RegionFr {
+    // nouvelles régions et régions inchangées : nom, latitude, longitude, époque, superficie,
+    // spécialité culinaire, personnalité, capitale régionale, image
+    HAUTS_DE_FRANCE("Hauts-de-France", 50.62925, 3.057256, Epoque.NOUVELLE, 31814, "la bière", "Charles de Gaulle", "Lille", "hauts-de-france.png"),
+    NORMANDIE("Normandie", 49.443232, 1.099971, Epoque.NOUVELLE, 29907, "la matelote", "Guillaume le Conquérant", "Rouen", "normandie.png"),
+    BRETAGNE("Bretagne", 48.117266, -1.6777926, Epoque.LES_DEUX, 27208, "la crepe", "Louis Guilloux", "Rennes", "bretagne.png"),
+    PAYS_DE_LA_LOIRE("Pays de la Loire", 47.218371, -1.553621, Epoque.LES_DEUX, 32082, "la fouace", "Jules Verne", "Nantes", "pays-de-la-loire.png"),
+    ILE_DE_FRANCE("Île-de-France", 48.856614, 2.3522219, Epoque.LES_DEUX, 12012, "le macaron", "Alexandre Dumas", "Paris", "ile-de-france.png"),
+    CENTRE_VAL_DE_LOIRE("Centre-Val de Loire", 47.902964, 1.909251, Epoque.NOUVELLE, 39151, "la tarte tatin", "Jeanne d'Arc", "Orleans", "centre-val-de-loire.png"),
+    GRAND_EST("Grand Est", 48.5734053, 7.7521113, Epoque.NOUVELLE, 57433, "la choucroute", "Paul Verlaine", "Strasbourg", "grand-est.png"),
+    BOURGOGNE_FRANCHE_COMTE("Bourgogne-Franche-Comté", 47.322047, 5.04148, Epoque.NOUVELLE, 47784, "le boeuf bourguignon", "Victor Hugo", "Dijon", "bourgogne-franche-comte.png"),
+    AUVERGNE_RHONE_ALPES("Auvergne-Rhône-Alpes", 45.764043, 4.835659, Epoque.NOUVELLE, 69711, "le coq au vin", "Jean Moulin", "Lyon", "auvergne-rhone-alpes.png"),
+    NOUVELLE_AQUITAINE("Nouvelle-Aquitaine", 44.837789, -0.57918, Epoque.NOUVELLE, 84060, "les huitres du Bassin d'Arcachon", "Jacques Ellul", "Bordeaux", "nouvelle-aquitaine.png"),
+    OCCITANIE("Occitanie", 43.604652, 1.444209, Epoque.NOUVELLE, 72724, "le confit de canard", "Jean Jaurès", "Toulouse", "occitanie.png"),
+    PROVENCE_ALPES_COTE_D_AZUR("Provence-Alpes-Côte d'Azur", 43.296482, 5.36978, Epoque.LES_DEUX, 31400, "la bouillabaisse", "Fernandel", "Marseille", "provence-alpes-cote-dazur.png"),
+    CORSE("Corse", 41.919229, 8.738635, Epoque.LES_DEUX, 8680, "le figatellu", "Napoleon Bonaparte", "Ajaccio", "corse.png"),
+    MAYOTTE("Mayotte", -12.780600, 45.227800, Epoque.LES_DEUX, 374, "le matsidza", "Taambati Moussa", "Mamoudzou", "mayotte.png"),
+    LA_REUNION("La Réunion", -20.882057, 55.450675, Epoque.LES_DEUX, 2504, "le rhum arrange", "Michel Houellebecq", "Saint-Denis", "la-reunion.png"),
+    GUYANE("Guyane", 4.9227, -52.3269, Epoque.LES_DEUX, 83534, "le poulet boucane", "Henri Salvador", "Cayenne", "guyane.png"),
+    MARTINIQUE("Martinique", 14.6160647, -61.0587804, Epoque.LES_DEUX, 1128, "le gratin de bananes", "Aimé Césaire", "Fort-de-France", "martinique.png"),
+    GUADELOUPE("Guadeloupe", 17.302606, -62.717692, Epoque.LES_DEUX, 1703, "les accras de morue", "Teddy Riner", "Basse-Terre", "guadeloupe.png"),
+
+    // anciennes régions (avant 2016) : pas encore d'indices ni d'image
+    NORD_PAS_DE_CALAIS("Nord-Pas-de-Calais", 50.62925, 3.057256),
+    PICARDIE("Picardie", 49.844067, 2.295753),
+    HAUTE_NORMANDIE("Haute-Normandie", 49.443232, 1.099971),
+    BASSE_NORMANDIE("Basse-Normandie", 49.182863, -0.370679),
+    POITOU_CHARENTES("Poitou-Charentes", 46.580224, 0.340375),
+    CENTRE("Centre", 47.902964, 1.909251),
+    CHAMPAGNE_ARDENNE("Champagne-Ardenne", 48.956682, 4.363073),
+    LORRAINE("Lorraine", 49.1193089, 6.1757156),
+    ALSACE("Alsace", 48.5734053, 7.7521113),
+    BOURGOGNE("Bourgogne", 47.322047, 5.04148),
+    FRANCHE_COMTE("Franche-Comté", 47.237829, 6.0240539),
+    RHONE_ALPES("Rhône-Alpes", 45.764043, 4.835659),
+    AUVERGNE("Auvergne", 45.777222, 3.087025),
+    LIMOUSIN("Limousin", 45.833619, 1.261105),
+    AQUITAINE("Aquitaine", 44.837789, -0.57918),
+    MIDI_PYRENEES("Midi-Pyrénées", 43.604652, 1.444209),
+    LANGUEDOC_ROUSSILLON("Languedoc-Roussillon", 43.610769, 3.876716);
+
+    private final String nom;
+    private final double latitude;
+    private final double longitude;
+    private final Epoque epoque;
+    private final int superficie;
+    private final String specialite;
+    private final String personnalite;
+    private final String capitale;
+    private final String image;
+
+    RegionFr(String nom, double latitude, double longitude, Epoque epoque, int superficie,
+             String specialite, String personnalite, String capitale, String image) {
+        this.nom = nom;
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.epoque = epoque;
+        this.superficie = superficie;
+        this.specialite = specialite;
+        this.personnalite = personnalite;
+        this.capitale = capitale;
+        this.image = image;
+    }
+
+    // constructeur des anciennes régions, qui n'ont ni indices ni image
+    RegionFr(String nom, double latitude, double longitude) {
+        this(nom, latitude, longitude, Epoque.ANCIENNE, 0, "", "", "", null);
+    }
+
+    // index des régions par nom simplifié ("bretagne", "iledefrance"...), construit une seule fois
+    private static final Map<String, RegionFr> PAR_CLE = new HashMap<>();
+    static {
+        for (RegionFr region : values()) {
+            PAR_CLE.put(region.getCle(), region);
+        }
+    }
+
+    private static final Random HASARD = new Random();
+
+    // la région correspondant à la saisie du joueur, ou Optional.empty() si elle est inconnue ou refusée dans ce mode
+    public static Optional<RegionFr> chercher(String saisie, ModeRegions mode) {
+        return Optional.ofNullable(PAR_CLE.get(Region.convertisseur(saisie))).filter(mode::reconnait);
+    }
+
+    public static List<RegionFr> tirables(ModeRegions mode) {
+        List<RegionFr> liste = new ArrayList<>();
+        for (RegionFr region : values()) {
+            if (mode.peutTirer(region)) {
+                liste.add(region);
+            }
+        }
+        return liste;
+    }
+
+    public static RegionFr tirer(ModeRegions mode) {
+        List<RegionFr> liste = tirables(mode);
+        return liste.get(HASARD.nextInt(liste.size()));
+    }
+
+    public String getCle() { return Region.convertisseur(nom); }
+    public String getNom() { return nom; }
+    public double getLatitude() { return latitude; }
+    public double getLongitude() { return longitude; }
+    public Epoque getEpoque() { return epoque; }
+    public int getSuperficie() { return superficie; }
+    public String getSpecialite() { return specialite; }
+    public String getPersonnalite() { return personnalite; }
+    public String getCapitale() { return capitale; }
+    // null pour les régions sans image
+    public String getImage() { return image; }
+}
+
 class Region{
 
     private double latitude;
@@ -480,7 +630,7 @@ class Region{
     }
 
 
-    public String convertisseur(String region){
+    public static String convertisseur(String region){
 
         //supprimer les espaces
         String lessai = region.replaceAll("\\s","");
