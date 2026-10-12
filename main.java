@@ -186,7 +186,8 @@ class Message{
             partie.abandonner();
             return;
         }
-        if (saisie.equals("1") && (lesparametres.getChoixdelaregion() == 1) && (lesparametres.getChoixlaliste() == 0)){
+        // la liste existe dans les trois modes : "1" n'est plus réservé au mode "nouvelles régions"
+        if (saisie.equals("1") && (lesparametres.getChoixlaliste() == 0)){
             touteslesregions(ModeRegions.depuisCode(lesparametres.getChoixdelaregion()));
             return;
         }
