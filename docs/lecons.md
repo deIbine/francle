@@ -15,6 +15,7 @@ Le détail de ce qui a été fait dans le jeu se trouve dans la [feuille de rout
 - [Phase 2 : centraliser les données (refactoring)](#phase-2--centraliser-les-données-refactoring)
 - [Petits correctifs](#petits-correctifs)
 - [Phase 3.1 : séparer les règles de l'affichage](#phase-31--séparer-les-règles-de-laffichage)
+- [Phase 3.2 : Maven, JUnit et intégration continue](#phase-32--maven-junit-et-intégration-continue)
 - [Aide-mémoire](#aide-mémoire)
 
 ---
@@ -497,6 +498,114 @@ le compilateur recopie directement sa valeur partout où elle sert.)
 
 ---
 
+## Phase 3.2 : Maven, JUnit et intégration continue
+
+### Pourquoi un outil de build
+
+Jusqu'ici, compiler demandait de connaître la bonne commande (`javac -encoding UTF-8 -d out main.java`), et
+IntelliJ avait été réglé à la main (dossier de code, dossier exclu, dossier de travail). Rien de tout ça n'était
+écrit dans le dépôt. Le **`pom.xml`** décrit le projet une fois pour toutes : version de Java, encodage,
+dépendances (JUnit), versions des plugins, classe à lancer. N'importe quel IDE et n'importe quelle machine
+(y compris les serveurs de GitHub) en tirent la même construction.
+
+> *La question à se poser :* « Quelqu'un qui clone le dépôt peut-il compiler et tester avec **une seule**
+> commande, sans me demander comment ? »
+
+### Les conventions de Maven
+
+Maven préfère les **conventions** à la configuration : si on range les fichiers à l'endroit attendu,
+il n'y a rien à déclarer.
+
+| Dossier | Contenu |
+|---|---|
+| `src/main/java` | le code du jeu |
+| `src/main/resources` | les fichiers non Java (images), copiés à côté des classes et dans le `.jar` |
+| `src/test/java` | les tests, compilés et lancés à part, jamais embarqués dans le jeu |
+| `target/` | tout ce que Maven produit (classes, rapports, `.jar`) ; ignoré par Git, on peut le supprimer |
+
+Le **cycle de vie** enchaîne des phases dans un ordre fixe, et demander une phase lance toutes les précédentes :
+`compile` → `test` → `package` (le `.jar`) → `verify`. `mvnw.cmd package` compile donc **et teste** avant
+d'assembler : un jeu dont les tests échouent n'est pas empaqueté.
+
+**Les dépendances** sont téléchargées depuis Maven Central et gardées dans `~/.m2`. Le *scope* `test` indique
+que JUnit ne sert qu'aux tests. Le **BOM** (`junit-bom`) fixe en un seul endroit la version de tous les modules
+de JUnit (DRY, appliqué aux dépendances).
+
+**Les versions sont fixées** (plugins, et Maven lui-même via le wrapper) : sans cela, le même `pom.xml` pourrait
+construire différemment dans six mois. Ce sont les dernières versions **stables**, pas les bêta.
+
+### Le Maven Wrapper
+
+`mvnw` / `mvnw.cmd` sont de petits scripts versionnés qui téléchargent la version de Maven inscrite dans
+`.mvn/wrapper/maven-wrapper.properties`, puis la lancent. Personne n'a besoin d'installer Maven, et tout le monde
+utilise la même version. Comme en Phase 0, l'**empreinte SHA-256** du téléchargement est inscrite
+(`distributionSha256Sum`) : le wrapper refuse un fichier altéré. Elle a été calculée après avoir vérifié le
+fichier avec l'empreinte SHA-512 publiée par Apache.
+
+Piège des fins de ligne : un script shell en CRLF échoue sous Linux (`/bin/sh^M: not found`), un `.cmd` en LF peut
+échouer sous Windows. Le `.gitattributes` les impose (`mvnw text eol=lf`, `*.cmd text eol=crlf`), et le bit
+exécutable de `mvnw` est enregistré dans Git (`git update-index --chmod=+x mvnw`), car Windows ne le connaît pas.
+
+### Les ressources au lieu des chemins relatifs
+
+`new File("regions/bretagne.png")` part du **dossier courant** : lancé depuis un autre dossier, ou depuis un `.jar`,
+le jeu ne trouvait plus ses images. `representation.class.getResource("/regions/bretagne.png")` les cherche dans
+le **classpath** : à côté des classes compilées, ou à l'intérieur du `.jar`. Le `/` initial part de la racine du
+classpath. `getResource` renvoie `null` si la ressource n'existe pas : un test vérifie que l'image de chaque
+région est bien là.
+
+### JUnit
+
+```java
+@Test
+@DisplayName("Cinq essais ratés font perdre la partie")
+void defaite() {
+    Partie partie = jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES,
+            "Corse", "Normandie", "Occitanie", "Grand Est", "Guyane");   // préparer et agir
+
+    assertEquals(Partie.Etat.PERDUE, partie.getEtat());                  // vérifier
+}
+```
+
+- Un test = une méthode annotée `@Test`, qui vérifie **un** comportement, avec un nom qui dit lequel.
+- Structure **Préparer / Agir / Vérifier** (*Arrange / Act / Assert*).
+- `assertEquals(attendu, obtenu)` : l'ordre compte pour le message d'erreur. `assertEquals(a, b, tolérance)` pour
+  des `double`, `assertThrows` pour une exception attendue. Un dernier paramètre texte précise le cas en échec.
+- **Tests paramétrés** : `@ParameterizedTest` avec `@CsvSource` (un tableau de cas) ou `@EnumSource` (une
+  exécution par constante d'`enum`) ; un seul test vérifie ainsi les 35 images.
+- Les tests sont dans le même package que le code (ici, le package par défaut) : ils voient tout ce qui n'est pas
+  `private`.
+- Dans IntelliJ : flèche verte dans la marge pour lancer un test, `Ctrl+Shift+F10` pour lancer celui sous le curseur.
+
+**Un test qui ne peut pas échouer ne prouve rien.** Pour le vérifier, on réintroduit volontairement un bug et on
+regarde les tests rougir (c'est le principe du *mutation testing*) : l'inversion latitude/longitude de la Phase 1
+fait échouer 4 tests, « 6 essais au lieu de 5 » en fait échouer 2. Puis on annule (`git checkout -- fichier`).
+
+### Ce que les tests ont appris en chemin
+
+- **La distance d'une région à elle-même valait 9 cm.** Près de 1, `acos` amplifie énormément les erreurs
+  d'arrondi : 10⁻¹⁶ sur le cosinus devient 10⁻⁸ radian, soit des centimètres sur Terre. Sans effet sur le jeu
+  (la victoire compare des régions, pas des distances), mais un test sur des `double` doit toujours avoir
+  une **tolérance** adaptée au calcul.
+- **Les distances dépendaient de la langue du système.** `String.format("%.2f", d)` écrit `698,45` sur un Windows
+  français et `698.45` sur un serveur en anglais. On impose `Locale.FRENCH`, et un test simule un système anglais
+  avec `Locale.setDefault(Locale.US)`, en restaurant la valeur d'origine dans un `finally` pour ne pas perturber
+  les autres tests.
+
+> *La question à se poser :* « Mon code dépend-il de quelque chose qui change d'une machine à l'autre ? »
+> (dossier courant, langue, fuseau horaire, fins de ligne, encodage). L'intégration continue, qui tourne sur une
+> autre machine, est faite pour le révéler.
+
+### L'intégration continue
+
+`.github/workflows/ci.yml` décrit ce que GitHub exécute à chaque PR et à chaque push sur `main`, sur une machine
+Linux neuve : récupérer le code (`actions/checkout`), installer le JDK 21 (`actions/setup-java`, avec cache des
+dépendances Maven), puis `./mvnw -B verify`. Le résultat (✅ ou ❌) s'affiche sur la PR, avant la fusion.
+La « machine neuve » est le vrai intérêt : ce qui ne marche que chez moi (un fichier oublié dans le commit,
+un réglage local) y échoue tout de suite.
+
+---
+
 ## Aide-mémoire
 
 ### Raccourcis IntelliJ
@@ -510,6 +619,7 @@ le compilateur recopie directement sa valeur partout où elle sert.)
 | `Alt+Suppr` | *Safe Delete* : supprimer, sauf si c'est encore utilisé |
 | `F6` | *Move* : déplacer une méthode `static` vers une autre classe |
 | `Ctrl+Alt+O` | *Optimize Imports* : retirer les imports inutiles |
+| `Ctrl+Shift+F10` | Lancer le test (ou la classe) sous le curseur |
 | Icône 🐞 | Lancer en *Debug* (avec points d'arrêt) |
 
 ### Commandes Git
@@ -535,3 +645,13 @@ le compilateur recopie directement sa valeur partout où elle sert.)
 | `javac -Xlint:all …` | Afficher tous les avertissements |
 | `java -cp out main` | Lancer le programme |
 | `java --patch-module java.desktop=dossier …` | Remplacer des classes du JDK par des doublures (tests) |
+
+### Maven
+
+| Commande | Usage |
+|---|---|
+| `mvnw.cmd test` | Compiler et lancer les tests |
+| `mvnw.cmd package` | Compiler, tester et produire `target/francle.jar` |
+| `java -jar target/francle.jar` | Lancer le jeu empaqueté |
+| `mvnw.cmd clean` | Supprimer `target/` |
+| `mvnw.cmd -Dtest=PartieTest test` | Lancer une seule classe de tests |

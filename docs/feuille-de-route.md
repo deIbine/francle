@@ -12,7 +12,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 0 | Environnement de développement | ✅ Fait (JDK 21, IntelliJ 2026.2) |
 | 1 | Corriger les bugs | ✅ Fait (4 bugs corrigés) |
 | 2 | Centraliser les données des régions | ✅ Fait (enum RegionFr, −466 lignes) |
-| 3 | Séparer logique et affichage, tests, Maven | 🟡 En cours (3.1 faite : classe `Partie`) |
+| 3 | Séparer logique et affichage, tests, Maven | 🟡 En cours (3.1 `Partie` et 3.2 Maven faites) |
 | 4 | Interface Swing en une seule fenêtre | ⬜ À faire |
 | 5 | Nouvelles fonctionnalités | ⬜ À faire |
 
@@ -211,6 +211,20 @@ et des packages.
   (« C'est raté ! » à la place) ; « 1 pour avoir la liste » ne marchait qu'en mode « nouvelles régions ».
 
 Résultat : `main.java` passe de 978 à 828 lignes.
+
+### 3.2 : Maven, JUnit et intégration continue ✅
+
+- **`pom.xml`** : Java 21, UTF-8, JUnit 6.1.3 (*scope* `test`, via son BOM), versions des plugins fixées,
+  `target/francle.jar` exécutable (`java -jar`).
+- **Maven Wrapper** (`mvnw`, `mvnw.cmd`) : Maven 3.9.16, vérifié par son empreinte SHA-256 ; fins de ligne des
+  scripts imposées dans `.gitattributes`.
+- **Arborescence Maven** : `src/main/java`, `src/main/resources` (images), `src/test/java`. Les images sont lues
+  avec `getResource` : le jeu se lance depuis n'importe quel dossier, et depuis le `.jar`.
+- **70 tests JUnit** (`PartieTest`, `RegionFrTest`, `MessageTest`), dont des tests paramétrés ; vérifiés en
+  réintroduisant des bugs (inversion latitude/longitude, 6 essais).
+- **Intégration continue** : `.github/workflows/ci.yml` lance `./mvnw -B verify` à chaque PR.
+- **Corrigé en chemin** : les distances suivaient la langue du système (`698.45` sur une machine anglaise).
+- **IntelliJ** : ouvrir le `pom.xml` remplace la configuration manuelle de la Phase 0.
 
 **Comment le penser.** *Séparation des responsabilités* : une classe = une raison de changer (les règles
 changent avec le *game design*, l'affichage avec l'interface). *Testabilité* : « si je ne peux pas tester
