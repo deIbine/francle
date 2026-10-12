@@ -596,6 +596,27 @@ fait échouer 4 tests, « 6 essais au lieu de 5 » en fait échouer 2. Puis on a
 > (dossier courant, langue, fuseau horaire, fins de ligne, encodage). L'intégration continue, qui tourne sur une
 > autre machine, est faite pour le révéler.
 
+### Les anciens réglages de l'IDE entrent en conflit avec Maven
+
+Premier lancement dans IntelliJ après le passage à Maven : `Maven resources compiler: Failed to copy
+'…\out\production\francle\docs\feuille-de-route.md'`. La cause : en Phase 0, sans outil de build, la racine du
+projet avait été marquée à la main comme dossier de code (dans `.idea/francle.iml`). En ouvrant le `pom.xml`,
+IntelliJ a **ajouté** la configuration de Maven mais **gardé** ce réglage manuel. Il traitait donc toute la racine
+comme du code et copiait dans `target/classes` tout ce qui n'était pas du Java (`docs/`, et même l'ancien dossier
+de compilation `out/`, qui a disparu pendant la copie).
+
+- **Comment le repérer :** un chemin absurde dans l'erreur (`target/classes/out/production/…`, un dossier de
+  compilation copié dans un autre) ; puis *File > Project Structure* (`Ctrl+Alt+Shift+S`) → *Modules* → *Sources* :
+  la racine apparaît en bleu.
+- **Comment corriger :** décocher *Sources* sur la racine, puis *Reload All Maven Projects* dans l'onglet Maven ;
+  ou, plus radical, fermer IntelliJ, supprimer `.idea` et rouvrir le `pom.xml` : IntelliJ reconstruit tout depuis
+  le `pom.xml`.
+- Le dépôt, le build en ligne de commande et la CI n'étaient pas touchés : `.idea/` et `out/` ne sont pas versionnés.
+
+> *Comment le penser :* une connaissance (« où est le code ») ne doit vivre qu'à **un seul endroit, versionné**.
+> En adoptant un outil de build, on **supprime** les réglages manuels qu'il remplace au lieu de les empiler.
+> C'est DRY, appliqué à la configuration.
+
 ### L'intégration continue
 
 `.github/workflows/ci.yml` décrit ce que GitHub exécute à chaque PR et à chaque push sur `main`, sur une machine

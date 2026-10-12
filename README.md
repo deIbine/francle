@@ -51,6 +51,10 @@ java -jar target/francle.jar
 seul le JDK, les dossiers de code, de ressources et de tests, et JUnit. Lancer ensuite la classe `main`, ou les
 tests par un clic droit sur `src/test/java` → *Run 'All Tests'*.
 
+Projet déjà ouvert dans IntelliJ avant le passage à Maven ? Les anciens réglages manuels (racine marquée comme
+dossier de code) restent et entrent en conflit avec Maven (erreur *Maven resources compiler: Failed to copy*).
+Le plus simple : fermer IntelliJ, supprimer le dossier `.idea`, puis rouvrir le `pom.xml`.
+
 ## Structure du projet
 
 ```
