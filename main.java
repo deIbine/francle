@@ -423,6 +423,8 @@ Le reste du code vient chercher ses données dans cet enum.
  */
 enum Epoque { ANCIENNE, NOUVELLE, LES_DEUX }
 
+enum Zone { METROPOLE, OUTRE_MER }
+
 enum ModeRegions {
     ANCIENNES, NOUVELLES, TOUTES;
 
@@ -451,26 +453,26 @@ enum ModeRegions {
 }
 
 enum RegionFr {
-    // nouvelles régions et régions inchangées : nom, latitude, longitude, époque, superficie,
+    // nouvelles régions et régions inchangées : nom, latitude, longitude, époque, zone, superficie,
     // spécialité culinaire, personnalité, capitale régionale, image
-    HAUTS_DE_FRANCE("Hauts-de-France", 50.62925, 3.057256, Epoque.NOUVELLE, 31814, "la bière", "Charles de Gaulle", "Lille", "hauts-de-france.png"),
-    NORMANDIE("Normandie", 49.443232, 1.099971, Epoque.NOUVELLE, 29907, "la matelote", "Guillaume le Conquérant", "Rouen", "normandie.png"),
-    BRETAGNE("Bretagne", 48.117266, -1.6777926, Epoque.LES_DEUX, 27208, "la crepe", "Louis Guilloux", "Rennes", "bretagne.png"),
-    PAYS_DE_LA_LOIRE("Pays de la Loire", 47.218371, -1.553621, Epoque.LES_DEUX, 32082, "la fouace", "Jules Verne", "Nantes", "pays-de-la-loire.png"),
-    ILE_DE_FRANCE("Île-de-France", 48.856614, 2.3522219, Epoque.LES_DEUX, 12012, "le macaron", "Alexandre Dumas", "Paris", "ile-de-france.png"),
-    CENTRE_VAL_DE_LOIRE("Centre-Val de Loire", 47.902964, 1.909251, Epoque.NOUVELLE, 39151, "la tarte tatin", "Jeanne d'Arc", "Orleans", "centre-val-de-loire.png"),
-    GRAND_EST("Grand Est", 48.5734053, 7.7521113, Epoque.NOUVELLE, 57433, "la choucroute", "Paul Verlaine", "Strasbourg", "grand-est.png"),
-    BOURGOGNE_FRANCHE_COMTE("Bourgogne-Franche-Comté", 47.322047, 5.04148, Epoque.NOUVELLE, 47784, "le boeuf bourguignon", "Victor Hugo", "Dijon", "bourgogne-franche-comte.png"),
-    AUVERGNE_RHONE_ALPES("Auvergne-Rhône-Alpes", 45.764043, 4.835659, Epoque.NOUVELLE, 69711, "le coq au vin", "Jean Moulin", "Lyon", "auvergne-rhone-alpes.png"),
-    NOUVELLE_AQUITAINE("Nouvelle-Aquitaine", 44.837789, -0.57918, Epoque.NOUVELLE, 84060, "les huitres du Bassin d'Arcachon", "Jacques Ellul", "Bordeaux", "nouvelle-aquitaine.png"),
-    OCCITANIE("Occitanie", 43.604652, 1.444209, Epoque.NOUVELLE, 72724, "le confit de canard", "Jean Jaurès", "Toulouse", "occitanie.png"),
-    PROVENCE_ALPES_COTE_D_AZUR("Provence-Alpes-Côte d'Azur", 43.296482, 5.36978, Epoque.LES_DEUX, 31400, "la bouillabaisse", "Fernandel", "Marseille", "provence-alpes-cote-dazur.png"),
-    CORSE("Corse", 41.919229, 8.738635, Epoque.LES_DEUX, 8680, "le figatellu", "Napoleon Bonaparte", "Ajaccio", "corse.png"),
-    MAYOTTE("Mayotte", -12.780600, 45.227800, Epoque.LES_DEUX, 374, "le matsidza", "Taambati Moussa", "Mamoudzou", "mayotte.png"),
-    LA_REUNION("La Réunion", -20.882057, 55.450675, Epoque.LES_DEUX, 2504, "le rhum arrange", "Michel Houellebecq", "Saint-Denis", "la-reunion.png"),
-    GUYANE("Guyane", 4.9227, -52.3269, Epoque.LES_DEUX, 83534, "le poulet boucane", "Henri Salvador", "Cayenne", "guyane.png"),
-    MARTINIQUE("Martinique", 14.6160647, -61.0587804, Epoque.LES_DEUX, 1128, "le gratin de bananes", "Aimé Césaire", "Fort-de-France", "martinique.png"),
-    GUADELOUPE("Guadeloupe", 17.302606, -62.717692, Epoque.LES_DEUX, 1703, "les accras de morue", "Teddy Riner", "Basse-Terre", "guadeloupe.png"),
+    HAUTS_DE_FRANCE("Hauts-de-France", 50.62925, 3.057256, Epoque.NOUVELLE, Zone.METROPOLE, 31814, "la bière", "Charles de Gaulle", "Lille", "hauts-de-france.png"),
+    NORMANDIE("Normandie", 49.443232, 1.099971, Epoque.NOUVELLE, Zone.METROPOLE, 29907, "la matelote", "Guillaume le Conquérant", "Rouen", "normandie.png"),
+    BRETAGNE("Bretagne", 48.117266, -1.6777926, Epoque.LES_DEUX, Zone.METROPOLE, 27208, "la crepe", "Louis Guilloux", "Rennes", "bretagne.png"),
+    PAYS_DE_LA_LOIRE("Pays de la Loire", 47.218371, -1.553621, Epoque.LES_DEUX, Zone.METROPOLE, 32082, "la fouace", "Jules Verne", "Nantes", "pays-de-la-loire.png"),
+    ILE_DE_FRANCE("Île-de-France", 48.856614, 2.3522219, Epoque.LES_DEUX, Zone.METROPOLE, 12012, "le macaron", "Alexandre Dumas", "Paris", "ile-de-france.png"),
+    CENTRE_VAL_DE_LOIRE("Centre-Val de Loire", 47.902964, 1.909251, Epoque.NOUVELLE, Zone.METROPOLE, 39151, "la tarte tatin", "Jeanne d'Arc", "Orleans", "centre-val-de-loire.png"),
+    GRAND_EST("Grand Est", 48.5734053, 7.7521113, Epoque.NOUVELLE, Zone.METROPOLE, 57433, "la choucroute", "Paul Verlaine", "Strasbourg", "grand-est.png"),
+    BOURGOGNE_FRANCHE_COMTE("Bourgogne-Franche-Comté", 47.322047, 5.04148, Epoque.NOUVELLE, Zone.METROPOLE, 47784, "le boeuf bourguignon", "Victor Hugo", "Dijon", "bourgogne-franche-comte.png"),
+    AUVERGNE_RHONE_ALPES("Auvergne-Rhône-Alpes", 45.764043, 4.835659, Epoque.NOUVELLE, Zone.METROPOLE, 69711, "le coq au vin", "Jean Moulin", "Lyon", "auvergne-rhone-alpes.png"),
+    NOUVELLE_AQUITAINE("Nouvelle-Aquitaine", 44.837789, -0.57918, Epoque.NOUVELLE, Zone.METROPOLE, 84060, "les huitres du Bassin d'Arcachon", "Jacques Ellul", "Bordeaux", "nouvelle-aquitaine.png"),
+    OCCITANIE("Occitanie", 43.604652, 1.444209, Epoque.NOUVELLE, Zone.METROPOLE, 72724, "le confit de canard", "Jean Jaurès", "Toulouse", "occitanie.png"),
+    PROVENCE_ALPES_COTE_D_AZUR("Provence-Alpes-Côte d'Azur", 43.296482, 5.36978, Epoque.LES_DEUX, Zone.METROPOLE, 31400, "la bouillabaisse", "Fernandel", "Marseille", "provence-alpes-cote-dazur.png"),
+    CORSE("Corse", 41.919229, 8.738635, Epoque.LES_DEUX, Zone.METROPOLE, 8680, "le figatellu", "Napoleon Bonaparte", "Ajaccio", "corse.png"),
+    MAYOTTE("Mayotte", -12.780600, 45.227800, Epoque.LES_DEUX, Zone.OUTRE_MER, 374, "le matsidza", "Taambati Moussa", "Mamoudzou", "mayotte.png"),
+    LA_REUNION("La Réunion", -20.882057, 55.450675, Epoque.LES_DEUX, Zone.OUTRE_MER, 2504, "le rhum arrange", "Michel Houellebecq", "Saint-Denis", "la-reunion.png"),
+    GUYANE("Guyane", 4.9227, -52.3269, Epoque.LES_DEUX, Zone.OUTRE_MER, 83534, "le poulet boucane", "Henri Salvador", "Cayenne", "guyane.png"),
+    MARTINIQUE("Martinique", 14.6160647, -61.0587804, Epoque.LES_DEUX, Zone.OUTRE_MER, 1128, "le gratin de bananes", "Aimé Césaire", "Fort-de-France", "martinique.png"),
+    GUADELOUPE("Guadeloupe", 17.302606, -62.717692, Epoque.LES_DEUX, Zone.OUTRE_MER, 1703, "les accras de morue", "Teddy Riner", "Basse-Terre", "guadeloupe.png"),
 
     // anciennes régions (avant 2016) : pas encore d'indices ni d'image
     NORD_PAS_DE_CALAIS("Nord-Pas-de-Calais", 50.62925, 3.057256),
@@ -495,18 +497,20 @@ enum RegionFr {
     private final double latitude;
     private final double longitude;
     private final Epoque epoque;
+    private final Zone zone;
     private final int superficie;
     private final String specialite;
     private final String personnalite;
     private final String capitale;
     private final String image;
 
-    RegionFr(String nom, double latitude, double longitude, Epoque epoque, int superficie,
+    RegionFr(String nom, double latitude, double longitude, Epoque epoque, Zone zone, int superficie,
              String specialite, String personnalite, String capitale, String image) {
         this.nom = nom;
         this.latitude = latitude;
         this.longitude = longitude;
         this.epoque = epoque;
+        this.zone = zone;
         this.superficie = superficie;
         this.specialite = specialite;
         this.personnalite = personnalite;
@@ -514,9 +518,9 @@ enum RegionFr {
         this.image = image;
     }
 
-    // constructeur des anciennes régions, qui n'ont ni indices ni image
+    // constructeur des anciennes régions, toutes en métropole, qui n'ont ni indices ni image
     RegionFr(String nom, double latitude, double longitude) {
-        this(nom, latitude, longitude, Epoque.ANCIENNE, 0, "", "", "", null);
+        this(nom, latitude, longitude, Epoque.ANCIENNE, Zone.METROPOLE, 0, "", "", "", null);
     }
 
     // index des régions par nom simplifié ("bretagne", "iledefrance"...), construit une seule fois
@@ -554,6 +558,7 @@ enum RegionFr {
     public double getLatitude() { return latitude; }
     public double getLongitude() { return longitude; }
     public Epoque getEpoque() { return epoque; }
+    public Zone getZone() { return zone; }
     public int getSuperficie() { return superficie; }
     public String getSpecialite() { return specialite; }
     public String getPersonnalite() { return personnalite; }
@@ -800,13 +805,21 @@ class Region{
         return distance;
     }
 
-    // pourcentage de proximité : 100 % à 0 km, 0 % pour la région la plus éloignée de la cible
+    // pourcentage de proximité : 100 % à 0 km, 0 % pour la région de référence la plus éloignée de la cible.
+    // Pour une cible en métropole, seules les régions de métropole servent de référence : sinon l'outre-mer,
+    // à plus de 6000 km, écrase toute la métropole entre 88 % et 98 %.
     public int pourcentage(Region region, double ladistance){
+        RegionFr cible = RegionFr.chercher(region.getNomdelaregion(), ModeRegions.TOUTES).orElseThrow();
         double distanceMax = 0;
         for (RegionFr autre : RegionFr.values()) {
-            distanceMax = Math.max(distanceMax, verifdistance(region, Region.depuis(autre)));
+            if (cible.getZone() == Zone.OUTRE_MER || autre.getZone() == Zone.METROPOLE) {
+                distanceMax = Math.max(distanceMax, verifdistance(region, Region.depuis(autre)));
+            }
         }
-        return (int) ((distanceMax - ladistance) * 100 / distanceMax);
+        // arrondi et non troncature : (int) 99.9999 donnerait 99 % pour une distance de quelques centimètres
+        int pourcentage = (int) Math.round((distanceMax - ladistance) * 100 / distanceMax);
+        // une proposition en outre-mer pour une cible en métropole dépasse la référence : 0 %, pas un pourcentage négatif
+        return Math.max(0, pourcentage);
     }
 
     public String fleche(Region laregion, Region lasupposition){
