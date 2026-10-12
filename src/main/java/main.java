@@ -207,7 +207,7 @@ class Message{
         Indice indice = Indice.apresEssai(numero).orElseThrow();
         JOptionPane.showMessageDialog(null,
                 "C'est raté ! " +
-                        "\nVous êtes à " + String.format("%.2f", essai.distance()) + " km." +
+                        "\nVous êtes à " + String.format(Locale.FRENCH, "%.2f", essai.distance()) + " km." +
                         "\nVotre pourcentage de proximité est de : " + essai.pourcentage() + "%." +
                         "\n" + phrase(indice, partie.getCible()), TITRES[numero], JOptionPane.PLAIN_MESSAGE);
     }
@@ -266,7 +266,7 @@ class Message{
                 Essai essai = essais.get(i);
                 proposition = essai.proposition().getNom();
                 boolean trouve = essai.proposition() == partie.getCible();
-                distance = trouve ? "0" : String.format("%.2f", essai.distance());
+                distance = trouve ? "0" : String.format(Locale.FRENCH, "%.2f", essai.distance());
                 pourcentage = essai.pourcentage();
                 // un essai réussi ne révèle pas d'indice
                 if (!trouve){

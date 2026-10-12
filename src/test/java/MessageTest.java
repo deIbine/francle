@@ -2,6 +2,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -14,6 +15,21 @@ class MessageTest {
         assertEquals("27 208", Message.avecmilliers(27208));
         assertEquals("374", Message.avecmilliers(374));
         assertEquals("0", Message.avecmilliers(0));
+    }
+
+    @Test
+    @DisplayName("Les distances s'écrivent avec une virgule, même sur un système en anglais")
+    void distanceEnFrancais() {
+        Locale avant = Locale.getDefault();
+        Locale.setDefault(Locale.US);
+        try {
+            Partie partie = new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES);
+            partie.proposer("Grand Est");
+
+            assertTrue(Message.historique(partie).matches("(?s)Supposition 1 : Grand Est \\d+,\\d\\d km .*"));
+        } finally {
+            Locale.setDefault(avant); // ne pas perturber les autres tests
+        }
     }
 
     @Test
