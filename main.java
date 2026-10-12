@@ -185,7 +185,7 @@ class Message{
                                 "C'est raté ! " +
                                         "\nVous êtes à " + distance + " km." +
                                         "\nVotre pourcentage de proximité est de : " + pourcentage + "%." +
-                                        "\nLa superficie de la région recherchée est de " + laregion.getSuperficie() + " km.", "Essai un",JOptionPane.PLAIN_MESSAGE);
+                                        "\nLa superficie de la région recherchée est de " + laregion.getSuperficie() + " km².", "Essai un",JOptionPane.PLAIN_MESSAGE);
                         break;
                     case 1 :
                         JOptionPane.showMessageDialog(null,
@@ -225,7 +225,7 @@ class Message{
         }
         JOptionPane.showMessageDialog(null,felicitations +
                 "Voici vos essais : \n \n" +
-                "Supposition 1 : " + jeusympa[0].getSupposition() + " " + jeusympa[0].getDistance() + " km " + jeusympa[0].getPourcentage() + "%" + " Superficie : " + jeusympa[0].getIndice() + " km \n" +
+                "Supposition 1 : " + jeusympa[0].getSupposition() + " " + jeusympa[0].getDistance() + " km " + jeusympa[0].getPourcentage() + "%" + " Superficie : " + jeusympa[0].getIndice() + " km² \n" +
                 "Supposition 2 : " + jeusympa[1].getSupposition() + " " + jeusympa[1].getDistance() + " km " + jeusympa[1].getPourcentage() + "% Premier indice : " + jeusympa[1].getIndice() + "\n"+
                 "Supposition 3 : " + jeusympa[2].getSupposition() + " " + jeusympa[2].getDistance() + " km " + jeusympa[2].getPourcentage() + "% Deuxième indice : " + jeusympa[2].getIndice() + "\n"+
                 "Supposition 4 : " + jeusympa[3].getSupposition() + " " + jeusympa[3].getDistance() + " km " + jeusympa[3].getPourcentage() + "% Troisième indice : " + jeusympa[3].getIndice() + "\n" +
@@ -240,7 +240,7 @@ class Message{
 
         //trouver un moyen de mettre la superficie après le guess 1 plus ajouter le dernier guess avant de noter quand c'est terminé pour le dernier guess
         supposition = JOptionPane.showInputDialog("Quelle est votre supposition ? (1 pour avoir la liste) (Echap pour abandonner) \n \n" +
-                "Supposition 1 : " + jeusympa[0].getSupposition() + " " + jeusympa[0].getDistance() + " km " + jeusympa[0].getPourcentage() + "%" + " Superficie : " + jeusympa[0].getIndice() + " km \n" +
+                "Supposition 1 : " + jeusympa[0].getSupposition() + " " + jeusympa[0].getDistance() + " km " + jeusympa[0].getPourcentage() + "%" + " Superficie : " + jeusympa[0].getIndice() + " km² \n" +
                 "Supposition 2 : " + jeusympa[1].getSupposition() + " " + jeusympa[1].getDistance() + " km " + jeusympa[1].getPourcentage() + "% Premier indice : " + jeusympa[1].getIndice() + "\n"+
                 "Supposition 3 : " + jeusympa[2].getSupposition() + " " + jeusympa[2].getDistance() + " km " + jeusympa[2].getPourcentage() + "% Deuxième indice : " + jeusympa[2].getIndice() + "\n"+
                 "Supposition 4 : " + jeusympa[3].getSupposition() + " " + jeusympa[3].getDistance() + " km " + jeusympa[3].getPourcentage() + "% Troisième indice : " + jeusympa[3].getIndice() + "\n" +
@@ -457,20 +457,20 @@ enum RegionFr {
     // spécialité culinaire, personnalité, capitale régionale, image
     HAUTS_DE_FRANCE("Hauts-de-France", 50.62925, 3.057256, Epoque.NOUVELLE, Zone.METROPOLE, 31814, "la bière", "Charles de Gaulle", "Lille", "hauts-de-france.png"),
     NORMANDIE("Normandie", 49.443232, 1.099971, Epoque.NOUVELLE, Zone.METROPOLE, 29907, "la matelote", "Guillaume le Conquérant", "Rouen", "normandie.png"),
-    BRETAGNE("Bretagne", 48.117266, -1.6777926, Epoque.LES_DEUX, Zone.METROPOLE, 27208, "la crepe", "Louis Guilloux", "Rennes", "bretagne.png"),
+    BRETAGNE("Bretagne", 48.117266, -1.6777926, Epoque.LES_DEUX, Zone.METROPOLE, 27208, "la crêpe", "Louis Guilloux", "Rennes", "bretagne.png"),
     PAYS_DE_LA_LOIRE("Pays de la Loire", 47.218371, -1.553621, Epoque.LES_DEUX, Zone.METROPOLE, 32082, "la fouace", "Jules Verne", "Nantes", "pays-de-la-loire.png"),
     ILE_DE_FRANCE("Île-de-France", 48.856614, 2.3522219, Epoque.LES_DEUX, Zone.METROPOLE, 12012, "le macaron", "Alexandre Dumas", "Paris", "ile-de-france.png"),
-    CENTRE_VAL_DE_LOIRE("Centre-Val de Loire", 47.902964, 1.909251, Epoque.NOUVELLE, Zone.METROPOLE, 39151, "la tarte tatin", "Jeanne d'Arc", "Orleans", "centre-val-de-loire.png"),
+    CENTRE_VAL_DE_LOIRE("Centre-Val de Loire", 47.902964, 1.909251, Epoque.NOUVELLE, Zone.METROPOLE, 39151, "la tarte Tatin", "Jeanne d'Arc", "Orléans", "centre-val-de-loire.png"),
     GRAND_EST("Grand Est", 48.5734053, 7.7521113, Epoque.NOUVELLE, Zone.METROPOLE, 57433, "la choucroute", "Paul Verlaine", "Strasbourg", "grand-est.png"),
-    BOURGOGNE_FRANCHE_COMTE("Bourgogne-Franche-Comté", 47.322047, 5.04148, Epoque.NOUVELLE, Zone.METROPOLE, 47784, "le boeuf bourguignon", "Victor Hugo", "Dijon", "bourgogne-franche-comte.png"),
+    BOURGOGNE_FRANCHE_COMTE("Bourgogne-Franche-Comté", 47.322047, 5.04148, Epoque.NOUVELLE, Zone.METROPOLE, 47784, "le bœuf bourguignon", "Victor Hugo", "Dijon", "bourgogne-franche-comte.png"),
     AUVERGNE_RHONE_ALPES("Auvergne-Rhône-Alpes", 45.764043, 4.835659, Epoque.NOUVELLE, Zone.METROPOLE, 69711, "le coq au vin", "Jean Moulin", "Lyon", "auvergne-rhone-alpes.png"),
-    NOUVELLE_AQUITAINE("Nouvelle-Aquitaine", 44.837789, -0.57918, Epoque.NOUVELLE, Zone.METROPOLE, 84060, "les huitres du Bassin d'Arcachon", "Jacques Ellul", "Bordeaux", "nouvelle-aquitaine.png"),
+    NOUVELLE_AQUITAINE("Nouvelle-Aquitaine", 44.837789, -0.57918, Epoque.NOUVELLE, Zone.METROPOLE, 84060, "les huîtres du Bassin d'Arcachon", "Jacques Ellul", "Bordeaux", "nouvelle-aquitaine.png"),
     OCCITANIE("Occitanie", 43.604652, 1.444209, Epoque.NOUVELLE, Zone.METROPOLE, 72724, "le confit de canard", "Jean Jaurès", "Toulouse", "occitanie.png"),
     PROVENCE_ALPES_COTE_D_AZUR("Provence-Alpes-Côte d'Azur", 43.296482, 5.36978, Epoque.LES_DEUX, Zone.METROPOLE, 31400, "la bouillabaisse", "Fernandel", "Marseille", "provence-alpes-cote-dazur.png"),
-    CORSE("Corse", 41.919229, 8.738635, Epoque.LES_DEUX, Zone.METROPOLE, 8680, "le figatellu", "Napoleon Bonaparte", "Ajaccio", "corse.png"),
+    CORSE("Corse", 41.919229, 8.738635, Epoque.LES_DEUX, Zone.METROPOLE, 8680, "le figatellu", "Napoléon Bonaparte", "Ajaccio", "corse.png"),
     MAYOTTE("Mayotte", -12.780600, 45.227800, Epoque.LES_DEUX, Zone.OUTRE_MER, 374, "le matsidza", "Taambati Moussa", "Mamoudzou", "mayotte.png"),
-    LA_REUNION("La Réunion", -20.882057, 55.450675, Epoque.LES_DEUX, Zone.OUTRE_MER, 2504, "le rhum arrange", "Michel Houellebecq", "Saint-Denis", "la-reunion.png"),
-    GUYANE("Guyane", 4.9227, -52.3269, Epoque.LES_DEUX, Zone.OUTRE_MER, 83534, "le poulet boucane", "Henri Salvador", "Cayenne", "guyane.png"),
+    LA_REUNION("La Réunion", -20.882057, 55.450675, Epoque.LES_DEUX, Zone.OUTRE_MER, 2504, "le rhum arrangé", "Michel Houellebecq", "Saint-Denis", "la-reunion.png"),
+    GUYANE("Guyane", 4.9227, -52.3269, Epoque.LES_DEUX, Zone.OUTRE_MER, 83534, "le poulet boucané", "Henri Salvador", "Cayenne", "guyane.png"),
     MARTINIQUE("Martinique", 14.6160647, -61.0587804, Epoque.LES_DEUX, Zone.OUTRE_MER, 1128, "le gratin de bananes", "Aimé Césaire", "Fort-de-France", "martinique.png"),
     GUADELOUPE("Guadeloupe", 17.302606, -62.717692, Epoque.LES_DEUX, Zone.OUTRE_MER, 1703, "les accras de morue", "Teddy Riner", "Basse-Terre", "guadeloupe.png"),
 
