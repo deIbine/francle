@@ -7,10 +7,12 @@ import java.lang.Math;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Objects;
+import java.text.Collator;
 import java.text.Normalizer;
 import java.util.regex.Pattern;
 
@@ -248,8 +250,18 @@ class Message{
         return supposition;
     }
 
-    public void touteslesregions(){
-        JOptionPane.showMessageDialog( null, "Voici les régions possibles : \nAuvergne-Rhône-Alpes \nBretagne \nCentre-Val de Loire \nCorse \nGrand Est \nGuadeloupe \nGuyane \nHauts-de-France \nÎle-de-France \nLa Réunion \nMartinique \nMayotte \nNormandie \nNouvelle-Aquitaine \nOccitanie \nPays de la Loire \nProvence-Alpes-Côte d'Azur", "", JOptionPane.PLAIN_MESSAGE );}
+    public void touteslesregions(ModeRegions mode){
+        JOptionPane.showMessageDialog( null, "Voici les régions possibles : \n" + listedesregions(mode), "", JOptionPane.PLAIN_MESSAGE );}
+
+    // les noms des régions jouables, dans l'ordre alphabétique français (Île-de-France rangée à la lettre I)
+    public static String listedesregions(ModeRegions mode){
+        List<String> noms = new ArrayList<>();
+        for (RegionFr region : RegionFr.tirables(mode)) {
+            noms.add(region.getNom());
+        }
+        noms.sort(Collator.getInstance(Locale.FRENCH));
+        return String.join("\n", noms);
+    }
 
 
 }
@@ -729,7 +741,7 @@ class Region{
         }
         if ((supposition.equals("1")) && (lesparametres.getChoixdelaregion() == 1) && (lesparametres.getChoixlaliste() == 0))
         {
-            lemessage.touteslesregions();
+            lemessage.touteslesregions(ModeRegions.depuisCode(lesparametres.getChoixdelaregion()));
         }
         else
         {
@@ -860,66 +872,11 @@ class representation{
     }
 
     public Image onmetlimage(String region){
-
-        if (Objects.equals(region, "corse")){
-            this.region = representation.Image(chemin + "corse.png");
-        }
-        else if (Objects.equals(region, "bourgognefranchecomte")){
-            this.region = representation.Image(chemin + "bourgogne-franche-comte.png");
-        }
-        else if (Objects.equals(region, "hautsdefrance")){
-            this.region = representation.Image(chemin + "hauts-de-france.png");
-        }
-        else if (Objects.equals(region, "auvergnerhonealpes")){
-            this.region = representation.Image(chemin + "auvergne-rhone-alpes.png");
-        }
-        else if (Objects.equals(region,"bretagne")){
-            this.region = representation.Image(chemin + "bretagne.png");
-        }
-        else if (Objects.equals(region, "centrevaldeloire")){
-            this.region = representation.Image(chemin + "centre-val-de-loire.png");
-        }
-        else if (Objects.equals(region, "grandest")){
-            this.region = representation.Image(chemin + "grand-est.png");
-        }
-        else if (Objects.equals(region,"guadeloupe")){
-            this.region = representation.Image(chemin + "guadeloupe.png");
-        }
-        else if (Objects.equals(region,"guyane")){
-            this.region = representation.Image(chemin + "guyane.png");
-        }
-        else if (Objects.equals(region, "iledefrance")){
-            this.region = representation.Image(chemin + "ile-de-france.png");
-        }
-        else if (Objects.equals(region,"lareunion")){
-            this.region = representation.Image(chemin + "la-reunion.png");
-        }
-        else if (Objects.equals(region,"martinique")){
-            this.region = representation.Image(chemin + "martinique.png");
-        }
-        else if (Objects.equals(region, "mayotte")){
-            this.region = representation.Image(chemin + "mayotte.png");
-        }
-        else if (Objects.equals(region,"normandie")){
-            this.region = representation.Image(chemin + "normandie.png");
-        }
-        else if (Objects.equals(region,"nouvelleaquitaine")){
-            this.region = representation.Image(chemin + "nouvelle-aquitaine.png");
-        }
-        else if (Objects.equals(region,"occitanie")){
-            this.region = representation.Image(chemin + "occitanie.png");
-        }
-        else if (Objects.equals(region, "paysdelaloire")){
-            this.region = representation.Image(chemin + "pays-de-la-loire.png");
-        }
-        else if (Objects.equals(region, "provencealpescotedazur")){
-            this.region = representation.Image(chemin + "provence-alpes-cote-dazur.png");
-        }
-        else
-        {
-            this.region = representation.Image(chemin + "defaut.png");
-        }
-
+        // l'image de la région si elle en a une ; sinon (clé inconnue, ancienne région) l'image par défaut
+        String fichier = RegionFr.chercher(region, ModeRegions.TOUTES)
+                .map(RegionFr::getImage)
+                .orElse("defaut.png");
+        this.region = representation.Image(chemin + fichier);
         return this.region;
     }
     public Image getRegion() {
