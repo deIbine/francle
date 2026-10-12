@@ -92,7 +92,7 @@ réinitialisation des variables, le *fall-through* d'un `switch`, les avertissem
 
 **Découvertes à traiter plus tard :**
 
-- **Pourcentage de proximité peu parlant** (question de *game design*) : il est calculé par rapport
+- ~~**Pourcentage de proximité peu parlant**~~ : réglé en Phase 2 (formule B). Constat d'origine : il était calculé par rapport
   à la région la plus éloignée de la cible, souvent un département d'outre-mer à plus de 9000 km.
   Toute la métropole se retrouve entre 88 % et 98 % (pour la Bretagne : Corse 88 %, Normandie 97 %).
   Options : calcul limité à la métropole, distance maximale fixe, ou autre formule.
@@ -135,12 +135,17 @@ Résultat : `main.java` passe de 1421 à 955 lignes ; ajouter une région = **1 
 (une *connaissance* à un seul endroit, pas seulement un texte) ; le refactoring sous filet de sécurité
 (construire à côté, migrer, supprimer) ; remplacer les valeurs spéciales par une vraie notion d'absence.
 
-**Reste à décider ou à faire :**
+**Ajouts après le refactoring** (changements de comportement volontaires, dans des commits séparés) :
 
-- le **pourcentage de proximité** (voir Phase 1) : désormais une seule ligne à changer dans `pourcentage` ;
-- les **coquilles des indices**, recopiées telles quelles pendant le refactoring : « la crepe »,
-  « Orleans », « Napoleon Bonaparte », « le rhum arrange », « le poulet boucane »…
-  Elles se corrigent maintenant à un seul endroit, dans `RegionFr`.
+- **Pourcentage de proximité, formule B** : pour une cible en métropole, 0 % correspond à la région
+  *métropolitaine* la plus éloignée (Bretagne : Normandie 76 %, Grand Est 35 %, Corse 0 % ; avant :
+  97 %, 92 %, 88 %). Une cible en outre-mer garde la référence de toutes les régions. Chaque région
+  porte désormais sa `Zone` (métropole, outre-mer). Le pourcentage est arrondi au lieu d'être tronqué
+  (une distance de quelques centimètres donnait 99 %) et ne descend jamais sous 0 %.
+  Conséquence de B : la référence dépend de la cible, les pourcentages sont plus sévères pour une
+  région en bordure (Grand Est) que pour une région centrale.
+- **Indices corrigés** : crêpe, tarte Tatin, Orléans, bœuf, huîtres, Napoléon, rhum arrangé,
+  poulet boucané ; superficie affichée en km² au lieu de km.
 
 ---
 
