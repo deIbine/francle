@@ -3,7 +3,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.lang.Math;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,7 +10,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
-import java.util.Objects;
 import java.text.Collator;
 import java.text.Normalizer;
 import java.util.regex.Pattern;
@@ -792,25 +790,14 @@ class Region{
         int r;
         r = 6371;
         // loi des cosinus sphérique : d = R * acos(sin(lat1)*sin(lat2) + cos(lat1)*cos(lat2)*cos(lon1 - lon2))
-        double lat1 = degresversradian(laaregion.getLatitude());
-        double lat2 = degresversradian(laasupposition.getLatitude());
-        double deltaLon = degresversradian(laaregion.getLongitude() - laasupposition.getLongitude());
+        double lat1 = Math.toRadians(laaregion.getLatitude());
+        double lat2 = Math.toRadians(laasupposition.getLatitude());
+        double deltaLon = Math.toRadians(laaregion.getLongitude() - laasupposition.getLongitude());
         double cosAngle = Math.sin(lat1) * Math.sin(lat2) + Math.cos(lat1) * Math.cos(lat2) * Math.cos(deltaLon);
         // les arrondis des double peuvent donner 1.0000000000000002, et acos(>1) renvoie NaN
         cosAngle = Math.min(1.0, cosAngle);
         distance = Math.acos(cosAngle) * r;
-        if ((laaregion.getLatitude() == 0) || (laasupposition.getLatitude() == 0)){
-            distance = 0;
-        }
         return distance;
-    }
-
-    public double degresversradian(double latoulon){
-        double pi;
-        pi = Math.PI;
-        double degre;
-        degre = latoulon *(pi/180);
-        return degre;
     }
 
     // pourcentage de proximité : 100 % à 0 km, 0 % pour la région la plus éloignée de la cible
