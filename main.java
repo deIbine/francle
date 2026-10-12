@@ -20,7 +20,6 @@ public class main{
         commentjouer didacticiel = new commentjouer();
         superinterface[] jeusympa = new superinterface[100];
         superinterface temporaire = new superinterface();
-        int essai = 0;
         int findujeu = - 1;
         while(findujeu !=0){
             String lejeu = JOptionPane.showInputDialog("0 = arrêt, 1 = jeu, 2 = paramètres, 3 = didacticiel. Faites votre choix : ");
@@ -42,9 +41,9 @@ public class main{
                 case 1 :
                     Region Francaise = new Region();
                     int compteur=0;
-                    while (essai !=5){
-                        jeusympa[essai] = temporaire.superi();
-                        essai = essai + 1;
+                    // on repart de 5 essais vierges à chaque partie
+                    for (int i = 0; i < 5; i++){
+                        jeusympa[i] = temporaire.superi();
                     }
                     JOptionPane.showMessageDialog( null, "Quelle est cette région française ?", "", JOptionPane.PLAIN_MESSAGE );
                     representation larep = new representation();
@@ -137,6 +136,7 @@ public class main{
                         boucle = Integer.parseInt(fin);
                     }
                     frame.setVisible(false);
+                    break;
                 default :
                     JOptionPane.showMessageDialog( null, "Retour au menu", "", JOptionPane.PLAIN_MESSAGE );
                     break;
@@ -512,13 +512,6 @@ class Region{
         String vrainom;
         int superficie;
 
-        if (verifchoix == 2){
-            int de;
-            double lareponse = Math.floor(Math.random()*2);
-            de = (int)lareponse;
-            if (de == 0) {verifchoix = 0;}
-            else {verifchoix = 1;}
-        }
         region = this.convertisseur(region);
 
         switch (region)
@@ -696,7 +689,8 @@ class Region{
                 break;}
                 int test = 0;
                 if (longitude != 0){test = 1;}
-                if ((verifchoix == 0) && (test == 0)){
+                // les anciennes régions sont reconnues dans tous les modes, sauf "nouvelles régions uniquement" (1)
+                if ((verifchoix != 1) && (test == 0)){
                     switch (region) {
                         case "nordpasdecalais":
                             latitude = 50.62925;
@@ -1034,7 +1028,14 @@ class Region{
         double distance;
         int r;
         r = 6371;
-        distance = Math.acos(Math.sin(degresversradian(laaregion.getLongitude()))*Math.sin(degresversradian(laasupposition.getLongitude()))+Math.cos(degresversradian(laaregion.getLongitude()))*Math.cos(degresversradian(laasupposition.getLongitude()))*Math.cos(degresversradian((laaregion.getLatitude()-laasupposition.getLatitude())))) * r;
+        // loi des cosinus sphérique : d = R * acos(sin(lat1)*sin(lat2) + cos(lat1)*cos(lat2)*cos(lon1 - lon2))
+        double lat1 = degresversradian(laaregion.getLatitude());
+        double lat2 = degresversradian(laasupposition.getLatitude());
+        double deltaLon = degresversradian(laaregion.getLongitude() - laasupposition.getLongitude());
+        double cosAngle = Math.sin(lat1) * Math.sin(lat2) + Math.cos(lat1) * Math.cos(lat2) * Math.cos(deltaLon);
+        // les arrondis des double peuvent donner 1.0000000000000002, et acos(>1) renvoie NaN
+        cosAngle = Math.min(1.0, cosAngle);
+        distance = Math.acos(cosAngle) * r;
         if ((laaregion.getLatitude() == 0) || (laasupposition.getLatitude() == 0)){
             distance = 0;
         }
