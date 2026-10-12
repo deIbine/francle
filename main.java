@@ -238,6 +238,10 @@ class Message{
             felicitations = "Bravo ! \n \n";
             message = "Vous avez trouvé la bonne réponse ! \nFélicitations et à demain !";
         }
+        else if (partie.getEtat() == Partie.Etat.ABANDONNEE){
+            felicitations = "Vous avez abandonné ! \n \n";
+            message = "La réponse était " + partie.getCible().getNom() + "\nBon courage et à demain !";
+        }
         else {
             felicitations = "C'est raté ! \n \n";
             message = "La réponse était " + partie.getCible().getNom() + "\nBon courage et à demain !";
