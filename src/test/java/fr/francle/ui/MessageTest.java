@@ -1,3 +1,9 @@
+package fr.francle.ui;
+
+import fr.francle.donnees.ModeRegions;
+import fr.francle.donnees.RegionFr;
+import fr.francle.jeu.Partie;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
