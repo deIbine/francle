@@ -73,6 +73,9 @@ class MessageTest {
         assertTrue(lignes[0].endsWith("% Superficie : 27 208 km² "));
         assertTrue(lignes[1].startsWith("Supposition 2 : Normandie "));
         assertTrue(lignes[1].endsWith("% Premier indice : la crêpe"));
+        // d'Ajaccio, Rennes est au nord-ouest ; de Rouen, au sud-ouest ; la ligne gagnante n'a pas de flèche
+        assertTrue(lignes[0].contains(" km ↖ "));
+        assertTrue(lignes[1].contains(" km ↙ "));
         assertEquals("Supposition 3 : Bretagne 0 km 100% Deuxième indice : ", lignes[2]);
     }
 }
