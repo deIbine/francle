@@ -53,6 +53,15 @@ final class Textes {
         }
     }
 
+    // le nom d'un mode de jeu, dans le menu Paramètres
+    static String mode(ModeRegions mode) {
+        switch (mode) {
+            case NOUVELLES : return "Nouvelles régions (depuis 2016)";
+            case ANCIENNES : return "Anciennes régions (avant 2016)";
+            default : return "Toutes les régions";
+        }
+    }
+
     // le message sous la saisie, après un essai raté
     static String apresEssai(Partie partie) {
         int restants = Partie.ESSAIS_MAX - partie.getEssais().size();

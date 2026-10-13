@@ -2,8 +2,7 @@ package fr.francle.ui;
 
 import fr.francle.donnees.ModeRegions;
 
-// les réglages du joueur, sans aucun affichage : aujourd'hui modifiés par les popups de Parametres,
-// demain (Phase 4.3) par la barre de menus de la fenêtre
+// les réglages du joueur, sans aucun affichage : le menu Paramètres de la fenêtre les modifie
 class Reglages {
 
     private ModeRegions mode = ModeRegions.NOUVELLES;

@@ -931,6 +931,91 @@ supprimé, pas commenté : Git le garde dans l'historique (`git show 8098abf:src
 
 ---
 
+## Phase 4.3 : les menus
+
+### Une `Action` : une commande, plusieurs déclencheurs
+
+« Abandonner » existe à deux endroits : le bouton à côté de « Valider » et l'article du menu Jeu. Avec deux
+écouteurs séparés, il faudrait penser à griser **les deux** en fin de partie, et l'oubli de l'un est un bug qui
+attend son heure. Une `Action` réunit en **un seul objet** le nom, le raccourci, l'état actif ou non, et le code
+à exécuter. Le bouton et l'article de menu sont construits à partir d'elle (`new JButton(abandonner)`,
+`menu.add(abandonner)`) et **l'écoutent** : `abandonner.setEnabled(false)` grise les deux d'un coup.
+
+> *La question à se poser :* « Cette commande peut-elle être déclenchée de plusieurs façons (bouton, menu,
+> raccourci) ? » Si oui, une `Action` : l'état est stocké à un seul endroit. C'est encore DRY, appliqué à
+> l'interface.
+
+### Les menus Swing
+
+| Classe | Rôle |
+|---|---|
+| `JMenuBar` | la barre, posée sur la fenêtre par `frame.setJMenuBar(...)` (hors du contenu : elle ne compte pas dans le layout) |
+| `JMenu` | un menu déroulant (« Jeu ») |
+| `JMenuItem` | un article ordinaire, souvent créé à partir d'une `Action` |
+| `JRadioButtonMenuItem` + `ButtonGroup` | des choix **exclusifs** : le groupe décoche les autres quand on en coche un |
+| `JCheckBoxMenuItem` | une case à cocher **indépendante** |
+
+Le choix du composant **dit** la règle à l'utilisateur : des ronds pour « un seul mode à la fois », des coches
+pour « avec ou sans silhouette ». Les anciens popups demandaient de taper 0, 1 ou 2, ce qui permettait de taper 7
+(et il fallait le gérer). Avec des boutons radio, une saisie invalide n'est **plus possible**. C'est la meilleure
+validation : celle qu'on n'a pas besoin d'écrire. C'est pourquoi `Parametres` et `ModeRegions.depuisCode` ont pu
+disparaître.
+
+### Raccourcis (accélérateurs) et mnémoniques
+
+- Un **accélérateur** (`Ctrl+N`) déclenche la commande directement, menu fermé. Il est affiché à droite de
+  l'article : l'utilisateur le découvre en ouvrant le menu.
+- Un **mnémonique** (`Alt+J`) ouvre le menu au clavier ; la lettre est soulignée quand on appuie sur Alt.
+- `Toolkit.getMenuShortcutKeyMaskEx()` donne la bonne touche selon le système : Ctrl sous Windows et Linux,
+  Cmd sur Mac. Écrire `CTRL_DOWN_MASK` en dur aurait été faux sur Mac.
+- `F1` pour l'aide et `Ctrl+Q` pour quitter sont des **conventions** : les respecter, c'est ce qui rend une
+  application « évidente ».
+
+### Un seul chemin pour quitter
+
+« Quitter » ne fait pas `System.exit(0)` : il envoie à la fenêtre l'événement `WINDOW_CLOSING`, exactement comme un
+clic sur la croix. Si un jour on veut demander « Voulez-vous vraiment quitter ? » ou sauvegarder des statistiques
+(Phase 5), il n'y aura qu'un seul endroit à modifier.
+
+### Le piège du `FlowLayout`
+
+En fin de partie, « Nouvelle partie » remplace « Abandonner ». Le nouveau bouton est plus large, la ligne
+déborde, et `FlowLayout` fait ce qu'il fait toujours : il **passe à la ligne**, comme un mot trop long. Mais la
+hauteur du panneau a été fixée au `pack()` : la seconde ligne est coupée, et le bouton est invisible. Il n'y a
+aucune erreur, juste un bouton qui manque. `BorderLayout` règle le problème : le champ de saisie au centre prend la
+largeur qui **reste**, et les boutons à l'est gardent leur taille.
+
+> *La question à se poser :* « Que devient cette disposition si un composant change de taille (texte plus long,
+> police plus grande, bouton qui en remplace un autre) ? » `FlowLayout` convient à ce qui a la place de s'étaler,
+> pas à une ligne qui doit rester une ligne.
+
+### Vérifier sans déranger l'utilisateur
+
+Pour tester les raccourcis, le harnais a d'abord envoyé de **vraies touches** (`Robot.keyPress`). Les touches sont
+bien arrivées, mais elles vont à la fenêtre active de l'ordinateur, que l'utilisateur était en train d'utiliser :
+`Ctrl+N` aurait pu ouvrir une fenêtre dans son navigateur. Une vérification ne doit pas avoir d'effets de bord
+sur le reste du système. La seconde version ne touche plus à l'écran :
+
+- les commandes sont déclenchées **par programme** (`article.doClick()`), et les raccourcis lus sur les articles
+  (`getAccelerator()`) ;
+- la fenêtre n'est jamais affichée : elle est **dessinée dans une image** en mémoire (`racine.paint(g)`). Il faut
+  alors appeler `frame.validate()` à la main. Swing ne recalcule la disposition tout seul que pour une fenêtre
+  visible, et sans cet appel le bouton « Nouvelle partie » semblait encore absent.
+
+Au passage, un piège de l'EDT : `SwingUtilities.invokeAndWait` **depuis** l'EDT est interdit. L'EDT attendrait
+une tâche qu'il est le seul à pouvoir exécuter. Swing préfère lever une `Error` plutôt que de bloquer pour
+toujours.
+
+### Les notions Java rencontrées
+
+- **`AbstractAction`**, classe abstraite à compléter : on ne redéfinit que `actionPerformed`.
+- **`Runnable`** comme paramètre (`action(nom, raccourci, this::commencer)`) : passer « du code à exécuter plus
+  tard » à une méthode.
+- **Une lambda qui capture une variable de boucle** (`for (ModeRegions mode : MODES)` puis `e -> reglages.setMode(mode)`) :
+  autorisé, car `mode` est une nouvelle variable à chaque tour et n'est jamais modifiée (*effectivement finale*).
+
+---
+
 ## Aide-mémoire
 
 ### Raccourcis IntelliJ

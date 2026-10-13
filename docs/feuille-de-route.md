@@ -13,7 +13,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 1 | Corriger les bugs | ✅ Fait (4 bugs corrigés) |
 | 2 | Centraliser les données des régions | ✅ Fait (enum RegionFr, −466 lignes) |
 | 3 | Séparer logique et affichage, tests, Maven, packages | ✅ Fait (PR #21, #22 et 3.3) |
-| 4 | Interface Swing en une seule fenêtre | 🔄 En cours (4.1 et 4.2 faites) |
+| 4 | Interface Swing en une seule fenêtre | 🔄 En cours (4.1, 4.2 et 4.3 faites) |
 | 5 | Nouvelles fonctionnalités | ⬜ À faire |
 
 ---
@@ -326,6 +326,25 @@ tableau des essais, indices. Plus de cascade de popups pour jouer.
 - **Vérifié à l'écran** : la vraie fenêtre lancée, des essais joués en cliquant ses boutons par programme, et
   des captures d'écran. Elles ont montré une fenêtre plus haute que l'écran (cadre réduit de 420 × 320 à
   400 × 220) et des flèches trop petites.
+
+### 4.3 : les menus ✅
+
+- **Barre de menus** (à la place de la barre de boutons, qui disparaît : la fenêtre passe de 624 à 593 points de
+  haut) :
+  - **Jeu** : Nouvelle partie (Ctrl+N), Liste des régions (Ctrl+L), Abandonner, Quitter (Ctrl+Q) ;
+  - **Paramètres** : le mode en **boutons radio** (un seul choix), la silhouette et la liste en **cases à cocher** ;
+  - **Aide** : Comment jouer (F1).
+  Menus ouvrables au clavier (Alt+J, Alt+P, Alt+A).
+- **Des `Action`** au lieu d'écouteurs séparés : « Abandonner » est partagée par le bouton et le menu, et
+  `setEnabled(false)` grise les deux. En fin de partie, « Nouvelle partie » remplace « Abandonner » à côté de
+  « Valider », et devient le bouton de la touche Entrée.
+- **Quitter** passe par le même chemin que la croix de la fenêtre (`WINDOW_CLOSING`).
+- **Supprimés** : `Parametres` (ses popups « tapez 0, 1 ou 2 ») et `ModeRegions.depuisCode`, devenus inutiles. Le
+  jeu n'affiche plus aucune boîte de saisie.
+- **Corrigé en chemin** : la ligne de saisie était en `FlowLayout` ; le bouton « Nouvelle partie », plus large,
+  passait à la ligne et disparaissait. Elle est maintenant en `BorderLayout`.
+- **145 tests** (`Textes.mode`) ; menus vérifiés par programme (raccourcis déclarés, articles grisés, un seul
+  bouton radio coché, mode appliqué à la partie suivante) et fenêtre dessinée en mémoire.
 
 **Comment le penser.** La *programmation événementielle* : le programme ne déroule plus ses lignes dans
 l'ordre, il **réagit** à des événements (`ActionListener`). Le *fil de Swing* (*Event Dispatch Thread*) :

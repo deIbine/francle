@@ -51,6 +51,17 @@ class TextesTest {
     }
 
     @Test
+    @DisplayName("Chaque mode de jeu a son propre nom dans le menu")
+    void modes() {
+        assertEquals("Nouvelles régions (depuis 2016)", Textes.mode(ModeRegions.NOUVELLES));
+        assertEquals("Anciennes régions (avant 2016)", Textes.mode(ModeRegions.ANCIENNES));
+        assertEquals("Toutes les régions", Textes.mode(ModeRegions.TOUTES));
+        // deux modes avec le même nom seraient indiscernables dans le menu
+        assertEquals(ModeRegions.values().length,
+                java.util.Arrays.stream(ModeRegions.values()).map(Textes::mode).distinct().count());
+    }
+
+    @Test
     @DisplayName("Essais restants, au singulier comme au pluriel")
     void apresEssai() {
         Partie partie = new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES);
