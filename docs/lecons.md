@@ -16,6 +16,7 @@ Le détail de ce qui a été fait dans le jeu se trouve dans la [feuille de rout
 - [Petits correctifs](#petits-correctifs)
 - [Phase 3.1 : séparer les règles de l'affichage](#phase-31--séparer-les-règles-de-laffichage)
 - [Phase 3.2 : Maven, JUnit et intégration continue](#phase-32--maven-junit-et-intégration-continue)
+- [Phase 3.3 : un fichier par classe, des packages](#phase-33--un-fichier-par-classe-des-packages)
 - [Aide-mémoire](#aide-mémoire)
 
 ---
@@ -627,6 +628,128 @@ un réglage local) y échoue tout de suite.
 
 ---
 
+## Phase 3.3 : un fichier par classe, des packages
+
+### Le code mort se supprime, il ne se range pas
+
+Avant de répartir les classes, on retire ce qui ne sert à rien : la classe vide `commentjouer` (créée dans `main`
+mais jamais utilisée) et les brouillons en commentaire (`interfacerapide`, `Statistiques`, `internet ?`).
+Ranger du code mort dans des packages, c'est lui donner l'air d'être vivant. Les **idées** qu'il contenait ne sont
+pas perdues : elles passent dans la feuille de route, où on les retrouvera (et l'ancien code reste dans `archive/`
+et dans l'historique Git).
+
+> *La question à se poser :* « Ce commentaire est-il une explication du code, ou une idée pour plus tard ? »
+> Une explication reste dans le code ; une idée va dans la liste des choses à faire.
+
+### Un fichier par classe
+
+Java n'autorise qu'**une classe `public` par fichier**, qui porte le nom du fichier. Les autres classes d'un même
+fichier (« classes auxiliaires ») sont tolérées, mais `javac -Xlint:all` les signale, et elles sont introuvables :
+qui chercherait `Partie` dans `main.java` ? Un fichier par classe, c'est :
+
+- **trouver** une classe par son nom (`Ctrl+N` dans IntelliJ) ;
+- des **diffs lisibles** : un commit qui change les règles ne touche que `Partie.java` ;
+- des **imports précis** par fichier : on voit d'un coup d'œil de quoi dépend chaque classe
+  (`Partie` n'importe rien de `javax.swing` : la preuve qu'elle n'affiche rien).
+
+Les jokers comme `import javax.swing.*` disparaissent au passage : un import nommé dit exactement ce qu'on utilise.
+
+### Les conventions de nommage
+
+| Élément | Convention | Exemples |
+|---|---|---|
+| Classe, `enum`, `record` | `UpperCamelCase` | `Partie`, `RegionFr`, `Francle` |
+| Méthode, variable | `lowerCamelCase` | `proposer`, `getCible`, `distanceMax` |
+| Constante (`static final`) | `MAJUSCULES_SOULIGNEES` | `ESSAIS_MAX`, `RAYON_TERRE` |
+| Package | minuscules, à l'envers du nom de domaine | `fr.francle.jeu` |
+
+Ce n'est pas qu'une question de goût : `main` (une classe) se confondait avec `main` (la méthode). Le renommage
+est fait dans un **commit séparé** du découpage, pour que chacun reste lisible (`Shift+F6` dans IntelliJ renomme
+partout d'un coup, fichier compris). Les méthodes aux noms d'origine (`onmetlimage`, `messagedefin`…) seront
+renommées en Phase 4, quand l'interface sera réécrite.
+
+Piège Windows : son système de fichiers ignore la casse (`representation.java` et `Representation.java` sont
+le même fichier pour lui, pas pour Linux ni pour Git). Toujours renommer avec `git mv` (ou l'IDE), puis vérifier
+avec `git ls-files` que Git a bien enregistré la nouvelle casse.
+
+### Les packages : ranger par responsabilité
+
+Un package est un **dossier** et un **espace de noms** : la classe `Partie` du package `fr.francle.jeu` s'appelle
+en entier `fr.francle.jeu.Partie`, et vit dans `src/main/java/fr/francle/jeu/Partie.java`. Chaque fichier commence
+par `package fr.francle.jeu;`, et une classe d'un autre package s'utilise avec un `import`.
+
+On a rangé **par responsabilité**, en reprenant la séparation de la 3.1 :
+
+```
+fr.francle.ui        Francle, Message, Parametres, Representation
+      │ utilise
+      ▼
+fr.francle.jeu       Partie, Essai, Indice
+      │ utilise
+      ▼
+fr.francle.donnees   RegionFr, ModeRegions, Epoque, Zone
+```
+
+Les flèches ne vont **que vers le bas** : les données ignorent qu'il existe un jeu, le jeu ignore qu'il existe des
+popups. C'est ce qui permettra en Phase 4 de remplacer tout `ui` par une fenêtre Swing **sans toucher** à `jeu` ni à
+`donnees`. Une flèche vers le haut (`RegionFr` qui appellerait `Message`) serait une **dépendance circulaire** :
+impossible alors de changer une couche sans toucher l'autre.
+
+> *La question à se poser :* pour chaque `import fr.francle.…` : « Est-ce que ça va dans le bon sens ? »
+> Les imports en tête de fichier rendent ces dépendances visibles ; c'est un des intérêts du découpage.
+
+### La visibilité : ouvrir le moins possible
+
+| Mot-clé | Visible depuis |
+|---|---|
+| `private` | la classe seule |
+| *(rien)* : visibilité du package | les classes du même package |
+| `protected` | le package, plus les sous-classes (héritage, pas encore utilisé ici) |
+| `public` | partout |
+
+Tant que tout était dans le package par défaut, la visibilité du package voulait dire « tout le monde ». Avec
+trois packages, il faut choisir. La règle : **commencer fermé, et n'ouvrir que ce qu'un autre package utilise
+vraiment**. Concrètement, on a déplacé les fichiers, puis **compilé** : c'est le compilateur qui dit ce qui doit
+devenir `public` (ici, l'analyse faite avant était juste : tout a compilé du premier coup).
+
+- `public` : `RegionFr`, `ModeRegions`, `Partie`, `Essai`, `Indice`, `Partie.Etat`… car `ui` et `jeu` s'en servent.
+- visibles du **seul package** : `ModeRegions.peutTirer` et `reconnait` (seul `RegionFr` s'en sert),
+  `RegionFr.simplifier`, `Partie.pourcentage`, le brouillon `Partie.fleche`, et les classes `Message`,
+  `Parametres`, `Representation` (seul `Francle` s'en sert).
+
+Pourquoi fermer ? Tout ce qui est `public` est une **promesse** : d'autres parties du code peuvent s'en servir, donc
+on ne peut plus le changer librement. Ce qui reste fermé peut être modifié sans risque hors de son package.
+
+Les **tests** sont rangés dans le **même package** que la classe testée (`src/test/java/fr/francle/jeu/PartieTest.java`) :
+ils voient donc ce qui est visible du package, comme `Partie.pourcentage`, sans qu'on ait à l'ouvrir pour eux. Le
+test des images a dû déménager de `RegionFrTest` (package `donnees`) vers `RepresentationTest` (package `ui`) :
+un test de `donnees` ne doit pas dépendre de l'interface, pour la même raison que le code.
+
+### Ce que le compilateur ne vérifie pas
+
+Après le passage aux packages : compilation OK, 71 tests au vert, `BUILD SUCCESS`… et un `.jar` qui ne se lançait
+plus (`impossible de trouver ou de charger la classe principale Francle`). Le `pom.xml` déclarait encore la classe
+à lancer sous son ancien nom ; or un nom écrit dans un fichier de configuration (XML, texte) n'est **pas vérifié
+par le compilateur**, et aucun test ne lançait le `.jar`.
+
+Méthode habituelle : **reproduire** (lancer le `.jar`), **corriger** (`fr.francle.ui.Francle`), puis écrire un
+test qui l'aurait attrapé (`LancementTest` lit le `pom.xml` et vérifie que la classe existe et a une méthode `main`),
+et vérifier qu'il **échoue** avec l'ancienne valeur avant de passer avec la nouvelle.
+
+> *La question à se poser :* après un renommage ou un déplacement, « Où ce nom est-il écrit **en dehors du code
+> Java** ? » (configuration, scripts, documentation, chaînes de caractères). `Ctrl+Shift+F` (chercher dans tout le
+> projet) les trouve ; le refactoring d'IntelliJ propose aussi de les mettre à jour (*Search in comments and strings*).
+
+### Les notions Java rencontrées
+
+- **`package` et `import`** : le nom complet d'une classe, l'arborescence de dossiers qui doit lui correspondre.
+- **Les quatre niveaux de visibilité**, et le fait qu'un `enum` ou une classe imbriquée (`Partie.Etat`) a sa propre
+  visibilité, à ouvrir elle aussi si un autre package s'en sert.
+- **La réflexion** (`Class.forName`, `getMethod`, `Modifier.isStatic`) : manipuler une classe à partir de son nom
+  sous forme de texte, utilisée dans `LancementTest`.
+
+---
+
 ## Aide-mémoire
 
 ### Raccourcis IntelliJ
@@ -636,6 +759,7 @@ un réglage local) y échoue tout de suite.
 | `Ctrl+Shift+F` | Chercher un texte dans tout le projet |
 | `Alt+F7` | *Find Usages* : qui appelle cette méthode ? |
 | `Shift+F6` | *Rename* : renommer partout d'un coup |
+| `Ctrl+N` | Ouvrir une classe par son nom |
 | `Ctrl+Alt+M` | *Extract Method* : transformer une sélection en méthode |
 | `Alt+Suppr` | *Safe Delete* : supprimer, sauf si c'est encore utilisé |
 | `F6` | *Move* : déplacer une méthode `static` vers une autre classe |

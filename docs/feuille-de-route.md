@@ -12,7 +12,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 0 | Environnement de développement | ✅ Fait (JDK 21, IntelliJ 2026.2) |
 | 1 | Corriger les bugs | ✅ Fait (4 bugs corrigés) |
 | 2 | Centraliser les données des régions | ✅ Fait (enum RegionFr, −466 lignes) |
-| 3 | Séparer logique et affichage, tests, Maven | 🟡 En cours (3.1 `Partie` et 3.2 Maven faites) |
+| 3 | Séparer logique et affichage, tests, Maven, packages | ✅ Fait (PR #21, #22 et 3.3) |
 | 4 | Interface Swing en une seule fenêtre | ⬜ À faire |
 | 5 | Nouvelles fonctionnalités | ⬜ À faire |
 
@@ -160,7 +160,7 @@ Résultat : `main.java` passe de 1421 à 955 lignes ; ajouter une région = **1 
 
 ---
 
-## Phase 3 : séparer la logique de l'affichage, et ajouter des tests
+## Phase 3 : séparer la logique de l'affichage, et ajouter des tests ✅
 
 **Pourquoi.** Tout est encore mélangé dans `main.java` :
 
@@ -226,12 +226,35 @@ Résultat : `main.java` passe de 978 à 828 lignes.
 - **Corrigé en chemin** : les distances suivaient la langue du système (`698.45` sur une machine anglaise).
 - **IntelliJ** : ouvrir le `pom.xml` remplace la configuration manuelle de la Phase 0.
 
+### 3.3 : un fichier par classe, des packages ✅
+
+- **Ménage** : la classe vide `commentjouer` et les brouillons en commentaire (`interfacerapide`, `Statistiques`…)
+  sont supprimés ; leurs idées sont reportées en Phase 5.
+- **Un fichier par classe** (11 fichiers), chacun avec ses seuls imports : plus d'avertissement « auxiliary class ».
+- **Conventions de nommage** : `main` devient `Francle`, `representation` devient `Representation`.
+- **Trois packages**, avec des dépendances dans un seul sens (`ui` → `jeu` → `donnees`) :
+
+  | Package | Classes | Rôle |
+  |---|---|---|
+  | `fr.francle.donnees` | `RegionFr`, `ModeRegions`, `Epoque`, `Zone` | Les régions et leurs informations |
+  | `fr.francle.jeu` | `Partie`, `Essai`, `Indice` | Les règles, sans affichage |
+  | `fr.francle.ui` | `Francle`, `Message`, `Parametres`, `Representation` | Les popups et les images |
+
+  (`interface`, prévu à l'origine, est un mot réservé de Java : d'où `ui`, pour *user interface*.)
+- **Visibilité réduite au nécessaire** : seul ce qu'un autre package utilise est `public`.
+- **Tests rangés dans le même package que leur classe** ; deux nouveaux : `RepresentationTest` (images) et
+  `LancementTest`, qui vérifie la classe à lancer déclarée dans le `pom.xml` (un oubli que ni le compilateur ni les
+  70 autres tests n'avaient vu : le `.jar` ne se lançait plus).
+
+Résultat de la Phase 3 : 978 lignes dans un seul fichier → 11 fichiers rangés en 3 packages, 72 tests JUnit,
+une CI, et un comportement identique au départ (hors corrections volontaires) sur 300 sessions rejouées.
+
 **Comment le penser.** *Séparation des responsabilités* : une classe = une raison de changer (les règles
 changent avec le *game design*, l'affichage avec l'interface). *Testabilité* : « si je ne peux pas tester
 une règle sans cliquer, c'est qu'elle est mal rangée ».
 
 **Ce que tu apprends :** `record`, packages et visibilité (`public`, `private`, visibilité du package),
-JUnit 5 (`@Test`, `assertEquals`), Maven (cycle `compile` / `test` / `package`, `src/main/java` et
+JUnit (`@Test`, `assertEquals`), Maven (cycle `compile` / `test` / `package`, `src/main/java` et
 `src/test/java`), les ressources (`getResource`) au lieu des chemins relatifs fragiles, l'intégration continue.
 C'est la phase la plus formatrice sur l'architecture, et la plus grosse.
 

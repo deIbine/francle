@@ -48,8 +48,8 @@ java -jar target/francle.jar
 ### Avec IntelliJ IDEA
 
 *File > Open*, puis choisir le fichier `pom.xml` (*Open as Project*). IntelliJ lit le `pom.xml` et configure
-seul le JDK, les dossiers de code, de ressources et de tests, et JUnit. Lancer ensuite la classe `main`, ou les
-tests par un clic droit sur `src/test/java` → *Run 'All Tests'*.
+seul le JDK, les dossiers de code, de ressources et de tests, et JUnit. Lancer ensuite la classe `Francle`
+(`fr.francle.ui`), ou les tests par un clic droit sur `src/test/java` → *Run 'All Tests'*.
 
 Projet déjà ouvert dans IntelliJ avant le passage à Maven ? Les anciens réglages manuels (racine marquée comme
 dossier de code) restent et entrent en conflit avec Maven (erreur *Maven resources compiler: Failed to copy*).
@@ -62,9 +62,12 @@ francle/
 ├── pom.xml                    Description du projet pour Maven (Java 21, JUnit, .jar)
 ├── mvnw, mvnw.cmd, .mvn/      Maven Wrapper
 ├── src/
-│   ├── main/java/             Code source du jeu
+│   ├── main/java/fr/francle/  Code source du jeu, en trois packages :
+│   │   ├── donnees/           les régions et leurs informations (RegionFr, ModeRegions…)
+│   │   ├── jeu/               les règles, sans affichage (Partie, Essai, Indice)
+│   │   └── ui/                les popups et les images (Francle, la classe à lancer)
 │   ├── main/resources/        Images : silhouettes (regions/) et cartes de localisation (indices/, pas encore utilisées)
-│   └── test/java/             Tests JUnit
+│   └── test/java/fr/francle/  Tests JUnit, rangés dans les mêmes packages que les classes testées
 ├── .github/workflows/         Intégration continue : compilation et tests à chaque PR
 ├── docs/
 │   ├── indices.md             Indices de chaque région
@@ -83,7 +86,7 @@ et ce qu'elle a permis d'apprendre dans [docs/lecons.md](docs/lecons.md).
 - [x] **Phase 0** : environnement de développement (JDK, IDE)
 - [x] **Phase 1** : corriger les bugs (calcul de distance, réinitialisation des parties…)
 - [x] **Phase 2** : centraliser les données des régions (`enum`, collections)
-- [ ] **Phase 3** : séparer la logique du jeu de l'affichage ✓, Maven, tests JUnit et intégration continue ✓, packages
+- [x] **Phase 3** : séparer la logique du jeu de l'affichage, Maven, tests JUnit, intégration continue, packages
 - [ ] **Phase 4** : interface Swing en une seule fenêtre, flèche de direction
 - [ ] **Phase 5** : statistiques, région du jour, indices des anciennes régions
 
