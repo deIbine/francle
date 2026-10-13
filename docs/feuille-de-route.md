@@ -14,7 +14,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 2 | Centraliser les données des régions | ✅ Fait (enum RegionFr, −466 lignes) |
 | 3 | Séparer logique et affichage, tests, Maven, packages | ✅ Fait (PR #21, #22 et 3.3) |
 | 4 | Interface Swing en une seule fenêtre | ✅ Fait (PR #24 à #28) |
-| 5 | Région du jour et statistiques | 🔄 En cours |
+| 5 | Région du jour et statistiques | ✅ Fait (PR #29 et #30) |
 | 6 | Indices plus riches | ⬜ À faire |
 | 7 | Version web (Spring Boot) | ⬜ À faire |
 
@@ -423,6 +423,30 @@ reproductible, `java.nio.file`, la sérialisation JSON (Jackson), les tests avec
   2030, puis l'a avancée d'un jour.
 - **176 tests** (`RegionDuJourTest` : valeurs de référence figées sur des dates passées, une fois par cycle,
   jamais deux jours de suite sur 4 000 jours, uniquement les nouvelles régions).
+
+### 5.2 : les statistiques ✅
+
+- **Nouveau package `fr.francle.stats`**, sans Swing ni écran :
+  - `Resultat` (une partie du jour terminée : date, région, propositions, état) et `PartieEnCours` ;
+  - `Historique` : les résultats et la partie du jour en cours. Une partie est reconstruite en **rejouant ses
+    propositions** dans une nouvelle `Partie` : ce sont les règles qui recalculent distances, indices et état ;
+  - `Statistiques` : jouées, % de victoires (arrondi), série en cours, meilleure série, répartition des victoires
+    par nombre d'essais. Calculées à chaque fois, jamais enregistrées ;
+  - `Sauvegarde` : l'historique en **JSON avec Jackson 3.2.3** dans `~/.francle/historique.json`. Écriture dans un
+    fichier temporaire puis renommage (jamais de fichier à moitié écrit) ; fichier abîmé **mis de côté** (pas
+    effacé) et joueur prévenu ; champ inconnu ignoré ; numéro de version dans le fichier.
+- **La partie du jour est enregistrée après chaque essai** : relancer le jeu la reprend où on l'avait laissée, et une
+  partie terminée ne se rejoue plus. Les parties libres ne sont pas enregistrées.
+- **Fenêtre Statistiques** (menu Jeu, Ctrl+T), ouverte d'elle-même à la fin de la partie du jour : quatre chiffres,
+  puis les barres de la répartition, **dessinées à la main** (`paintComponent`), celle du jour en couleur.
+- **`pom.xml`** : Jackson ; le `.jar` tout compris l'embarque (9,6 Mo).
+- **Corrigé en chemin** (trouvé par un test) : deux fichiers abîmés mis de côté dans la même seconde avaient le même
+  nom, et le second déplacement échouait.
+- **199 tests** (`StatistiquesTest`, `HistoriqueTest`, `SauvegardeTest` avec `@TempDir`) ; parcours complet vérifié
+  depuis le `.jar` avec un dossier temporaire à la place de `~/.francle`.
+
+Résultat de la Phase 5 : Francle a sa partie du jour, la même pour tout le monde, avec son numéro ; elle survit à la
+fermeture du jeu, ne se rejoue pas, et alimente des statistiques à la Wordle. 166 → 199 tests.
 
 ---
 
