@@ -37,13 +37,13 @@ télécharge la bonne version au premier lancement.
 Depuis la racine du projet :
 
 ```bash
-mvnw.cmd package
+.\mvnw.cmd package
 java -jar target/francle.jar
 ```
 
-- `mvnw.cmd package` compile le code, lance les tests, puis assemble le jeu et ses images dans `target/francle.jar`.
+- `.\mvnw.cmd package` compile le code, lance les tests, puis assemble le jeu et ses images dans `target/francle.jar`.
 - `java -jar` lance ce fichier, depuis n'importe quel dossier : les images sont lues à l'intérieur du `.jar`.
-- `mvnw.cmd test` lance seulement les tests.
+- `.\mvnw.cmd test` lance seulement les tests.
 
 ### Avec IntelliJ IDEA
 

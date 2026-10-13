@@ -524,7 +524,7 @@ il n'y a rien à déclarer.
 | `target/` | tout ce que Maven produit (classes, rapports, `.jar`) ; ignoré par Git, on peut le supprimer |
 
 Le **cycle de vie** enchaîne des phases dans un ordre fixe, et demander une phase lance toutes les précédentes :
-`compile` → `test` → `package` (le `.jar`) → `verify`. `mvnw.cmd package` compile donc **et teste** avant
+`compile` → `test` → `package` (le `.jar`) → `verify`. `.\mvnw.cmd package` compile donc **et teste** avant
 d'assembler : un jeu dont les tests échouent n'est pas empaqueté.
 
 **Les dépendances** sont téléchargées depuis Maven Central et gardées dans `~/.m2`. Le *scope* `test` indique
@@ -671,8 +671,13 @@ un réglage local) y échoue tout de suite.
 
 | Commande | Usage |
 |---|---|
-| `mvnw.cmd test` | Compiler et lancer les tests |
-| `mvnw.cmd package` | Compiler, tester et produire `target/francle.jar` |
+| `.\mvnw.cmd test` | Compiler et lancer les tests |
+| `.\mvnw.cmd package` | Compiler, tester et produire `target/francle.jar` |
 | `java -jar target/francle.jar` | Lancer le jeu empaqueté |
-| `mvnw.cmd clean` | Supprimer `target/` |
-| `mvnw.cmd -Dtest=PartieTest test` | Lancer une seule classe de tests |
+| `.\mvnw.cmd clean` | Supprimer `target/` |
+| `.\mvnw.cmd "-Dtest=PartieTest" test` | Lancer une seule classe de tests |
+
+Sous PowerShell, le `.\` est obligatoire : par sécurité, PowerShell ne lance jamais un programme du dossier
+courant sans qu'on le désigne explicitement (sinon un faux `notepad.cmd` déposé dans un dossier serait lancé à la
+place du vrai). Les guillemets autour de `-Dtest=…` évitent que PowerShell découpe l'argument.
+Sous Git Bash, macOS ou Linux : `./mvnw test`.

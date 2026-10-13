@@ -2,8 +2,8 @@
 <!--
   Description du projet pour Maven : ce qu'il faut pour compiler, tester et empaqueter Francle.
   Commandes (depuis la racine du projet) :
-    mvnw.cmd test      compile et lance les tests
-    mvnw.cmd package   produit target/francle.jar, à lancer avec : java -jar target/francle.jar
+    .\mvnw.cmd test    compile et lance les tests
+    .\mvnw.cmd package   produit target/francle.jar, à lancer avec : java -jar target/francle.jar
 -->
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
