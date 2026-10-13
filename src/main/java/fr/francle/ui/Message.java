@@ -21,9 +21,9 @@ class Message{
     private static final String[] LIBELLES = {" Superficie : ", " Premier indice : ", " Deuxième indice : ", " Troisième indice : "};
 
     // un tour de jeu : demande une proposition, la transmet à la partie, puis affiche ce qu'elle répond
-    public void tour(Partie partie, Parametres lesparametres){
+    public void tour(Partie partie, Reglages reglages){
         String saisie;
-        if (lesparametres.getChoixlaliste() == 0) {
+        if (reglages.isAvecListe()) {
             saisie = JOptionPane.showInputDialog("Quelle est votre supposition ? (1 pour avoir la liste) (Echap pour abandonner) \n \n"
                     + historique(partie));
         }
@@ -36,8 +36,8 @@ class Message{
             return;
         }
         // la liste existe dans les trois modes : "1" n'est plus réservé au mode "nouvelles régions"
-        if (saisie.equals("1") && (lesparametres.getChoixlaliste() == 0)){
-            touteslesregions(ModeRegions.depuisCode(lesparametres.getChoixdelaregion()));
+        if (saisie.equals("1") && reglages.isAvecListe()){
+            touteslesregions(reglages.getMode());
             return;
         }
         Optional<Essai> essai = partie.proposer(saisie);
