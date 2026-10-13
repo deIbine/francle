@@ -1096,6 +1096,41 @@ recopier la sortie du code sans réfléchir.
 
 ---
 
+## Phase 4.4.1 : un retour d'utilisateur
+
+### « Égal » a plusieurs sens
+
+La liste se fermait quand l'unique suggestion était « déjà écrite ». Le code disait
+`suggestion.equalsIgnoreCase(texte.strip())` : égal *sans tenir compte des majuscules ni des espaces autour*. Avec
+« bretagne », la liste disparaissait donc alors que le joueur n'avait pas écrit le nom correctement. Il y a en réalité
+trois égalités différentes dans ce jeu :
+
+| Égalité | Méthode | Sert à |
+|---|---|---|
+| même région | `simplifier(a).equals(simplifier(b))` (via `chercher`) | accepter « ile de france » comme proposition |
+| même texte, à la casse près | `equalsIgnoreCase` | ne correspond ici à aucun besoin réel |
+| même texte, caractère par caractère | `equals` | savoir si le nom est **écrit** correctement |
+
+La bonne question n'était pas « le joueur a-t-il désigné cette région ? » (`chercher` y répond déjà), mais « le
+champ contient-il déjà l'orthographe exacte ? ». C'est `equals`.
+
+> *La question à se poser :* devant une comparaison, « égal **au sens de quoi** ? ». `equalsIgnoreCase`, `strip`,
+> les arrondis des `double`, la simplification des saisies : chacun définit une égalité différente, à choisir
+> d'après ce qu'on veut savoir.
+
+### Reproduire avec un test avant de corriger
+
+Avant de toucher au code, le test a été écrit **à partir du retour** (« bretagne », « BRETAGNE », « Bretagne »
+avec une espace, plus deux cas d'accents et de tirets), puis lancé : 3 échecs, exactement les cas signalés. Les
+cas d'accents passaient déjà, car `equalsIgnoreCase` ne confond pas « ile » et « Île ». Ensuite seulement, le
+correctif d'une ligne, et les 5 cas au vert. C'est la méthode de la Phase 1 (reproduire, corriger, revérifier avec
+le même test), appliquée à un retour d'utilisateur plutôt qu'à un bug trouvé en lisant le code.
+
+Détail JUnit : `@CsvSource` retire les espaces autour des valeurs, sauf entre guillemets. Comme son guillemet par
+défaut est l'apostrophe (présente dans « d'Azur »), on a choisi `quoteCharacter = '"'` pour pouvoir écrire `"Bretagne "`.
+
+---
+
 ## Bilan de la Phase 4
 
 - **Ce qui a vraiment changé, c'est le sens du programme.** Il ne pose plus de questions dans l'ordre : il attend et
