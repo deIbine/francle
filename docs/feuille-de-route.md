@@ -406,6 +406,24 @@ l'ordre de la liste fait partie du résultat. *Persistance* : jusqu'ici, tout di
 **Ce que tu apprends :** `LocalDate` et le temps comme paramètre (pour tester n'importe quel jour), le hasard
 reproductible, `java.nio.file`, la sérialisation JSON (Jackson), les tests avec un dossier temporaire (`@TempDir`).
 
+### 5.1 : la région du jour ✅
+
+- **`RegionDuJour`** (`jeu`) : `numero(date)` (n° 1 le 13 octobre 2026) et `pour(date)`. Les jours sont groupés en
+  **cycles** de 18 jours ; à chaque cycle, les 18 nouvelles régions sont mélangées avec une graine tirée du numéro du
+  cycle. Chaque région revient donc **une fois par cycle**, et **jamais deux jours de suite** (même d'un cycle à
+  l'autre, grâce à un échange au besoin).
+- Le résultat ne dépend que de la date et des **noms** des régions (tri par nom simplifié avant de mélanger), pas de
+  l'ordre des lignes de l'enum. Un « sel » ajouté à la graine évite que le premier cycle commence par l'ordre
+  alphabétique.
+- **Menu Jeu** : « Partie du jour » (Ctrl+D), qui s'ouvre au lancement, et « Partie libre » (Ctrl+N), qui garde le mode
+  des réglages. La partie du jour se joue toujours avec les nouvelles régions. Si on y revient le même jour, on la
+  retrouve **telle qu'on l'a laissée** (essais, ou fin de partie) ; le lendemain, une nouvelle commence.
+- **Titre** de la fenêtre : « Francle n° 1 », comme « Wordle 1234 » ; « Francle · partie libre ».
+- **L'horloge est un paramètre** de `Fenetre` (`Clock`) : la vérification a lancé la vraie fenêtre au 1er janvier
+  2030, puis l'a avancée d'un jour.
+- **176 tests** (`RegionDuJourTest` : valeurs de référence figées sur des dates passées, une fois par cycle,
+  jamais deux jours de suite sur 4 000 jours, uniquement les nouvelles régions).
+
 ---
 
 ## Phase 6 : des indices plus riches

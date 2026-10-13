@@ -1146,6 +1146,89 @@ défaut est l'apostrophe (présente dans « d'Azur »), on a choisi `quoteCharac
 
 ---
 
+## Phase 5.1 : la région du jour
+
+### Le même résultat partout, sans se parler
+
+Comme dans Wordle, tout le monde doit avoir la même région le même jour, sans serveur : chaque machine fait le
+calcul de son côté. Il faut donc qu'il ne dépende **que** de choses identiques partout : la date, et les noms des
+régions. Trois pièges, chacun évité exprès :
+
+1. **L'ordre de la liste.** `Collections.shuffle(liste, new Random(graine))` donne le même mélange pour la même
+   graine *et la même liste de départ*. Mélanger `RegionFr.values()`, c'est faire dépendre la réponse de l'ordre des
+   lignes de l'enum : réordonner une ligne changerait la région du jour chez tout le monde. On trie donc d'abord par
+   nom simplifié.
+2. **L'algorithme du hasard.** `Random` et `Collections.shuffle` sont décrits précisément par la documentation de Java :
+   même graine, même suite, sur toutes les machines et toutes les versions. Ce n'est pas vrai de tous les générateurs
+   (par exemple `Math.random()` ou `ThreadLocalRandom`, sans graine choisie).
+3. **L'heure et le fuseau.** `LocalDate.now()` dépend du fuseau de la machine : à minuit à Paris, il est encore
+   23 h à Londres. Chacun a donc la région de *son* jour, comme dans Wordle. C'est un choix, pas un oubli.
+
+### Le hasard qui ne se répète pas : mélanger par cycles
+
+Tirer une région par jour (`liste.get(random.nextInt(18))`) donne parfois la même deux jours de suite, et laisse
+certaines régions absentes des semaines entières. On mélange plutôt les 18 régions **une fois par cycle de 18
+jours** et on les distribue dans l'ordre : chacune revient exactement une fois par cycle. C'est le principe du jeu de
+cartes qu'on bat puis qu'on distribue, plutôt que de tirer une carte au hasard et de la remettre.
+
+Reste la jointure entre deux cycles : le dernier jour d'un cycle et le premier du suivant peuvent tomber sur la même
+région (une chance sur 18). On échange alors les deux premières régions du nouveau cycle. Le test « jamais deux jours
+de suite » a été vérifié en **retirant** cet échange : il échoue (Bourgogne-Franche-Comté deux jours de suite,
+1 710 jours avant le lancement). Un test qui ne casse jamais ne prouve rien.
+
+### `floorDiv` et `floorMod` : les nombres négatifs
+
+Avant le premier jour, le numéro du jour est négatif. Or en Java, `-1 % 18` vaut **-1** (le reste garde le signe),
+ce qui donnerait un index invalide. `Math.floorMod(-1, 18)` vaut **17**, le dernier jour du cycle précédent, ce qu'on
+veut. De même, `-1 / 18` vaut 0 alors que `Math.floorDiv(-1, 18)` vaut -1. Dès qu'un calcul « tourne en rond »
+(jours, heures, angles, positions dans un cercle), se demander s'il peut recevoir un nombre négatif.
+
+### Le temps comme paramètre
+
+`LocalDate.now()` au milieu du code rend celui-ci intestable : on ne peut pas vérifier « le lendemain » sans attendre
+un jour. Deux réponses, à deux niveaux :
+
+- la **règle** reçoit la date en paramètre (`RegionDuJour.pour(date)`) : le test choisit n'importe quel jour, passé
+  ou futur ;
+- la **fenêtre** reçoit une horloge (`Clock`), avec `Clock.systemDefaultZone()` par défaut. La vérification lui a
+  donné une horloge réglée au 1er janvier 2030, puis l'a avancée d'un jour pour voir la nouvelle partie commencer.
+
+C'est la même idée que la fonction de suggestions passée à `Autocompletion` en 4.4 : ce dont un code dépend, on le
+lui **donne** au lieu qu'il aille le chercher (*injection de dépendance*).
+
+### Afficher à partir de l'état
+
+Revenir à la partie du jour après une partie libre doit la montrer **telle qu'on l'a laissée** : sinon, la
+recommencer offrirait des essais supplémentaires. Plutôt que de mémoriser ce qui était affiché, `montrerPartie(p)`
+reconstruit tout l'affichage à partir de la seule `Partie` (essais, indices, message, image, boutons). Une partie
+neuve, en cours ou terminée passent par le même chemin. C'est plus robuste qu'une suite de mises à jour : il n'y a
+rien à oublier de remettre à zéro.
+
+### Valeurs de référence (tests « golden »)
+
+Il n'existe pas de « bonne » région du jour en dehors du calcul lui-même. Le test ne peut donc pas en vérifier la
+justesse, mais il peut vérifier qu'elle **ne change pas** : quelques dates et leurs régions sont figées dans le test.
+S'il casse un jour, c'est que la région du jour a changé pour tout le monde. Ces dates sont **passées** : figer des
+dates à venir aurait révélé les réponses des prochaines parties à qui lit le code.
+
+### Mesurer avant d'optimiser
+
+Les tests de la région du jour prenaient 4,4 secondes. La cause : le tri compare les régions par `getCle()`, qui
+refait la simplification du nom (normalisation Unicode, expressions régulières) à **chaque comparaison**, et ce tri
+était refait à chaque jour testé. La liste triée ne change jamais : elle est maintenant calculée une seule fois
+(`static final`, rendue non modifiable par `List.copyOf`). On passe à 0,6 seconde, sans rien changer au résultat (les
+valeurs de référence l'ont vérifié).
+
+### Les notions Java rencontrées
+
+- **`java.time`** : `LocalDate`, `ChronoUnit.DAYS.between`, `Clock` (et une sous-classe de `Clock` dans le harnais).
+- **`Collections.shuffle(liste, random)`** et **`Collections.swap`**.
+- **`List.copyOf`** : une copie non modifiable (toute tentative de modification lève une exception).
+- **Plusieurs constructeurs** qui s'enchaînent : `Fenetre()` appelle `this(Clock.systemDefaultZone())`.
+- **Un nombre en hexadécimal** (`0x4672616E636C65L`) : ici les codes ASCII de « Francle », écrits deux chiffres par lettre.
+
+---
+
 ## Aide-mémoire
 
 ### Raccourcis IntelliJ
