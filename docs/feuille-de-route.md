@@ -273,6 +273,9 @@ interface ne fait que la brancher ; sans elle, il faudrait réécrire les règle
 | **Version web** avec Spring Boot | Serveur HTTP, API, HTML | Gros projet, réaliste après la Phase 3 |
 | **Variante Charlemagne** (ou départements, pays européens) | Généraliser `RegionFr` en jeu de données interchangeable | Moyen à gros |
 
+**Autres idées notées dans le code d'origine** (commentaires retirés en Phase 3.3, conservés ici) : distances en miles,
+thème sombre, silhouette tournée au hasard pour corser le jeu, comparaison proximité / taille de la région.
+
 **Comment le penser.** La plupart de ces fonctionnalités sont devenues faciles grâce aux Phases 2 et 3 :
 c'est la récompense d'une bonne architecture, chaque nouvelle fonctionnalité coûte moins cher que la
 précédente. Les ajouter *avant* la Phase 3 voudrait dire tester encore en cliquant, dans un fichier déjà trop gros.

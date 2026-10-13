@@ -25,7 +25,6 @@ public class main{
         lesparametres.setChoixdelaregion(1);
         lesparametres.setChoiximage(0);
         lesparametres.setChoixlaliste(0);
-        commentjouer didacticiel = new commentjouer();
         int findujeu = - 1;
         while(findujeu !=0){
             String lejeu = JOptionPane.showInputDialog("0 = arrêt, 1 = jeu, 2 = paramètres, 3 = didacticiel. Faites votre choix : ");
@@ -151,19 +150,6 @@ public class main{
 
     }
 
-
-
-    /*
-    //commentaire test
-
-    public possibilitedelutilisateur (){
-        tu connais, on lui donne des possibilites entre commentjouer, parametres, statistiques, faire des guess, ça me paraît bien
-    }
-    public verifsens(){
-        bon en gros c'est ce qui permettrait de tourner la flèche dans le bon sens
-        il y aurait genre 8 flèches maximum du coup dans les sens cardinaux, faut trouver une méthode MATHEMATIQUE STONK
-    }
-     */
 }
 
 class Message{
@@ -395,26 +381,6 @@ class Parametres{
         }
         return choixliste;
     }
-    /*
-    private int unite (0 = km, 1 = miles)
-    private int theme (0 = light, 1 = dark)
-    private int langage (a voir en fonction de notre ambition)
-    private int modedejeu (choix possible entre les anciennes et les nouvelles régions par exemple, 0  = ancienne, 1 = nouvelle (pourquoi pas mettre les départements ?)
-
-
-    public proximitecontretaille(){
-        verifier ce que ça fait dans le jeu
-    }
-
-    public supprimerimage(){
-        possibilite de supprimer l'image pour faire des guess plus dur
-    }
-
-    public sensimage(){
-        possibilite de aleatoirement modifier le sens de l'image
-    }
-
-     */
 }
 
 /*
@@ -757,78 +723,3 @@ class representation{
     }
 
 }
-
-
-class commentjouer {
-
-    //class commentjouer extends JFrame implements ActionListener
-
-    /*
-    Objectif : mettre en place un code qui permet de mettre en avant comment jouer
-    Soit avec un bouton directement sur le JavaScript
-    Soit on niveau du menu avec un choix chiffré, en fonction de notre avancement
-    Et de la connaissance au niveau de l'utilisation des boutons JavaScript
-     */
-
-
-}
-
-/*
-
-Tentative d'interface non utilisée
-
-class interfacerapide extends JFrame implements ActionListener{
-    private JTextField tfEntree;
-    private JButton OKButton;
-    private JPanel myPanel;
-    private JLabel tfEntre;
-    private JLabel Sortie;
-
-
-    public void notreinterface() {
-        setTitle("Francle");
-        //setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        setVisible(true);
-        //setContentPane(myPanel);
-
-    }
-
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        tfEntree.setText("");
-        Sortie.setText("");
-    }
-}
-
-
- */
-/*
-class Statistiques{
-    ok donc c'est en bonus avec des stats à modifier en fonction des tests
-    inspiration de wordle
-    private int nombreparties
-    private int nombresdepartiesgagnées
-
-
-    public calculpourcentagevictoire(){
-        calcul simple du pourcentage de victoire à envoyer si l'utilisateur demande des statistiques
-    }
-
-    public repartitionvictoire(){
-        se débrouiller pour sauvegarder un tableau avec les victoires de l'utilisateur, il pourra savoir, quand il a gagné, s'il a gagné en un guess, deux guess, trois guess, etc... jusqu'à 6
-    }
-
-    possibilité de faire un reset ?
-    possibilité d'avoir des utilisateurs différents ?
-}
-
-
-
-class internet ?{
-
-        }*/
-/*
-Obligation de faire une classe convertisseur pour essayer de prendre les suppositions des utilisateurs ratées ou vérifier les accents et les tirets ?
- */
-
