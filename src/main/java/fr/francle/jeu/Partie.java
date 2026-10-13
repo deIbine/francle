@@ -1,3 +1,9 @@
+package fr.francle.jeu;
+
+import fr.francle.donnees.ModeRegions;
+import fr.francle.donnees.RegionFr;
+import fr.francle.donnees.Zone;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -7,11 +13,11 @@ import java.util.Optional;
 Les règles du jeu, sans aucun affichage : Partie reçoit les saisies du joueur et dit ce qui s'est passé.
 C'est l'interface (Francle, Message) qui demande les saisies et affiche les résultats.
  */
-class Partie {
+public class Partie {
 
     public static final int ESSAIS_MAX = 5;
 
-    enum Etat { EN_COURS, GAGNEE, PERDUE, ABANDONNEE }
+    public enum Etat { EN_COURS, GAGNEE, PERDUE, ABANDONNEE }
 
     private final RegionFr cible;
     private final ModeRegions mode;
@@ -64,7 +70,7 @@ class Partie {
     // pourcentage de proximité : 100 % à 0 km, 0 % pour la région de référence la plus éloignée de la cible.
     // Pour une cible en métropole, seules les régions de métropole servent de référence : sinon l'outre-mer,
     // à plus de 6000 km, écrase toute la métropole entre 88 % et 98 %.
-    public static int pourcentage(RegionFr cible, double distance) {
+    static int pourcentage(RegionFr cible, double distance) {
         double distanceMax = 0;
         for (RegionFr autre : RegionFr.values()) {
             if (cible.getZone() == Zone.OUTRE_MER || autre.getZone() == Zone.METROPOLE) {
@@ -79,7 +85,7 @@ class Partie {
 
     // Brouillon de la flèche de direction (à reprendre en Phase 4), recopié tel quel depuis l'ancienne classe Region :
     // les degrés ne sont pas convertis en radians, et l'azimut n'est pas encore découpé en 8 directions.
-    public static String fleche(RegionFr cible, RegionFr proposition){
+    static String fleche(RegionFr cible, RegionFr proposition){
         String sens = "";
         double resultat;
 

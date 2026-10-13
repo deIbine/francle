@@ -1,5 +1,7 @@
+package fr.francle.donnees;
+
 // les régions jouées, choisies dans les paramètres
-enum ModeRegions {
+public enum ModeRegions {
     ANCIENNES, NOUVELLES, TOUTES;
 
     // correspondance avec le choix tapé dans le menu des paramètres (0, 1 ou 2)
@@ -12,7 +14,7 @@ enum ModeRegions {
     }
 
     // les régions que le jeu peut faire deviner dans ce mode
-    public boolean peutTirer(RegionFr region) {
+    boolean peutTirer(RegionFr region) {
         switch (this) {
             case ANCIENNES : return region.getEpoque() != Epoque.NOUVELLE;
             case NOUVELLES : return region.getEpoque() != Epoque.ANCIENNE;
@@ -21,7 +23,7 @@ enum ModeRegions {
     }
 
     // les régions acceptées comme proposition du joueur : tout, sauf les anciennes en mode "nouvelles"
-    public boolean reconnait(RegionFr region) {
+    boolean reconnait(RegionFr region) {
         return this != NOUVELLES || region.getEpoque() != Epoque.ANCIENNE;
     }
 }

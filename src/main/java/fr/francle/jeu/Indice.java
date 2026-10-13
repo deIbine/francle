@@ -1,7 +1,9 @@
+package fr.francle.jeu;
+
 import java.util.Optional;
 
 // les indices, dans l'ordre où ils sont révélés : un après chacun des quatre premiers essais ratés
-enum Indice {
+public enum Indice {
     SUPERFICIE, SPECIALITE, PERSONNALITE, CAPITALE;
 
     // l'indice révélé après l'essai raté numéro "numero" (0 = le premier), rien après le quatrième

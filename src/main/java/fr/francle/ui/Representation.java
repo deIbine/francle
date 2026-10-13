@@ -1,3 +1,8 @@
+package fr.francle.ui;
+
+import fr.francle.donnees.ModeRegions;
+import fr.francle.donnees.RegionFr;
+
 import java.awt.FlowLayout;
 import java.awt.Image;
 import java.awt.image.BufferedImage;

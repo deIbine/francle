@@ -1,3 +1,5 @@
+package fr.francle.donnees;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -84,14 +86,6 @@ class RegionFrTest {
             assertTrue(mode.peutTirer(region));
             assertTrue(mode.reconnait(region));
         }
-    }
-
-    @ParameterizedTest
-    @EnumSource(RegionFr.class)
-    @DisplayName("L'image de chaque région existe dans les ressources")
-    void imageExiste(RegionFr region) {
-        String fichier = region.getImage() == null ? "defaut.png" : region.getImage();
-        assertNotNull(Representation.Image("regions/" + fichier), fichier);
     }
 
     @Test

@@ -1,3 +1,11 @@
+package fr.francle.ui;
+
+import fr.francle.donnees.ModeRegions;
+import fr.francle.donnees.RegionFr;
+import fr.francle.jeu.Essai;
+import fr.francle.jeu.Indice;
+import fr.francle.jeu.Partie;
+
 import java.text.Collator;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;

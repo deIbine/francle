@@ -1,3 +1,9 @@
+package fr.francle.ui;
+
+import fr.francle.donnees.ModeRegions;
+import fr.francle.donnees.RegionFr;
+import fr.francle.jeu.Partie;
+
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 

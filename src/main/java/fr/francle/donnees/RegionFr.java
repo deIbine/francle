@@ -1,3 +1,5 @@
+package fr.francle.donnees;
+
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,7 +13,7 @@ import java.util.regex.Pattern;
 Les régions jouables : chaque information n'est écrite qu'ici, une seule fois.
 Le reste du code vient chercher ses données dans cet enum.
  */
-enum RegionFr {
+public enum RegionFr {
     // nouvelles régions et régions inchangées : nom, latitude, longitude, époque, zone, superficie,
     // spécialité culinaire, personnalité, capitale régionale, image
     HAUTS_DE_FRANCE("Hauts-de-France", 50.62925, 3.057256, Epoque.NOUVELLE, Zone.METROPOLE, 31814, "la bière", "Charles de Gaulle", "Lille", "hauts-de-france.png"),
@@ -131,7 +133,7 @@ enum RegionFr {
     private static final int RAYON_TERRE = 6371;
 
     // "Île-de-France " -> "iledefrance" : sans espaces, majuscules, ponctuation ni accents
-    public static String simplifier(String saisie) {
+    static String simplifier(String saisie) {
         String texte = saisie.replaceAll("\\s", "");
         texte = texte.toLowerCase();
         texte = texte.replaceAll("\\p{Punct}", "");

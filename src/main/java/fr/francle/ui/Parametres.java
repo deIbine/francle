@@ -1,3 +1,5 @@
+package fr.francle.ui;
+
 import javax.swing.JOptionPane;
 
 class Parametres{
