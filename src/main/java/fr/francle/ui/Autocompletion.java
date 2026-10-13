@@ -164,8 +164,10 @@ class Autocompletion {
         List<String> suggestions = source.apply(texte);
         modele.clear();
         suggestions.forEach(modele::addElement);
-        // rien à proposer, ou la seule suggestion est déjà écrite en entier : la liste ne servirait à rien
-        boolean dejaEcrite = suggestions.size() == 1 && suggestions.get(0).equalsIgnoreCase(texte.strip());
+        // rien à proposer, ou la seule suggestion est déjà écrite exactement : la liste ne servirait à rien.
+        // « Exactement » : equals et non equalsIgnoreCase, sans strip. Pour « bretagne » ou « Bretagne  », la liste
+        // reste, et permet de reprendre l'orthographe correcte du nom (majuscule, accents, tirets).
+        boolean dejaEcrite = suggestions.size() == 1 && suggestions.get(0).equals(texte);
         if (suggestions.isEmpty() || dejaEcrite) {
             fermer();
             return;

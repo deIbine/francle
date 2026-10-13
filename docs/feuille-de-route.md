@@ -13,7 +13,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 1 | Corriger les bugs | ✅ Fait (4 bugs corrigés) |
 | 2 | Centraliser les données des régions | ✅ Fait (enum RegionFr, −466 lignes) |
 | 3 | Séparer logique et affichage, tests, Maven, packages | ✅ Fait (PR #21, #22 et 3.3) |
-| 4 | Interface Swing en une seule fenêtre | ✅ Fait (PR #24 à #27) |
+| 4 | Interface Swing en une seule fenêtre | ✅ Fait (PR #24 à #28) |
 | 5 | Nouvelles fonctionnalités | ⬜ À faire |
 
 ---
@@ -359,10 +359,17 @@ tableau des essais, indices. Plus de cascade de popups pour jouer.
 - **161 tests**, dont `AutocompletionTest` : l'autocomplétion se teste **sans écran** (un champ dans un `JRootPane`),
   en suivant les vraies liaisons des touches.
 
+### 4.4.1 : garder la liste pour corriger l'orthographe ✅
+
+Retour de l'utilisateur après la 4.4 : avec « bretagne » tapé en entier mais sans majuscule, la liste disparaissait.
+Elle ne se ferme plus que si le nom est écrit **exactement** (`equals` au lieu de `equalsIgnoreCase`, sans `strip`).
+Pour « bretagne », « BRETAGNE », « ile de france » ou « Bretagne » suivi d'une espace, elle reste et propose
+l'orthographe correcte. 166 tests.
+
 Résultat de la Phase 4 : le jeu se joue dans une seule fenêtre (image, saisie avec suggestions, tableau des essais
 avec flèche de direction, indices, carte de France en fin de partie), réglée par des menus. Il n'y a plus aucun popup
 de saisie. Le package `ui` est réécrit (827 lignes en 7 classes, dont la moitié de logique testée sans écran) ; `jeu`
-et `donnees` n'ont reçu que des ajouts (`Direction`, `indicesReveles`, `suggestions`). 72 → 161 tests.
+et `donnees` n'ont reçu que des ajouts (`Direction`, `indicesReveles`, `suggestions`). 72 → 166 tests.
 
 **Comment le penser.** La *programmation événementielle* : le programme ne déroule plus ses lignes dans
 l'ordre, il **réagit** à des événements (`ActionListener`). Le *fil de Swing* (*Event Dispatch Thread*) :

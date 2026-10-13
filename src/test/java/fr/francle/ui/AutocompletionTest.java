@@ -6,6 +6,8 @@ import fr.francle.donnees.RegionFr;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.List;
 import javax.swing.JRootPane;
@@ -100,7 +102,7 @@ class AutocompletionTest {
     }
 
     @Test
-    @DisplayName("Pas de liste pour un champ vide, une saisie inconnue ou un nom déjà complet")
+    @DisplayName("Pas de liste pour un champ vide, une saisie inconnue ou un nom déjà écrit exactement")
     void pasDeListe() {
         champ.setText("bre");
         champ.setText("");
@@ -109,7 +111,32 @@ class AutocompletionTest {
         champ.setText("xyz");
         assertFalse(autocompletion.estOuverte());
 
-        champ.setText("corse");
+        champ.setText("Corse");
         assertFalse(autocompletion.estOuverte());
+    }
+
+    @ParameterizedTest(name = "« {0} » → la liste propose encore « {1} »")
+    // CsvSource retire les espaces autour d'une valeur, sauf entre guillemets ; et le guillemet par défaut est
+    // l'apostrophe, qui apparaît dans « d'Azur » : d'où quoteCharacter = '"'
+    @CsvSource(delimiter = '|', quoteCharacter = '"', value = {
+            "bretagne                   | Bretagne",
+            "BRETAGNE                   | Bretagne",
+            "ile de france              | Île-de-France",
+            "provence alpes cote d'azur | Provence-Alpes-Côte d'Azur",
+            "\"Bretagne \"              | Bretagne",
+    })
+    @DisplayName("Nom reconnu mais pas écrit exactement (majuscule, accent, tiret, espace) : la liste reste, pour corriger")
+    void nomReconnuMalEcrit(String saisie, String correcte) {
+        champ.setText(saisie);
+
+        assertTrue(autocompletion.estOuverte());
+        assertEquals(List.of(correcte), autocompletion.suggestions());
+
+        touche("DOWN");
+        touche("ENTER");
+
+        assertEquals(correcte, champ.getText());
+        assertFalse(autocompletion.estOuverte(), "une fois corrigé, le nom est écrit exactement : plus de liste");
+        assertEquals(0, validations);
     }
 }
