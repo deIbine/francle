@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Description du projet pour Maven : ce qu'il faut pour compiler, tester et empaqueter Francle.
+  Commandes (depuis la racine du projet) :
+    .\mvnw.cmd test    compile et lance les tests
+    .\mvnw.cmd package   produit target/francle.jar, à lancer avec : java -jar target/francle.jar
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!-- l'identité du projet : groupe, nom, version -->
+    <groupId>fr.francle</groupId>
+    <artifactId>francle</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>Francle</name>
+    <description>Devinez la région française à partir de sa silhouette</description>
+
+    <properties>
+        <!-- compile pour Java 21 (vérifie aussi qu'on n'utilise rien de plus récent) -->
+        <maven.compiler.release>21</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- BOM : fixe en un seul endroit la version de tous les modules JUnit -->
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>6.1.3</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- scope test : JUnit sert aux tests, il n'est pas embarqué dans le jeu -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <!-- target/francle.jar plutôt que target/francle-1.0-SNAPSHOT.jar -->
+        <finalName>francle</finalName>
+        <!-- versions des plugins fixées : le build donne le même résultat sur toutes les machines -->
+        <plugins>
+            <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>3.5.0</version>
+            </plugin>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.5.0</version>
+            </plugin>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.16.0</version>
+            </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.6.0</version>
+            </plugin>
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.5.1</version>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <!-- la classe à lancer avec java -jar -->
+                            <mainClass>main</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
+            </plugin>
+            <plugin>
+                <artifactId>maven-install-plugin</artifactId>
+                <version>3.2.0</version>
+            </plugin>
+        </plugins>
+    </build>
+</project>

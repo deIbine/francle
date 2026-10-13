@@ -11,3 +11,9 @@
 *.jpg  binary
 *.docx binary
 *.pptx binary
+
+# Scripts : fins de ligne imposées quel que soit le système
+# (un script shell en CRLF échoue sous Linux, un .cmd en LF peut échouer sous Windows)
+mvnw   text eol=lf
+*.sh   text eol=lf
+*.cmd  text eol=crlf

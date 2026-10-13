@@ -1,0 +1,34 @@
+# Intégration continue : à chaque PR (et à chaque push sur main), GitHub compile le jeu et lance les tests
+# sur une machine Linux neuve. Le résultat (✅ ou ❌) s'affiche directement sur la PR.
+name: Compilation et tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # récupère le code de la branche
+      - uses: actions/checkout@v7
+
+      # installe le même JDK qu'en local, et garde en cache les dépendances Maven d'une exécution à l'autre
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # verify : compile, lance les tests et construit le .jar ; -B = mode non interactif (pas d'animations)
+      - name: Compiler et tester
+        run: ./mvnw -B verify
+
+      # en cas d'échec, garde les rapports détaillés des tests, téléchargeables depuis la page de l'exécution
+      - name: Rapports de tests
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: rapports-de-tests
+          path: target/surefire-reports/
