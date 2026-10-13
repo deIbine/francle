@@ -7,7 +7,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 
-class representation{
+class Representation{
 
     /*
     class permettant de charger les images
@@ -18,7 +18,7 @@ class representation{
     // l'image, ou null si la ressource n'existe pas ou ne se lit pas
     public static BufferedImage Image(String path) {
         // "/" au début : chemin depuis la racine du classpath, et non depuis le package de la classe
-        URL ressource = representation.class.getResource("/" + path);
+        URL ressource = Representation.class.getResource("/" + path);
         if (ressource == null) {
             return null;
         }
@@ -28,7 +28,7 @@ class representation{
             return null;
         }
     }
-    private Image region = representation.Image("toto");
+    private Image region = Representation.Image("toto");
 
     public void setRegion(Image region) {
         this.region = region;
@@ -48,7 +48,7 @@ class representation{
         String fichier = RegionFr.chercher(region, ModeRegions.TOUTES)
                 .map(RegionFr::getImage)
                 .orElse("defaut.png");
-        this.region = representation.Image(chemin + fichier);
+        this.region = Representation.Image(chemin + fichier);
         return this.region;
     }
     public Image getRegion() {
@@ -57,7 +57,7 @@ class representation{
 
 
     public Image jpgjeu(){
-        this.region = representation.Image(chemin + "defaut.png");
+        this.region = Representation.Image(chemin + "defaut.png");
         //ajouter commentjouer.png
         return this.region;
     }

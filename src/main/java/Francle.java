@@ -1,7 +1,7 @@
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
-public class main{
+public class Francle {
 
 
     public static void main (String[] args){
@@ -32,7 +32,7 @@ public class main{
                     // une nouvelle Partie à chaque fois : rien ne peut traîner de la partie précédente
                     Partie partie = new Partie(RegionFr.tirer(mode), mode);
                     JOptionPane.showMessageDialog( null, "Quelle est cette région française ?", "", JOptionPane.PLAIN_MESSAGE );
-                    representation larep = new representation();
+                    Representation larep = new Representation();
                     if (lesparametres.getChoiximage() == 0) {
                         if ((lesparametres.getChoixdelaregion() == 0) || (lesparametres.getChoixdelaregion() == 2))
                         {
@@ -102,7 +102,7 @@ public class main{
                     }
                     break;
                 case 3 :
-                    representation didacticiele = new representation();
+                    Representation didacticiele = new Representation();
                     int boucle = 1;
                     didacticiele.setRegion(didacticiele.jpgjeu());
                     frame = didacticiele.interfacesimple();

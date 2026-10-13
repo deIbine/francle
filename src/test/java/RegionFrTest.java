@@ -91,7 +91,7 @@ class RegionFrTest {
     @DisplayName("L'image de chaque région existe dans les ressources")
     void imageExiste(RegionFr region) {
         String fichier = region.getImage() == null ? "defaut.png" : region.getImage();
-        assertNotNull(representation.Image("regions/" + fichier), fichier);
+        assertNotNull(Representation.Image("regions/" + fichier), fichier);
     }
 
     @Test

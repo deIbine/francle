@@ -5,7 +5,7 @@ import java.util.Optional;
 
 /*
 Les règles du jeu, sans aucun affichage : Partie reçoit les saisies du joueur et dit ce qui s'est passé.
-C'est l'interface (main, Message) qui demande les saisies et affiche les résultats.
+C'est l'interface (Francle, Message) qui demande les saisies et affiche les résultats.
  */
 class Partie {
 

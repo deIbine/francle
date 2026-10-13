@@ -74,7 +74,7 @@
                     <archive>
                         <manifest>
                             <!-- la classe à lancer avec java -jar -->
-                            <mainClass>main</mainClass>
+                            <mainClass>Francle</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
