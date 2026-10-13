@@ -813,6 +813,124 @@ Phase 3.1, appliqué aux réglages : le modèle d'un côté, la vue de l'autre.
 
 ---
 
+## Phase 4.2 : la fenêtre principale
+
+### La programmation événementielle
+
+Avec les popups, le programme menait la danse : `showInputDialog` **bloquait** jusqu'à la réponse, puis la ligne
+suivante s'exécutait, dans une boucle `while`. Avec une fenêtre, c'est le joueur qui mène : il peut cliquer
+« Valider », « Abandonner » ou « Nouvelle partie » dans n'importe quel ordre. Le programme ne déroule plus une
+histoire, il **réagit** :
+
+```java
+valider.addActionListener(e -> jouer());   // « quand on cliquera sur Valider, appelle jouer() »
+```
+
+Cette ligne n'appelle **pas** `jouer()` : elle **inscrit** un écouteur, que Swing appellera plus tard, à chaque
+clic. `e -> jouer()` est une *lambda* : une petite fonction sans nom, passée comme une valeur. Conséquence :
+plus de boucle de jeu. L'état de la partie ne vit plus dans des variables locales de `main`, mais dans les
+**champs** de `Fenetre` (`partie`, les composants), qui survivent entre deux clics.
+
+> *La question à se poser :* « Qu'est-ce qui déclenche ce code, et dans quel état est le programme à ce
+> moment-là ? » Par exemple : que se passe-t-il si on clique « Valider » après la fin de la partie ?
+> (Réponse : rien, car le bouton est désactivé. Sans ça, `Partie` lèverait son `IllegalStateException`.)
+
+### L'Event Dispatch Thread (EDT)
+
+Un *thread* (fil d'exécution) est une suite d'instructions exécutée par la machine ; un programme peut en avoir
+plusieurs **en même temps**. Swing n'est pas prévu pour ça : si deux fils modifient le même composant à la
+fois, l'affichage peut se corrompre, sans erreur et de façon imprévisible. D'où la règle : **tout ce qui touche à
+l'interface se fait sur un seul fil, l'EDT**. Les écouteurs sont déjà appelés sur l'EDT ; seul `main`, qui tourne
+sur le fil principal, doit y confier la création de la fenêtre :
+
+```java
+SwingUtilities.invokeLater(() -> new Fenetre().afficher());
+```
+
+Corollaire : un écouteur doit être **rapide**. Pendant qu'il s'exécute, l'EDT ne fait rien d'autre et la fenêtre
+est figée. Un calcul long (un téléchargement, par exemple) se fait sur un autre fil (`SwingWorker`), qui
+renvoie le résultat à l'EDT.
+
+### Les layouts : décrire des règles, pas des positions
+
+On ne place pas les composants au pixel près : on choisit un **gestionnaire de disposition** (*layout manager*) qui
+les place selon des règles, et qui suit quand la fenêtre change de taille ou que la police grossit (écran à 150 %).
+
+- `BorderLayout` : cinq zones (`NORTH`, `SOUTH`, `EAST`, `WEST`, `CENTER`) ; le centre prend la place qui reste.
+- `FlowLayout` : les composants à la suite, comme des mots dans une ligne (la barre de boutons).
+
+Une interface réelle **imbrique** des panneaux (`JPanel`), chacun avec son layout : la fenêtre est un `BorderLayout`
+dont la zone sud est elle-même un `BorderLayout`, qui contient une ligne en `FlowLayout`. `frame.pack()` donne
+ensuite à la fenêtre la taille juste nécessaire.
+
+### Modèle et vue : `JTable` et `AbstractTableModel`
+
+Une `JTable` ne stocke **aucune donnée**. Elle demande chaque case à son **modèle** (`getValueAt(ligne, colonne)`),
+qui va la lire dans la `Partie`. On a donc trois rôles distincts :
+
+| Rôle | Classe | Sait… |
+|---|---|---|
+| Les données et les règles | `Partie` | ce qui s'est joué, sans rien afficher |
+| Le modèle du tableau | `TableauEssais` | traduire la partie en lignes et colonnes de texte |
+| La vue | `JTable` | dessiner des cases, sans savoir ce qu'elles veulent dire |
+
+Le modèle doit **prévenir** la vue quand ses données changent : `fireTableDataChanged()` (tout a pu changer) ou
+`fireTableRowsUpdated(1, 1)` (seule la ligne 1). Oublier cet appel est le bug classique : les données sont justes
+mais l'écran ne bouge pas. `TableauEssaisTest` le vérifie en branchant son propre écouteur sur le modèle, comme
+le ferait la `JTable`. C'est le même mécanisme d'événements que les boutons, dans l'autre sens.
+
+### Le renderer est un tampon, pas une case
+
+Pour dessiner 25 cases, la `JTable` n'utilise pas 25 composants. Elle prend **un seul** `JLabel` (le *renderer*),
+le règle pour la case 1, le dessine, le règle pour la case 2, etc., comme un tampon encreur. Conséquence : le
+`DefaultTableCellRenderer` remet la police du tableau **à chaque case**. Un `setFont` fait une seule fois serait
+écrasé. Pour agrandir les flèches, il faut redéfinir `getTableCellRendererComponent` et changer la police **après**
+l'appel à `super`.
+
+### Les composants restent bêtes, la logique se teste à part
+
+`Fenetre` crée des composants, les dispose et branche les écouteurs : rien d'autre. Tout ce qui demande une
+réflexion a été sorti dans des classes sans fenêtre, donc testables : les phrases (`Textes`), le tableau
+(`TableauEssais`), le choix et la taille des images (`Representation.silhouette`, `carte`, `ajuster`), et la règle
+des indices révélés (`Partie.indicesReveles`). La raison est très concrète : sur la machine d'intégration continue,
+il n'y a pas d'écran, et `new JFrame()` y lève une `HeadlessException`.
+
+### Vérifier à l'écran, pas seulement avec des tests
+
+Les 144 tests passaient, et pourtant la fenêtre dépassait de l'écran et les flèches étaient minuscules. Des tests
+ne voient pas ce qu'un humain voit. La fenêtre a donc été lancée, jouée par programme (les vrais boutons, cliqués
+par `doClick()`), puis photographiée (`Robot.createScreenCapture`). Au passage, une notion utile : avec une mise à
+l'échelle de 150 %, un écran 1080p n'offre que 672 **points** de haut utilisables. Swing compte en points, pas en
+pixels.
+
+### Une dépendance, et un `.jar` qui l'embarque
+
+FlatLaf est la première dépendance du jeu lui-même (JUnit ne sert qu'aux tests, d'où son *scope* `test`). Maven
+la télécharge et la met dans le classpath pour compiler et tester. Mais le `.jar` produit par `maven-jar-plugin`
+ne contient **que nos classes** : `java -jar target/francle.jar` aurait planté avec `NoClassDefFoundError`.
+`maven-shade-plugin` fabrique un `.jar` « tout compris » (*uber-jar*), qui embarque aussi les classes de FlatLaf
+(6,9 Mo au lieu de quelques centaines de Ko).
+
+> *La question à se poser :* après avoir ajouté une dépendance, « Le programme livré la trouvera-t-il ? » Les
+> tests passent dans Maven, qui fournit le classpath ; l'utilisateur, lui, n'a que le `.jar`.
+
+### Le code mort se supprime (encore)
+
+La fenêtre remplace la boucle de popups : `Message` (tour, messages, historique en texte) n'avait plus d'appelant.
+Ce qui servait encore (séparateur de milliers, liste triée) est passé dans `Textes`, avec ses tests. Le reste est
+supprimé, pas commenté : Git le garde dans l'historique (`git show 8098abf:src/main/java/fr/francle/ui/Message.java`, 8098abf étant le commit de la 4.1).
+
+### Les notions Java rencontrées
+
+- **Les lambdas** (`e -> jouer()`) et les **références de méthode** (`this::montrer`, `recus::add`).
+- **Une classe anonyme** (`new DefaultTableCellRenderer() { @Override … }`) : une sous-classe sans nom, définie
+  là où on s'en sert, pour redéfinir une seule méthode.
+- **Les blocs de texte** (`"""…"""`, Java 15) pour un texte de plusieurs lignes, comme les règles du jeu.
+- **Un constructeur `private`** (`Textes`, `Representation`) : une classe qui n'a que des méthodes `static` ne doit
+  pas être instanciée.
+
+---
+
 ## Aide-mémoire
 
 ### Raccourcis IntelliJ
