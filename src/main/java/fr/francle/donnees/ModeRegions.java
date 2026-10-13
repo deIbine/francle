@@ -4,15 +4,6 @@ package fr.francle.donnees;
 public enum ModeRegions {
     ANCIENNES, NOUVELLES, TOUTES;
 
-    // correspondance avec le choix tapé dans le menu des paramètres (0, 1 ou 2)
-    public static ModeRegions depuisCode(int code) {
-        switch (code) {
-            case 0 : return ANCIENNES;
-            case 2 : return TOUTES;
-            default : return NOUVELLES;
-        }
-    }
-
     // les régions que le jeu peut faire deviner dans ce mode
     boolean peutTirer(RegionFr region) {
         switch (this) {

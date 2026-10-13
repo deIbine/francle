@@ -11,20 +11,32 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableCellRenderer;
 
@@ -32,8 +44,7 @@ import javax.swing.table.DefaultTableCellRenderer;
 La fenêtre du jeu. Elle ne contient aucune règle : elle transmet les actions du joueur à la Partie,
 puis affiche ce que la Partie répond. Tout ici s'exécute sur l'Event Dispatch Thread (voir Francle.main).
 
-Disposition (BorderLayout imbriqués) :
-    NORTH   la barre de boutons
+Disposition : la barre de menus (Jeu, Paramètres, Aide), puis le contenu en BorderLayout imbriqués :
     CENTER  l'image
     SOUTH   la saisie et le message, le tableau des essais, les indices
  */
@@ -44,16 +55,30 @@ class Fenetre {
     private static final int LARGEUR_IMAGE = 400;
     private static final int HAUTEUR_IMAGE = 220;
 
+    // l'ordre des modes dans le menu : le mode par défaut d'abord (l'enum, lui, est rangé par époque)
+    private static final List<ModeRegions> MODES = List.of(ModeRegions.NOUVELLES, ModeRegions.ANCIENNES, ModeRegions.TOUTES);
+
+    // la touche des raccourcis de menu : Ctrl sous Windows et Linux, Cmd sur Mac
+    private static final int RACCOURCI = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+
     private final Reglages reglages = new Reglages();
     private final TableauEssais tableau = new TableauEssais();
+
+    // les actions du joueur. Chacune réunit un nom, un raccourci et ce qu'il faut faire ; un article de menu et
+    // un bouton peuvent partager la même : la désactiver grise les deux à la fois
+    private final Action nouvellePartie = action("Nouvelle partie", KeyStroke.getKeyStroke(KeyEvent.VK_N, RACCOURCI), this::commencer);
+    private final Action liste = action("Liste des régions", KeyStroke.getKeyStroke(KeyEvent.VK_L, RACCOURCI), this::montrerListe);
+    private final Action abandonner = action("Abandonner", null, this::abandonner);
+    private final Action quitter = action("Quitter", KeyStroke.getKeyStroke(KeyEvent.VK_Q, RACCOURCI), this::quitter);
+    private final Action aide = action("Comment jouer", KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), this::montrerAide);
 
     private final JFrame frame = new JFrame("Francle");
     private final JLabel image = new JLabel();
     private final JTextField saisie = new JTextField(20);
     private final JButton valider = new JButton("Valider");
-    private final JButton abandonner = new JButton("Abandonner");
-    private final JButton nouvellePartie = new JButton("Nouvelle partie");
-    private final JButton liste = new JButton("Liste des régions");
+    private final JButton boutonAbandonner = new JButton(abandonner);
+    // à la fin de la partie, « Nouvelle partie » prend la place d'« Abandonner »
+    private final JButton boutonRejouer = new JButton(nouvellePartie);
     private final JLabel message = new JLabel(" ", SwingConstants.CENTER);
     private final JTextArea indices = new JTextArea(Indice.values().length, 30);
 
@@ -61,7 +86,9 @@ class Fenetre {
 
     Fenetre() {
         construire();
-        brancher();
+        valider.addActionListener(e -> jouer());
+        // la touche Entrée dans le champ de saisie fait comme un clic sur « Valider »
+        saisie.addActionListener(e -> jouer());
         commencer();
     }
 
@@ -72,13 +99,26 @@ class Fenetre {
         saisie.requestFocusInWindow();
     }
 
+    // une Action à partir d'un nom, d'un raccourci (ou null) et du code à exécuter
+    private static Action action(String nom, KeyStroke raccourci, Runnable quoiFaire) {
+        Action action = new AbstractAction(nom) {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                quoiFaire.run();
+            }
+        };
+        // le raccourci n'est utilisé que par les articles de menu (un bouton l'ignore)
+        action.putValue(Action.ACCELERATOR_KEY, raccourci);
+        return action;
+    }
+
     // ---- construction : les composants et leur disposition ----
 
     private void construire() {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setJMenuBar(menus());
         JPanel contenu = new JPanel(new BorderLayout(0, 10));
         contenu.setBorder(BorderFactory.createEmptyBorder(10, 16, 16, 16));
-        contenu.add(barre(), BorderLayout.NORTH);
         image.setHorizontalAlignment(SwingConstants.CENTER);
         image.setPreferredSize(new Dimension(LARGEUR_IMAGE, HAUTEUR_IMAGE));
         contenu.add(image, BorderLayout.CENTER);
@@ -86,25 +126,67 @@ class Fenetre {
         frame.setContentPane(contenu);
     }
 
-    private JPanel barre() {
-        JButton parametres = new JButton("Paramètres");
-        JButton aide = new JButton("Comment jouer");
-        parametres.addActionListener(e -> parametres());
-        aide.addActionListener(e -> JOptionPane.showMessageDialog(frame, Textes.REGLES, "Comment jouer",
-                JOptionPane.INFORMATION_MESSAGE));
-        JPanel barre = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
-        barre.add(nouvellePartie);
-        barre.add(liste);
+    private JMenuBar menus() {
+        JMenu jeu = new JMenu("Jeu");
+        // Alt+J ouvre le menu (la lettre est soulignée quand on appuie sur Alt)
+        jeu.setMnemonic(KeyEvent.VK_J);
+        jeu.add(nouvellePartie);
+        jeu.add(liste);
+        jeu.add(abandonner);
+        jeu.addSeparator();
+        jeu.add(quitter);
+
+        JMenu parametres = new JMenu("Paramètres");
+        parametres.setMnemonic(KeyEvent.VK_P);
+        // boutons radio : le ButtonGroup garantit qu'un seul mode est coché à la fois
+        ButtonGroup groupe = new ButtonGroup();
+        for (ModeRegions mode : MODES) {
+            JRadioButtonMenuItem article = new JRadioButtonMenuItem(Textes.mode(mode), mode == reglages.getMode());
+            article.addActionListener(e -> {
+                reglages.setMode(mode);
+                prevenirProchainePartie();
+            });
+            groupe.add(article);
+            parametres.add(article);
+        }
+        parametres.addSeparator();
+        // cases à cocher : indépendantes l'une de l'autre
+        JCheckBoxMenuItem images = new JCheckBoxMenuItem("Silhouette de la région", reglages.isAvecImages());
+        images.addActionListener(e -> {
+            reglages.setAvecImages(images.isSelected());
+            prevenirProchainePartie();
+        });
+        JCheckBoxMenuItem avecListe = new JCheckBoxMenuItem("Liste des régions", reglages.isAvecListe());
+        avecListe.addActionListener(e -> {
+            reglages.setAvecListe(avecListe.isSelected());
+            // celui-ci compte tout de suite : l'article « Liste des régions » du menu Jeu se grise ou non
+            liste.setEnabled(reglages.isAvecListe());
+        });
+        parametres.add(images);
+        parametres.add(avecListe);
+
+        JMenu menuAide = new JMenu("Aide");
+        menuAide.setMnemonic(KeyEvent.VK_A);
+        menuAide.add(aide);
+
+        JMenuBar barre = new JMenuBar();
+        barre.add(jeu);
         barre.add(parametres);
-        barre.add(aide);
+        barre.add(menuAide);
         return barre;
     }
 
     private JPanel bas() {
-        JPanel ligneSaisie = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
-        ligneSaisie.add(saisie);
-        ligneSaisie.add(valider);
-        ligneSaisie.add(abandonner);
+        // pas de FlowLayout ici : quand « Nouvelle partie » (plus large) remplace « Abandonner », la ligne déborde,
+        // FlowLayout renvoie le bouton à la ligne, et cette seconde ligne est coupée (la hauteur a été fixée par
+        // pack). Avec BorderLayout, le champ prend la largeur qui reste et les boutons ne bougent jamais de ligne.
+        JPanel boutons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+        boutons.add(valider);
+        boutons.add(boutonAbandonner);
+        boutons.add(boutonRejouer);
+        JPanel ligneSaisie = new JPanel(new BorderLayout());
+        ligneSaisie.add(saisie, BorderLayout.CENTER);
+        ligneSaisie.add(boutons, BorderLayout.EAST);
 
         message.setFont(message.getFont().deriveFont(Font.BOLD));
         JPanel haut = new JPanel(new BorderLayout(0, 6));
@@ -158,17 +240,6 @@ class Fenetre {
 
     // ---- événements : ce qui se passe quand le joueur agit ----
 
-    private void brancher() {
-        // le même traitement pour un clic sur « Valider » et pour la touche Entrée dans le champ de saisie
-        valider.addActionListener(e -> jouer());
-        saisie.addActionListener(e -> jouer());
-        abandonner.addActionListener(e -> abandonner());
-        nouvellePartie.addActionListener(e -> commencer());
-        liste.addActionListener(e -> JOptionPane.showMessageDialog(frame,
-                "Voici les régions possibles :\n" + Textes.listeDesRegions(partie.getMode()),
-                "Liste des régions", JOptionPane.PLAIN_MESSAGE));
-    }
-
     private void commencer() {
         ModeRegions mode = reglages.getMode();
         // une nouvelle Partie à chaque fois : rien ne peut traîner de la partie précédente
@@ -211,16 +282,28 @@ class Fenetre {
         activerSaisie(false);
         // la réponse sur la carte de France, quand elle existe ; sinon on garde l'image affichée
         Representation.carte(partie.getCible()).ifPresent(this::montrer);
-        nouvellePartie.requestFocusInWindow();
+        boutonRejouer.requestFocusInWindow();
     }
 
-    private void parametres() {
-        Parametres.modifier(reglages);
-        // la liste se montre ou se cache tout de suite ; le mode et les images comptent à la prochaine partie
-        liste.setEnabled(reglages.isAvecListe());
+    // le mode et la silhouette ne changent pas la partie en cours : ils comptent à la suivante
+    private void prevenirProchainePartie() {
         if (partie.enCours()) {
             message.setText("Les nouveaux réglages s'appliqueront à la prochaine partie.");
         }
+    }
+
+    private void montrerListe() {
+        JOptionPane.showMessageDialog(frame, "Voici les régions possibles :\n" + Textes.listeDesRegions(partie.getMode()),
+                "Liste des régions", JOptionPane.PLAIN_MESSAGE);
+    }
+
+    private void montrerAide() {
+        JOptionPane.showMessageDialog(frame, Textes.REGLES, "Comment jouer", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    // comme un clic sur la croix de la fenêtre : un seul chemin pour quitter
+    private void quitter() {
+        frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
     }
 
     // ---- petits utilitaires d'affichage ----
@@ -228,9 +311,12 @@ class Fenetre {
     private void activerSaisie(boolean active) {
         saisie.setEnabled(active);
         valider.setEnabled(active);
+        // grise à la fois le bouton et l'article du menu Jeu
         abandonner.setEnabled(active);
+        boutonAbandonner.setVisible(active);
+        boutonRejouer.setVisible(!active);
         // la touche Entrée déclenche « Valider » pendant la partie, « Nouvelle partie » à la fin
-        frame.getRootPane().setDefaultButton(active ? valider : nouvellePartie);
+        frame.getRootPane().setDefaultButton(active ? valider : boutonRejouer);
     }
 
     private void montrer(String chemin) {
