@@ -1016,6 +1016,101 @@ toujours.
 
 ---
 
+## Phase 4.4 : l'autocomplétion
+
+### La règle d'un côté, le composant de l'autre
+
+L'autocomplétion a deux moitiés, rangées à deux endroits :
+
+- **quelles régions proposer** : une règle sur les données, donc `RegionFr.suggestions(saisie, mode)` dans
+  `donnees`, à côté de `chercher` et de `simplifier`. Elle se teste comme n'importe quelle méthode ;
+- **comment les proposer** (une liste sous le champ, les flèches, Entrée) : un comportement d'interface, donc la
+  classe `Autocompletion` dans `ui`. Elle reçoit une **fonction** (`Function<String, List<String>>`) qui calcule
+  les suggestions, et ne sait rien des régions. On pourrait la brancher demain sur un champ « capitale » sans
+  la modifier.
+
+Placer `suggestions` dans `RegionFr` a aussi une raison pratique : `simplifier` n'est visible que du package
+`donnees`, et c'est voulu. On n'a pas ouvert `simplifier` pour l'interface : on a ajouté le service dont
+l'interface avait besoin.
+
+> *La question à se poser :* « Cette classe pourrait-elle servir ailleurs si on lui passait ses données au lieu
+> qu'elle aille les chercher ? » Passer une fonction en paramètre, c'est la forme la plus légère de cette idée
+> (*injection de dépendance*).
+
+### Écouter un texte qui change : `DocumentListener`
+
+Un `JTextField` ne stocke pas son texte lui-même : il l'affiche à partir d'un **`Document`**, son modèle, comme
+la `JTable` affiche son `TableModel`. Pour réagir à chaque lettre, on écoute le document (`insertUpdate`,
+`removeUpdate`) plutôt que le clavier. Ça attrape **toutes** les modifications : frappe, collage, Retour arrière,
+et aussi `setText` appelé par le code. Écouter les touches en aurait manqué (un collage à la souris, par exemple).
+En contrepartie, `setText(x)` déclenche deux événements (effacer, puis insérer), et le code doit le supporter.
+
+### Les liaisons de touches : `InputMap` et `ActionMap`
+
+Pour que ↓, ↑, Entrée et Échap pilotent la liste **pendant que le champ garde le clavier**, on les relie au champ :
+
+```java
+champ.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("DOWN"), "DOWN");   // touche -> nom
+champ.getActionMap().put("DOWN", action);                                                  // nom -> action
+```
+
+Deux tables plutôt qu'une, pour séparer « quelle touche » de « quoi faire » : plusieurs touches peuvent viser la
+même action, et le thème peut changer les touches sans toucher aux actions. Une liaison `WHEN_FOCUSED` passe avant
+toutes les autres. C'est ainsi qu'Entrée remplace le comportement normal du champ.
+
+### Pourquoi pas un `JPopupMenu`
+
+Le réflexe serait un menu surgissant. Mais un `JPopupMenu` est fait pour les **menus** : à l'ouverture, il prend en
+charge les flèches, Entrée, Échap et les clics pour sa propre navigation, ce qui entre en conflit avec la frappe dans
+le champ. La liste est donc une simple `JList` posée dans le **calque des popups** de la fenêtre :
+
+- un `JLayeredPane` empile des calques, et `POPUP_LAYER` est dessiné par-dessus le contenu ;
+- la liste est **non focusable** : un clic dessus ne vole pas le clavier au champ ;
+- comme ce n'est pas une fenêtre à part, elle se dessine avec le reste. Sa vérification en mémoire marche donc
+  comme pour la fenêtre.
+
+### Tester un composant sans écran
+
+`AutocompletionTest` tourne aussi sur la machine d'intégration continue, qui n'a pas d'écran. Ce qui est interdit
+sans écran, ce sont les **fenêtres** (`JFrame` lève `HeadlessException`). Les composants légers (`JTextField`,
+`JList`, et même `JRootPane`) se créent sans problème. Le test place le champ dans un `JRootPane` et déclenche les
+touches **par leurs liaisons** (`InputMap` → `ActionMap`), exactement le chemin d'une vraie touche après sa
+réception. Il ne dépend donc ni du focus ni du système.
+
+### Le test qui avait tort, encore
+
+Le test attendait `[Nord-Pas-de-Calais, Normandie]` pour « nor » en mode « toutes ». Le code répondait aussi
+Basse-Normandie et Haute-Normandie, car leur mot « Normandie » commence par « nor ». C'est exactement la règle
+voulue, et la plus utile au joueur. On a donc corrigé l'attendu, en sachant pourquoi : c'est l'**inverse** de
+recopier la sortie du code sans réfléchir.
+
+### Les notions Java rencontrées
+
+- **`Function<T, R>`** : une fonction passée en paramètre (`this::suggestions`), appelée par `source.apply(texte)`.
+- **Les adaptateurs** (`MouseAdapter`, `FocusAdapter`, `ComponentAdapter`) : des écouteurs aux méthodes vides, dont on
+  ne redéfinit que celles qui servent.
+- **`Comparator.comparing(RegionFr::getNom, collator)`** : trier des objets selon une de leurs propriétés, avec un
+  ordre de comparaison choisi (ici l'ordre alphabétique français).
+- **Les streams** (`stream().map(RegionFr::getNom).toList()`, `anyMatch`) : transformer ou interroger une liste en
+  une ligne.
+
+---
+
+## Bilan de la Phase 4
+
+- **Ce qui a vraiment changé, c'est le sens du programme.** Il ne pose plus de questions dans l'ordre : il attend et
+  réagit (`ActionListener`, `Action`, `DocumentListener`), sur un seul fil, l'EDT.
+- **La Phase 3 a payé.** Les règles (`Partie`) n'ont reçu que des ajouts. Toute l'interface a pu être réécrite
+  sans toucher à une seule règle du jeu, et les tests de `jeu` et `donnees` écrits en Phase 3 sont restés au vert du
+  début à la fin, sans modification.
+- **Garder la logique hors des fenêtres.** Tout ce qui demande une réflexion (textes, tableau, images,
+  suggestions, flèche) vit dans des classes testables sans écran ; les fenêtres ne font qu'assembler et brancher.
+- **Regarder le résultat.** Plusieurs défauts n'étaient visibles que sur une image : fenêtre trop haute, flèches
+  minuscules, bouton disparu, sélection grise. Les tests vérifient ce qu'on a prévu ; regarder montre ce qu'on
+  n'avait pas prévu.
+
+---
+
 ## Aide-mémoire
 
 ### Raccourcis IntelliJ
