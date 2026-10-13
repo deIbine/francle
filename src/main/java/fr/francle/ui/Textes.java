@@ -4,10 +4,12 @@ import fr.francle.donnees.ModeRegions;
 import fr.francle.donnees.RegionFr;
 import fr.francle.jeu.Indice;
 import fr.francle.jeu.Partie;
+import fr.francle.jeu.RegionDuJour;
 
 import java.text.Collator;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -17,6 +19,10 @@ final class Textes {
 
     static final String REGLES = """
             Devinez la région française cachée en 5 essais au plus.
+
+            Partie du jour : la même région pour tout le monde, une seule partie par jour,
+            toujours parmi les nouvelles régions. Partie libre : autant que vous voulez,
+            avec les régions choisies dans le menu Paramètres.
 
             Après chaque essai, le tableau indique :
               • la distance entre la capitale de votre proposition et celle de la région cachée ;
@@ -30,8 +36,17 @@ final class Textes {
             Pendant la frappe, des suggestions s'affichent : ↓ et ↑ pour en choisir une, Entrée pour la reprendre,
             puis Entrée encore pour valider (désactivables dans le menu Paramètres).""";
 
+    // des titres courts : avec FlatLaf sous Windows, la barre de menus est intégrée à la barre de titre, et un titre
+    // plus long (« Francle — Partie du jour n° 1 · 13 octobre 2026 ») y était coupé
+    static final String TITRE_LIBRE = "Francle · partie libre";
+
     // que des méthodes static : on n'a jamais besoin d'un objet Textes
     private Textes() {}
+
+    // « Francle n° 1 », comme « Wordle 1234 »
+    static String titreDuJour(LocalDate date) {
+        return "Francle n° " + RegionDuJour.numero(date);
+    }
 
     // 27208 -> "27 208" : séparateur de milliers à la française. On impose l'espace insécable (U+00A0),
     // car l'espace fine (U+202F) du format français de Java s'affiche en carré vide avec certaines polices.

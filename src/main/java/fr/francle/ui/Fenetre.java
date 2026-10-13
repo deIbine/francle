@@ -5,6 +5,7 @@ import fr.francle.donnees.RegionFr;
 import fr.francle.jeu.Essai;
 import fr.francle.jeu.Indice;
 import fr.francle.jeu.Partie;
+import fr.francle.jeu.RegionDuJour;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -15,6 +16,8 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
+import java.time.Clock;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -66,7 +69,8 @@ class Fenetre {
 
     // les actions du joueur. Chacune réunit un nom, un raccourci et ce qu'il faut faire ; un article de menu et
     // un bouton peuvent partager la même : la désactiver grise les deux à la fois
-    private final Action nouvellePartie = action("Nouvelle partie", KeyStroke.getKeyStroke(KeyEvent.VK_N, RACCOURCI), this::commencer);
+    private final Action partieDuJour = action("Partie du jour", KeyStroke.getKeyStroke(KeyEvent.VK_D, RACCOURCI), this::jouerDuJour);
+    private final Action partieLibre = action("Partie libre", KeyStroke.getKeyStroke(KeyEvent.VK_N, RACCOURCI), this::jouerLibre);
     private final Action liste = action("Liste des régions", KeyStroke.getKeyStroke(KeyEvent.VK_L, RACCOURCI), this::montrerListe);
     private final Action abandonner = action("Abandonner", null, this::abandonner);
     private final Action quitter = action("Quitter", KeyStroke.getKeyStroke(KeyEvent.VK_Q, RACCOURCI), this::quitter);
@@ -77,19 +81,34 @@ class Fenetre {
     private final JTextField saisie = new JTextField(20);
     private final JButton valider = new JButton("Valider");
     private final JButton boutonAbandonner = new JButton(abandonner);
-    // à la fin de la partie, « Nouvelle partie » prend la place d'« Abandonner »
-    private final JButton boutonRejouer = new JButton(nouvellePartie);
+    // à la fin de la partie, « Partie libre » prend la place d'« Abandonner »
+    private final JButton boutonRejouer = new JButton(partieLibre);
     private final JLabel message = new JLabel(" ", SwingConstants.CENTER);
     private final JTextArea indices = new JTextArea(Indice.values().length, 30);
 
+    // l'horloge qui donne la date du jour. Un paramètre plutôt qu'un appel direct à LocalDate.now() : un test ou un
+    // harnais de vérification peut ainsi lancer la fenêtre « le 1er janvier 2030 », sans toucher à l'horloge du système
+    private final Clock horloge;
+
+    // la partie affichée : celle du jour ou une partie libre
     private Partie partie;
+    // la partie du jour et sa date : si le joueur y revient le même jour, il la retrouve telle qu'il l'a laissée
+    // (sinon, revenir à la partie du jour l'effacerait, et donnerait des essais en plus)
+    private Partie duJour;
+    private LocalDate dateDuJour;
 
     Fenetre() {
+        this(Clock.systemDefaultZone());
+    }
+
+    Fenetre(Clock horloge) {
+        this.horloge = horloge;
         construire();
         valider.addActionListener(e -> jouer());
         // la touche Entrée dans le champ : l'autocomplétion choisit la suggestion surlignée, ou appelle jouer()
         new Autocompletion(saisie, this::suggestions, this::jouer);
-        commencer();
+        // au lancement, la partie du jour
+        jouerDuJour();
     }
 
     void afficher() {
@@ -130,7 +149,8 @@ class Fenetre {
         JMenu jeu = new JMenu("Jeu");
         // Alt+J ouvre le menu (la lettre est soulignée quand on appuie sur Alt)
         jeu.setMnemonic(KeyEvent.VK_J);
-        jeu.add(nouvellePartie);
+        jeu.add(partieDuJour);
+        jeu.add(partieLibre);
         jeu.add(liste);
         jeu.add(abandonner);
         jeu.addSeparator();
@@ -244,17 +264,38 @@ class Fenetre {
 
     // ---- événements : ce qui se passe quand le joueur agit ----
 
-    private void commencer() {
+    // la partie du jour : créée au premier appel de la journée, puis reprise telle quelle (en cours ou terminée)
+    private void jouerDuJour() {
+        LocalDate aujourdhui = LocalDate.now(horloge);
+        if (duJour == null || !aujourdhui.equals(dateDuJour)) {
+            dateDuJour = aujourdhui;
+            duJour = new Partie(RegionDuJour.pour(aujourdhui), RegionDuJour.MODE);
+        }
+        montrerPartie(duJour);
+    }
+
+    // une partie libre : une nouvelle Partie à chaque fois, avec le mode choisi dans les réglages
+    private void jouerLibre() {
         ModeRegions mode = reglages.getMode();
-        // une nouvelle Partie à chaque fois : rien ne peut traîner de la partie précédente
-        partie = new Partie(RegionFr.tirer(mode), mode);
+        montrerPartie(new Partie(RegionFr.tirer(mode), mode));
+    }
+
+    // affiche une partie dans l'état où elle est (neuve, en cours ou terminée), uniquement à partir de cet état :
+    // c'est ce qui permet de reprendre la partie du jour sans rien avoir mémorisé d'autre
+    private void montrerPartie(Partie aMontrer) {
+        partie = aMontrer;
+        frame.setTitle(partie == duJour ? Textes.titreDuJour(dateDuJour) : Textes.TITRE_LIBRE);
         tableau.setPartie(partie);
-        montrer(Representation.silhouette(partie.getCible(), mode, reglages.isAvecImages()));
-        message.setText("Quelle est cette région française ?");
-        indices.setText("");
+        afficherIndices();
         liste.setEnabled(reglages.isAvecListe());
-        activerSaisie(true);
         saisie.setText("");
+        if (!partie.enCours()) {
+            terminer();
+            return;
+        }
+        montrer(Representation.silhouette(partie.getCible(), partie.getMode(), reglages.isAvecImages()));
+        message.setText(partie.getEssais().isEmpty() ? "Quelle est cette région française ?" : Textes.apresEssai(partie));
+        activerSaisie(true);
         saisie.requestFocusInWindow();
     }
 
@@ -297,7 +338,8 @@ class Fenetre {
         boutonRejouer.requestFocusInWindow();
     }
 
-    // le mode et la silhouette ne changent pas la partie en cours : ils comptent à la suivante
+    // le mode et la silhouette ne changent pas la partie en cours : ils comptent à la suivante (le mode, seulement
+    // pour les parties libres : la partie du jour se joue toujours avec les nouvelles régions)
     private void prevenirProchainePartie() {
         if (partie.enCours()) {
             message.setText("Les nouveaux réglages s'appliqueront à la prochaine partie.");
