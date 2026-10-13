@@ -14,7 +14,9 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 2 | Centraliser les données des régions | ✅ Fait (enum RegionFr, −466 lignes) |
 | 3 | Séparer logique et affichage, tests, Maven, packages | ✅ Fait (PR #21, #22 et 3.3) |
 | 4 | Interface Swing en une seule fenêtre | ✅ Fait (PR #24 à #28) |
-| 5 | Nouvelles fonctionnalités | ⬜ À faire |
+| 5 | Région du jour et statistiques | 🔄 En cours |
+| 6 | Indices plus riches | ⬜ À faire |
+| 7 | Version web (Spring Boot) | ⬜ À faire |
 
 ---
 
@@ -229,7 +231,7 @@ Résultat : `main.java` passe de 978 à 828 lignes.
 ### 3.3 : un fichier par classe, des packages ✅
 
 - **Ménage** : la classe vide `commentjouer` et les brouillons en commentaire (`interfacerapide`, `Statistiques`…)
-  sont supprimés ; leurs idées sont reportées en Phase 5.
+  sont supprimés ; leurs idées sont reportées dans les phases suivantes (statistiques en Phase 5, le reste en Phase 6).
 - **Un fichier par classe** (11 fichiers), chacun avec ses seuls imports : plus d'avertissement « auxiliary class ».
 - **Conventions de nommage** : `main` devient `Francle`, `representation` devient `Representation`.
 - **Trois packages**, avec des dépendances dans un seul sens (`ui` → `jeu` → `donnees`) :
@@ -381,23 +383,50 @@ interface ne fait que la brancher ; sans elle, il faudrait réécrire les règle
 
 ---
 
-## Phase 5 : nouvelles fonctionnalités
+## Phase 5 : la région du jour et les statistiques
 
-| Fonctionnalité | Ce que ça apprend | Difficulté après la Phase 2 |
+**Pourquoi.** Francle s'inspire de Wordle et Worldle, mais il lui manque ce qui fait revenir chaque jour : une même
+énigme pour tout le monde, et des statistiques qui racontent ses parties dans la durée.
+
+**Découpage choisi** (le 13 octobre 2026, Claude code et explique) :
+
+1. **5.1 la région du jour** : une région tirée à partir de la date, la même pour tout le monde (parmi les nouvelles
+   régions), avec un numéro de partie à la Wordle. Dans le menu Jeu, « Partie du jour » et « Partie libre »
+   (illimitée, comme aujourd'hui) ;
+2. **5.2 les statistiques** : l'historique des parties du jour, enregistré en **JSON avec Jackson** dans le dossier de
+   l'utilisateur ; parties jouées, % de victoires, série en cours et meilleure série, répartition par nombre
+   d'essais ; une fenêtre de statistiques en fin de partie du jour ; la partie du jour ne se rejoue pas, même après
+   avoir relancé le jeu. Seules les parties du jour comptent.
+
+**Comment le penser.** *Déterminisme* : « la même région pour tout le monde » veut dire qu'un calcul doit donner le
+même résultat sur toutes les machines, sans se parler. Le piège est subtil : la graine du hasard ne suffit pas,
+l'ordre de la liste fait partie du résultat. *Persistance* : jusqu'ici, tout disparaissait à la fermeture du jeu.
+Écrire sur le disque, c'est aussi prévoir le fichier absent, illisible ou d'une ancienne version.
+
+**Ce que tu apprends :** `LocalDate` et le temps comme paramètre (pour tester n'importe quel jour), le hasard
+reproductible, `java.nio.file`, la sérialisation JSON (Jackson), les tests avec un dossier temporaire (`@TempDir`).
+
+---
+
+## Phase 6 : des indices plus riches
+
+| Fonctionnalité | Ce que ça apprend | Difficulté |
 |---|---|---|
 | **Indices des anciennes régions** (aujourd'hui ni superficie ni indices) | Recherche de données | Très facile : 1 ligne par région dans `RegionFr` |
-| **Indices variés**, tirés parmi les personnalités alternatives de `docs/indices.md` | `List` dans un `enum`, hasard | Facile |
-| **Statistiques à la Wordle** : parties jouées, % de victoires, répartition par nombre d'essais | Lire et écrire des fichiers (`java.nio.file`), JSON ou propriétés | Moyen |
-| **Région du jour**, la même pour tout le monde | `LocalDate`, hasard reproductible avec une graine (`new Random(date.toEpochDay())`) | Moyen : piège subtil, l'ordre de la liste fait partie du résultat |
-| **Version web** avec Spring Boot | Serveur HTTP, API, HTML | Gros projet, réaliste après la Phase 3 |
-| **Variante Charlemagne** (ou départements, pays européens) | Généraliser `RegionFr` en jeu de données interchangeable | Moyen à gros |
+| **Indices variés**, tirés parmi les personnalités alternatives de `docs/indices.md` | `List` dans un `enum`, hasard | Facile (attention : la partie du jour doit tirer les mêmes indices pour tout le monde) |
 
 **Autres idées notées dans le code d'origine** (commentaires retirés en Phase 3.3, conservés ici) : distances en miles,
 thème sombre, silhouette tournée au hasard pour corser le jeu, comparaison proximité / taille de la région.
 
-**Comment le penser.** La plupart de ces fonctionnalités sont devenues faciles grâce aux Phases 2 et 3 :
-c'est la récompense d'une bonne architecture, chaque nouvelle fonctionnalité coûte moins cher que la
-précédente. Les ajouter *avant* la Phase 3 voudrait dire tester encore en cliquant, dans un fichier déjà trop gros.
+---
 
-**Ordre recommandé : 3 → 4 → 5**, en commençant la Phase 3 par la classe `Partie` et les tests JUnit.
-Exception possible : les indices des anciennes régions, faisables à tout moment pour un résultat visible rapide.
+## Phase 7 : la version web
+
+Une **version web** avec Spring Boot : un serveur HTTP qui expose le jeu (API), et une page HTML qui le joue.
+Gros projet, réaliste grâce aux Phases 3 à 5 : `Partie`, `RegionFr`, la région du jour et les statistiques sont déjà
+indépendants de Swing, et le JSON de la Phase 5 est le format naturel d'une API web.
+
+**Ce que tu apprends :** serveur HTTP, API REST, HTML et JavaScript côté navigateur, déploiement.
+
+**Comment le penser.** Une bonne architecture se mesure au coût d'une nouvelle interface : ici, la troisième
+(popups, fenêtre Swing, page web) ne devrait toucher ni aux règles ni aux données.
