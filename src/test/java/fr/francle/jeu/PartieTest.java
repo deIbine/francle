@@ -138,6 +138,20 @@ class PartieTest {
     }
 
     @Test
+    @DisplayName("Indices révélés : un par essai raté, aucun pour l'essai gagnant")
+    void indicesReveles() {
+        assertEquals(List.of(), new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES).indicesReveles());
+        assertEquals(List.of(Indice.SUPERFICIE, Indice.SPECIALITE),
+                jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES, "Corse", "Normandie").indicesReveles());
+        assertEquals(List.of(Indice.SUPERFICIE),
+                jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES, "Corse", "Bretagne").indicesReveles());
+        // 5 essais ratés : 4 indices seulement, il n'y en a pas de cinquième
+        assertEquals(List.of(Indice.values()),
+                jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES,
+                        "Corse", "Normandie", "Occitanie", "Grand Est", "Guyane").indicesReveles());
+    }
+
+    @Test
     @DisplayName("Pourcentage (formule B) : Bretagne → Normandie 76 %, Grand Est 35 %, Corse 0 %")
     void pourcentagesConnus() {
         RegionFr cible = RegionFr.BRETAGNE;

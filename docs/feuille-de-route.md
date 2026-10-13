@@ -13,7 +13,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 1 | Corriger les bugs | ✅ Fait (4 bugs corrigés) |
 | 2 | Centraliser les données des régions | ✅ Fait (enum RegionFr, −466 lignes) |
 | 3 | Séparer logique et affichage, tests, Maven, packages | ✅ Fait (PR #21, #22 et 3.3) |
-| 4 | Interface Swing en une seule fenêtre | 🔄 En cours (4.1) |
+| 4 | Interface Swing en une seule fenêtre | 🔄 En cours (4.1 et 4.2 faites) |
 | 5 | Nouvelles fonctionnalités | ⬜ À faire |
 
 ---
@@ -281,8 +281,8 @@ est un texte dans la question suivante, et l'image s'ouvre dans une fenêtre sé
    les réglages séparés de leurs popups (prérequis des menus) ;
 2. **4.2** la fenêtre principale : `JFrame`, image, champ de saisie, `JTable` des essais sur un `TableModel`,
    lancement sur l'EDT, thème **FlatLaf** (première dépendance Maven hors tests) ;
-3. **4.3** la barre de menus (nouvelle partie, paramètres, didacticiel, quitter) ; suppression de `Message`
-   et des anciens popups, noms de méthodes d'origine renommés ;
+3. **4.3** la barre de menus (nouvelle partie, paramètres en cases à cocher et boutons radio, comment jouer,
+   quitter) à la place des boutons ; suppression des popups de `Parametres` ;
 4. **4.4** l'autocomplétion, **faite maison** (filtrage des noms par préfixe pendant la frappe) plutôt
    qu'une `JComboBox` éditable.
 
@@ -299,6 +299,33 @@ est un texte dans la question suivante, et l'image s'ouvre dans une fenêtre sé
   `switch` imbriqué de 45 lignes.
 - **26 nouveaux tests** (98 au total) : les limites des secteurs (22,4° → nord, 22,6° → nord-est), un azimut
   vérifié par une seconde méthode indépendante (82,32° de Rennes à Strasbourg), 8 trajets entre capitales.
+
+### 4.2 : la fenêtre principale ✅
+
+Disposition verticale façon Worldle (choisie le 13 octobre 2026) : boutons, image, saisie et message,
+tableau des essais, indices. Plus de cascade de popups pour jouer.
+
+- **`Fenetre`** : `JFrame` en `BorderLayout` imbriqués. Elle ne contient aucune règle : chaque bouton (et la touche
+  Entrée) est branché par un `ActionListener` qui transmet l'action à `Partie`, puis affiche la réponse.
+  Une saisie inconnue reste dans le champ, sélectionnée, avec un message ; elle ne coûte toujours pas d'essai.
+- **`TableauEssais`** (`AbstractTableModel`) : la `JTable` lit chaque case dans `partie.getEssais()`. Toujours
+  5 lignes (les vides montrent les essais restants) ; flèche agrandie, coche ✓ sur l'essai gagnant.
+- **Fin de partie** : l'image bascule sur la **carte de France** où la région est coloriée (`resources/indices/`,
+  jamais utilisées jusqu'ici ; 13 régions de métropole, les autres gardent leur silhouette).
+- **`Partie.indicesReveles()`** : quels indices sont révélés est une règle, elle passe dans `jeu`.
+- **`Textes`** : toutes les phrases de la fenêtre, testables sans écran. Distances arrondies au kilomètre (`912 km`).
+- **`Representation`** réécrite : `charger`, `silhouette`, `carte`, `ajuster` (les images remplissent un cadre fixe
+  de 400 × 220 sans être déformées), `icone`.
+- **`Francle.main`** : crée la fenêtre sur l'**EDT** (`SwingUtilities.invokeLater`), avec le thème **FlatLaf**.
+- **`pom.xml`** : FlatLaf 3.7.2 ; **maven-shade-plugin** 3.6.2 pour un `.jar` « tout compris » (sinon `java -jar`
+  ne trouverait pas FlatLaf).
+- **Supprimés** : `Message` (sa boucle de popups, son historique en texte) et le menu « tapez 0, 1, 2 ou 3 ».
+  Les paramètres passent encore par les popups de `Parametres` (bouton « Paramètres »), jusqu'à la 4.3.
+- **144 tests** : `TableauEssaisTest` (cases, événements envoyés à la `JTable`), `TextesTest` (remplace
+  `MessageTest`), `RepresentationTest` étendu (carte de chaque région, proportions), `indicesReveles`.
+- **Vérifié à l'écran** : la vraie fenêtre lancée, des essais joués en cliquant ses boutons par programme, et
+  des captures d'écran. Elles ont montré une fenêtre plus haute que l'écran (cadre réduit de 420 × 320 à
+  400 × 220) et des flèches trop petites.
 
 **Comment le penser.** La *programmation événementielle* : le programme ne déroule plus ses lignes dans
 l'ordre, il **réagit** à des événements (`ActionListener`). Le *fil de Swing* (*Event Dispatch Thread*) :
