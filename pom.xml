@@ -44,6 +44,13 @@
             <artifactId>flatlaf</artifactId>
             <version>3.7.2</version>
         </dependency>
+        <!-- lecture et écriture du JSON (historique des parties du jour). Jackson 3 : groupe tools.jackson, sait déjà
+             traiter les dates java.time et les records, et amène avec lui jackson-core et jackson-annotations -->
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>3.2.3</version>
+        </dependency>
         <!-- scope test : JUnit sert aux tests, il n'est pas embarqué dans le jeu -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -100,8 +107,25 @@
                             <createDependencyReducedPom>false</createDependencyReducedPom>
                             <filters>
                                 <filter>
-                                    <!-- module-info et manifeste de FlatLaf : ils décrivent SON .jar, pas le nôtre -->
-                                    <artifact>com.formdev:flatlaf</artifact>
+                                    <!-- module-info et manifestes des dépendances (FlatLaf, Jackson) : ils décrivent
+                                         LEUR .jar, pas le nôtre. Nos propres fichiers ne sont pas concernés -->
+                                    <artifact>com.formdev:*</artifact>
+                                    <excludes>
+                                        <exclude>module-info.class</exclude>
+                                        <exclude>META-INF/versions/*/module-info.class</exclude>
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>tools.jackson.core:*</artifact>
+                                    <excludes>
+                                        <exclude>module-info.class</exclude>
+                                        <exclude>META-INF/versions/*/module-info.class</exclude>
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
+                                    </excludes>
+                                </filter>
+                                <filter>
+                                    <artifact>com.fasterxml.jackson.core:*</artifact>
                                     <excludes>
                                         <exclude>module-info.class</exclude>
                                         <exclude>META-INF/versions/*/module-info.class</exclude>
@@ -116,6 +140,9 @@
                                         <Multi-Release>true</Multi-Release>
                                     </manifestEntries>
                                 </transformer>
+                                <!-- les fichiers META-INF/services de plusieurs .jar portent le même nom : on les fusionne
+                                     au lieu de garder le premier, sinon des services déclarés disparaîtraient -->
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>
                         </configuration>
                     </execution>
