@@ -750,6 +750,69 @@ et vérifier qu'il **échoue** avec l'ancienne valeur avant de passer avec la no
 
 ---
 
+## Phase 4.1 : la flèche de direction et les réglages
+
+### Un brouillon peut cacher plusieurs bugs
+
+Le brouillon `fleche()` avait un bug annoncé (les degrés passés à `Math.sin` sans conversion, le piège de la
+Phase 1) et un bug caché : il calculait le cap **de la cible vers la proposition**. La flèche aurait été juste en
+apparence, mais aurait pointé à l'envers. On l'a vu en comparant la formule ligne à ligne avec sa définition :
+`atan2(sin Δλ · cos φ2, …)` donne le cap **du point 1 vers le point 2**, donc le point 1 doit être la proposition
+(là où est le joueur) et le point 2 la cible (là où il doit aller).
+
+> *La question à se poser :* pour toute fonction à deux arguments du même type (`distance(a, b)`, `azimut(a, b)`,
+> `copier(source, destination)`), « Est-ce que l'ordre compte ? » La distance est symétrique, l'azimut ne l'est pas.
+> Le nom des paramètres doit le dire (`depuis`, `vers`), et un test doit vérifier les deux sens (Rennes → Strasbourg
+> donne l'est, Strasbourg → Rennes l'ouest).
+
+### Découper un problème : calcul d'un côté, classement de l'autre
+
+`Direction` sépare deux étapes, testées chacune à part :
+
+1. `azimut(depuis, vers)` : de la trigonométrie, qui renvoie un nombre (82,32°) ;
+2. `depuisAzimut(angle)` : un classement, qui range ce nombre dans l'un des 8 secteurs de 45°.
+
+La deuxième se teste sans aucune région, avec des angles choisis **aux limites** : 22,4° doit donner le nord et
+22,6° le nord-est. C'est là que vivent les bugs (un `<` au lieu d'un `<=`, un secteur décalé de 22,5°). Le tour de
+passe-passe : `Math.round(angle / 45)` donne le numéro du secteur dont le centre est le plus proche, et `% 8`
+ramène le secteur 8 (de 337,5° à 360°) sur le nord.
+
+### Vérifier un calcul par un autre chemin
+
+Pour l'azimut de référence, le test contenait d'abord « ≈ 80° », une estimation de tête ; il a échoué (82,32°). Changer
+le test pour qu'il passe aurait été une erreur : on ne sait pas encore qui a tort. On a recalculé la valeur par une
+**méthode indépendante** (les deux villes en vecteurs 3D, projetés sur le plan tangent à Rennes) : 82,32° aussi.
+Deux méthodes différentes qui tombent d'accord, c'est une vraie preuve ; une estimation de tête n'en est pas une.
+
+> *La question à se poser :* quand un test échoue, « Qui a tort, le code ou la valeur attendue ? » Ne jamais
+> recopier dans le test la valeur que donne le code : le test ne vérifierait plus rien.
+
+### Les cas où la réponse n'existe pas
+
+À 0 km, il n'y a pas de direction : `atan2(0, 0)` renvoie 0, soit « nord », ce qui serait faux. Ce cas arrive
+vraiment : en mode « toutes les régions », Hauts-de-France et Nord-Pas-de-Calais ont toutes deux Lille pour
+capitale. Plutôt qu'un `null` (qui ferait planter l'affichage), on ajoute une valeur explicite `SUR_PLACE` (●).
+On compare la distance à 1 km plutôt qu'à 0 : les arrondis des `double` peuvent donner quelques micromètres au
+lieu de 0 pile (le piège de la Phase 1).
+
+### Séparer l'état de son affichage
+
+`Parametres` mélangeait deux choses : **ce qui est réglé** (trois `int` valant 0, 1 ou 2) et **comment on le
+demande** (des popups). La Phase 4.3 remplacera les popups par des menus ; si l'état restait dedans, il faudrait
+tout réécrire. `Reglages` ne garde que l'état, avec les bons types : un `ModeRegions` au lieu de `0/1/2`, des
+`boolean` au lieu de « 0 = avec, 1 = sans ». `reglages.isAvecImages()` se lit tout seul,
+`getChoiximage() == 0` demandait de connaître la convention. C'est le même raisonnement que `Partie` en
+Phase 3.1, appliqué aux réglages : le modèle d'un côté, la vue de l'autre.
+
+### Les notions Java rencontrées
+
+- **Un `enum` avec des champs** (`symbole`) et un **tableau constant** (`ROSE`) qui fixe un ordre.
+- **`Math.atan2(y, x)`** : l'angle d'un point, dans le bon quadrant (contrairement à `atan(y / x)`), entre −180° et
+  180° ; **`Math.toRadians` / `Math.toDegrees`** ; le modulo pour ramener un angle entre 0° et 360°.
+- **Les tests paramétrés avec `@CsvSource`** : JUnit convertit tout seul le texte `"NORD_EST"` en `Direction.NORD_EST`.
+
+---
+
 ## Aide-mémoire
 
 ### Raccourcis IntelliJ

@@ -13,7 +13,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 1 | Corriger les bugs | ✅ Fait (4 bugs corrigés) |
 | 2 | Centraliser les données des régions | ✅ Fait (enum RegionFr, −466 lignes) |
 | 3 | Séparer logique et affichage, tests, Maven, packages | ✅ Fait (PR #21, #22 et 3.3) |
-| 4 | Interface Swing en une seule fenêtre | ⬜ À faire |
+| 4 | Interface Swing en une seule fenêtre | 🔄 En cours (4.1) |
 | 5 | Nouvelles fonctionnalités | ⬜ À faire |
 
 ---
@@ -274,6 +274,31 @@ est un texte dans la question suivante, et l'image s'ouvre dans une fenêtre sé
   conversion des degrés en radians (le même piège qu'en Phase 1), puis le découpage de l'azimut
   en 8 directions (↑ ↗ → ↘ ↓ ↙ ← ↖) ;
 - les menus (paramètres, didacticiel) dans la fenêtre, au lieu de taper 0, 1, 2 ou 3.
+
+**Découpage choisi** (le 13 octobre 2026, Claude code et explique) :
+
+1. **4.1** la flèche de direction, en logique pure dans `jeu`, affichée tout de suite dans les popups ;
+   les réglages séparés de leurs popups (prérequis des menus) ;
+2. **4.2** la fenêtre principale : `JFrame`, image, champ de saisie, `JTable` des essais sur un `TableModel`,
+   lancement sur l'EDT, thème **FlatLaf** (première dépendance Maven hors tests) ;
+3. **4.3** la barre de menus (nouvelle partie, paramètres, didacticiel, quitter) ; suppression de `Message`
+   et des anciens popups, noms de méthodes d'origine renommés ;
+4. **4.4** l'autocomplétion, **faite maison** (filtrage des noms par préfixe pendant la frappe) plutôt
+   qu'une `JComboBox` éditable.
+
+### 4.1 : la flèche de direction et les réglages ✅
+
+- **`enum Direction`** (`jeu`) : les 8 directions de la rose des vents avec leur flèche (↑ ↗ → ↘ ↓ ↙ ← ↖), plus
+  `SUR_PLACE` (●) pour deux régions qui partagent leur capitale (Hauts-de-France et Nord-Pas-de-Calais : Lille).
+  `azimut()` calcule le cap initial en degrés, `depuisAzimut()` le range dans un secteur de 45°.
+- **Deux bugs du brouillon `Partie.fleche()`** : les degrés passés tels quels à `Math.sin`, et le cap calculé
+  **de la cible vers la proposition** (la flèche aurait pointé à l'envers). Le brouillon est supprimé.
+- **`record Essai`** gagne un champ `direction` ; la flèche s'affiche après un essai raté et dans l'historique.
+- **`Reglages`** (`ui`) : le mode de jeu et deux booléens (images, liste), sans aucun affichage, au lieu des
+  trois `int` 0/1/2 de `Parametres`. `Parametres` ne garde que ses popups, et `Francle.main` perd son
+  `switch` imbriqué de 45 lignes.
+- **26 nouveaux tests** (98 au total) : les limites des secteurs (22,4° → nord, 22,6° → nord-est), un azimut
+  vérifié par une seconde méthode indépendante (82,32° de Rennes à Strasbourg), 8 trajets entre capitales.
 
 **Comment le penser.** La *programmation événementielle* : le programme ne déroule plus ses lignes dans
 l'ordre, il **réagit** à des événements (`ActionListener`). Le *fil de Swing* (*Event Dispatch Thread*) :
