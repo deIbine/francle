@@ -39,7 +39,7 @@ public class Partie {
         }
         RegionFr proposition = trouvee.get();
         double distance = cible.distance(proposition);
-        Essai essai = new Essai(proposition, distance, pourcentage(cible, distance));
+        Essai essai = new Essai(proposition, distance, pourcentage(cible, distance), Direction.entre(proposition, cible));
         essais.add(essai);
         if (proposition == cible) {
             etat = Etat.GAGNEE;
@@ -81,20 +81,5 @@ public class Partie {
         int pourcentage = (int) Math.round((distanceMax - distance) * 100 / distanceMax);
         // une proposition en outre-mer pour une cible en métropole dépasse la référence : 0 %, pas un pourcentage négatif
         return Math.max(0, pourcentage);
-    }
-
-    // Brouillon de la flèche de direction (à reprendre en Phase 4), recopié tel quel depuis l'ancienne classe Region :
-    // les degrés ne sont pas convertis en radians, et l'azimut n'est pas encore découpé en 8 directions.
-    static String fleche(RegionFr cible, RegionFr proposition){
-        String sens = "";
-        double resultat;
-
-        double x = Math.cos(cible.getLatitude())*Math.sin(proposition.getLatitude()) - Math.sin(cible.getLatitude()) * Math.cos(proposition.getLatitude()) * Math.cos((proposition.getLongitude()) - (cible.getLongitude()));
-        double y = Math.sin((proposition.getLongitude())-(cible.getLongitude())) * Math.cos(proposition.getLatitude());
-
-        resultat = Math.atan2(y,x);
-
-        System.out.println(resultat);
-        return sens;
     }
 }

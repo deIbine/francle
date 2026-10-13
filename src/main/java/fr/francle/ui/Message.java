@@ -21,9 +21,9 @@ class Message{
     private static final String[] LIBELLES = {" Superficie : ", " Premier indice : ", " Deuxième indice : ", " Troisième indice : "};
 
     // un tour de jeu : demande une proposition, la transmet à la partie, puis affiche ce qu'elle répond
-    public void tour(Partie partie, Parametres lesparametres){
+    public void tour(Partie partie, Reglages reglages){
         String saisie;
-        if (lesparametres.getChoixlaliste() == 0) {
+        if (reglages.isAvecListe()) {
             saisie = JOptionPane.showInputDialog("Quelle est votre supposition ? (1 pour avoir la liste) (Echap pour abandonner) \n \n"
                     + historique(partie));
         }
@@ -36,8 +36,8 @@ class Message{
             return;
         }
         // la liste existe dans les trois modes : "1" n'est plus réservé au mode "nouvelles régions"
-        if (saisie.equals("1") && (lesparametres.getChoixlaliste() == 0)){
-            touteslesregions(ModeRegions.depuisCode(lesparametres.getChoixdelaregion()));
+        if (saisie.equals("1") && reglages.isAvecListe()){
+            touteslesregions(reglages.getMode());
             return;
         }
         Optional<Essai> essai = partie.proposer(saisie);
@@ -58,6 +58,7 @@ class Message{
                 "C'est raté ! " +
                         "\nVous êtes à " + String.format(Locale.FRENCH, "%.2f", essai.distance()) + " km." +
                         "\nVotre pourcentage de proximité est de : " + essai.pourcentage() + "%." +
+                        "\nLa région recherchée est dans cette direction : " + essai.direction().getSymbole() +
                         "\n" + phrase(indice, partie.getCible()), TITRES[numero], JOptionPane.PLAIN_MESSAGE);
     }
 
@@ -102,13 +103,14 @@ class Message{
                 message,"Fin du jeu",JOptionPane.PLAIN_MESSAGE);
     }
 
-    // les 5 lignes "Supposition n : région distance km pourcentage% indice", vides pour les essais pas encore joués
+    // les 5 lignes "Supposition n : région distance km flèche pourcentage% indice", vides pour les essais pas encore joués
     public static String historique(Partie partie){
         List<Essai> essais = partie.getEssais();
         StringBuilder texte = new StringBuilder();
         for (int i = 0; i < Partie.ESSAIS_MAX; i++){
             String proposition = "";
             String distance = "";
+            String fleche = "";
             int pourcentage = 0;
             String indice = "";
             if (i < essais.size()){
@@ -117,13 +119,15 @@ class Message{
                 boolean trouve = essai.proposition() == partie.getCible();
                 distance = trouve ? "0" : String.format(Locale.FRENCH, "%.2f", essai.distance());
                 pourcentage = essai.pourcentage();
+                // la flèche et son espace, et rien du tout sur la ligne gagnante
+                fleche = trouve ? "" : essai.direction().getSymbole() + " ";
                 // un essai réussi ne révèle pas d'indice
                 if (!trouve){
                     indice = Indice.apresEssai(i).map(lindice -> valeur(lindice, partie.getCible())).orElse("");
                 }
             }
             texte.append("Supposition ").append(i + 1).append(" : ").append(proposition).append(" ")
-                    .append(distance).append(" km ").append(pourcentage).append("%");
+                    .append(distance).append(" km ").append(fleche).append(pourcentage).append("%");
             if (i == 0){
                 texte.append(LIBELLES[i]).append(indice).append(" km² \n");
             }
