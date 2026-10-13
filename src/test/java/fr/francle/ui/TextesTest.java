@@ -8,6 +8,7 @@ import fr.francle.jeu.Partie;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Locale;
 
@@ -48,6 +49,13 @@ class TextesTest {
         assertEquals("Spécialité culinaire : la crêpe", Textes.indice(Indice.SPECIALITE, bretagne));
         assertEquals("Personnalité : Louis Guilloux", Textes.indice(Indice.PERSONNALITE, bretagne));
         assertEquals("Capitale régionale : Rennes", Textes.indice(Indice.CAPITALE, bretagne));
+    }
+
+    @Test
+    @DisplayName("Titre de la partie du jour : son numéro, à la Wordle")
+    void titreDuJour() {
+        assertEquals("Francle n° 1", Textes.titreDuJour(LocalDate.of(2026, 10, 13)));
+        assertEquals("Francle n° 20", Textes.titreDuJour(LocalDate.of(2026, 11, 1)));
     }
 
     @Test
