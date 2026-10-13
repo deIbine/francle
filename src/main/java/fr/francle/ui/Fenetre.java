@@ -6,6 +6,9 @@ import fr.francle.jeu.Essai;
 import fr.francle.jeu.Indice;
 import fr.francle.jeu.Partie;
 import fr.francle.jeu.RegionDuJour;
+import fr.francle.stats.Historique;
+import fr.francle.stats.Sauvegarde;
+import fr.francle.stats.Statistiques;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -16,6 +19,7 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
+import java.io.IOException;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -41,6 +45,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableCellRenderer;
 
 /*
@@ -73,6 +78,7 @@ class Fenetre {
     private final Action partieLibre = action("Partie libre", KeyStroke.getKeyStroke(KeyEvent.VK_N, RACCOURCI), this::jouerLibre);
     private final Action liste = action("Liste des régions", KeyStroke.getKeyStroke(KeyEvent.VK_L, RACCOURCI), this::montrerListe);
     private final Action abandonner = action("Abandonner", null, this::abandonner);
+    private final Action statistiques = action("Statistiques", KeyStroke.getKeyStroke(KeyEvent.VK_T, RACCOURCI), this::montrerStatistiques);
     private final Action quitter = action("Quitter", KeyStroke.getKeyStroke(KeyEvent.VK_Q, RACCOURCI), this::quitter);
     private final Action aide = action("Comment jouer", KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), this::montrerAide);
 
@@ -97,12 +103,23 @@ class Fenetre {
     private Partie duJour;
     private LocalDate dateDuJour;
 
+    // l'historique des parties du jour et l'endroit où il est enregistré. La sauvegarde est un paramètre, comme
+    // l'horloge : la vérification utilise un dossier temporaire, jamais les vraies statistiques du joueur
+    private final Sauvegarde sauvegarde;
+    private Historique historique;
+    // un problème de fichier à signaler au joueur dès que la fenêtre sera visible (ou null)
+    private String avertissement;
+    // un échec d'enregistrement n'est signalé qu'une fois, pas à chaque essai
+    private boolean enregistrementSignale;
+
     Fenetre() {
-        this(Clock.systemDefaultZone());
+        this(Clock.systemDefaultZone(), Sauvegarde.parDefaut());
     }
 
-    Fenetre(Clock horloge) {
+    Fenetre(Clock horloge, Sauvegarde sauvegarde) {
         this.horloge = horloge;
+        this.sauvegarde = sauvegarde;
+        historique = chargerHistorique();
         construire();
         valider.addActionListener(e -> jouer());
         // la touche Entrée dans le champ : l'autocomplétion choisit la suggestion surlignée, ou appelle jouer()
@@ -116,6 +133,23 @@ class Fenetre {
         frame.setLocationRelativeTo(null);  // centrée sur l'écran
         frame.setVisible(true);
         saisie.requestFocusInWindow();
+        if (avertissement != null) {
+            // invokeLater : la boîte de dialogue s'ouvre une fois la fenêtre dessinée, par-dessus elle
+            String texte = avertissement;
+            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(frame, texte, "Historique",
+                    JOptionPane.WARNING_MESSAGE));
+        }
+    }
+
+    // un fichier absent n'est pas une erreur (premier lancement) ; un fichier illisible a été mis de côté par
+    // la Sauvegarde : on le dit au joueur, et le jeu continue avec un historique vide
+    private Historique chargerHistorique() {
+        try {
+            return sauvegarde.charger();
+        } catch (IOException e) {
+            avertissement = e.getMessage() + "\nLes statistiques repartent de zéro.";
+            return Historique.vide();
+        }
     }
 
     // une Action à partir d'un nom, d'un raccourci (ou null) et du code à exécuter
@@ -151,8 +185,10 @@ class Fenetre {
         jeu.setMnemonic(KeyEvent.VK_J);
         jeu.add(partieDuJour);
         jeu.add(partieLibre);
-        jeu.add(liste);
         jeu.add(abandonner);
+        jeu.addSeparator();
+        jeu.add(statistiques);
+        jeu.add(liste);
         jeu.addSeparator();
         jeu.add(quitter);
 
@@ -269,7 +305,8 @@ class Fenetre {
         LocalDate aujourdhui = LocalDate.now(horloge);
         if (duJour == null || !aujourdhui.equals(dateDuJour)) {
             dateDuJour = aujourdhui;
-            duJour = new Partie(RegionDuJour.pour(aujourdhui), RegionDuJour.MODE);
+            // neuve, en cours ou terminée selon l'historique : relancer le jeu ne donne pas d'essais en plus
+            duJour = historique.partieDuJour(aujourdhui);
         }
         montrerPartie(duJour);
     }
@@ -310,10 +347,12 @@ class Fenetre {
         tableau.essaiJoue();
         saisie.setText("");
         afficherIndices();
+        retenirDuJour();
         if (partie.enCours()) {
             message.setText(Textes.apresEssai(partie));
         } else {
             terminer();
+            statistiquesEnFinDuJour();
         }
     }
 
@@ -327,7 +366,48 @@ class Fenetre {
 
     private void abandonner() {
         partie.abandonner();
+        retenirDuJour();
         terminer();
+        statistiquesEnFinDuJour();
+    }
+
+    // après chaque essai ou abandon de la partie du jour : l'historique est mis à jour et enregistré tout de suite,
+    // pour qu'un plantage ou une fermeture brutale ne fasse rien perdre. Les parties libres ne sont pas enregistrées.
+    private void retenirDuJour() {
+        if (partie != duJour) {
+            return;
+        }
+        historique = historique.avec(dateDuJour, duJour);
+        try {
+            sauvegarde.enregistrer(historique);
+        } catch (IOException e) {
+            if (!enregistrementSignale) {
+                enregistrementSignale = true;
+                JOptionPane.showMessageDialog(frame, "Impossible d'enregistrer l'historique dans " + sauvegarde.getFichier()
+                        + " :\n" + e.getMessage() + "\nVous pouvez continuer à jouer, mais cette partie ne sera pas retenue.",
+                        "Historique", JOptionPane.WARNING_MESSAGE);
+            }
+        }
+    }
+
+    // la partie du jour vient de se terminer : les statistiques s'affichent d'elles-mêmes, comme dans Wordle.
+    // invokeLater : d'abord la fin de partie dessinée (carte, message), ensuite la boîte de dialogue
+    private void statistiquesEnFinDuJour() {
+        if (partie == duJour && !partie.enCours()) {
+            SwingUtilities.invokeLater(this::montrerStatistiques);
+        }
+    }
+
+    private void montrerStatistiques() {
+        LocalDate aujourdhui = LocalDate.now(horloge);
+        Statistiques stats = Statistiques.de(historique.resultats(), aujourdhui);
+        // la barre de la victoire du jour est mise en valeur
+        int essaisDuJour = historique.resultats().stream()
+                .filter(resultat -> resultat.date().equals(aujourdhui) && resultat.victoire())
+                .mapToInt(resultat -> resultat.propositions().size())
+                .findFirst().orElse(0);
+        JOptionPane.showMessageDialog(frame, FenetreStatistiques.panneau(stats, essaisDuJour), "Statistiques",
+                JOptionPane.PLAIN_MESSAGE);
     }
 
     private void terminer() {

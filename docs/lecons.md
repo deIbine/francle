@@ -1229,6 +1229,116 @@ valeurs de référence l'ont vérifié).
 
 ---
 
+## Phase 5.2 : les statistiques
+
+### Enregistrer le minimum, recalculer le reste
+
+On aurait pu enregistrer des compteurs (« 12 parties, 9 victoires, série de 4 ») et les mettre à jour à chaque
+partie. Le moindre bug, ou un fichier modifié à la main, les aurait désynchronisés pour toujours. On enregistre
+plutôt **les faits** (chaque partie du jour : date, région, propositions, état), et les statistiques sont
+**recalculées** à partir d'eux à chaque affichage. C'est le même principe que la Phase 2 (une information à un seul
+endroit), appliqué aux données enregistrées.
+
+Pour la même raison, une partie n'est pas enregistrée avec ses distances, pourcentages et indices : seulement ses
+propositions. Pour la reprendre, `Historique` les **rejoue** dans une nouvelle `Partie`. Ce sont donc les règles du
+jeu qui recalculent tout le reste, et rien ne peut contredire les règles.
+
+> *La question à se poser :* avant d'enregistrer une valeur, « Peut-elle se recalculer à partir d'autre chose ? »
+> Si oui, on enregistre la source, pas le résultat.
+
+### JSON et Jackson : la sérialisation
+
+*Sérialiser*, c'est transformer des objets en texte (ou en octets) pour les enregistrer ou les envoyer ;
+*désérialiser*, c'est l'inverse. Jackson fait les deux à partir des records eux-mêmes : le nom de chaque composant
+devient une clé JSON, une `LocalDate` devient `"2030-03-09"` (format ISO), un enum devient son nom (`"BRETAGNE"`),
+une `List` un tableau. Aucune ligne de code d'écriture du JSON à écrire.
+
+Ce que ça implique :
+
+- **les noms deviennent un format.** Renommer la constante `BRETAGNE` de l'enum, ou le composant `propositions` du
+  record, rendrait illisibles les fichiers déjà enregistrés. D'où le champ `version`, qui permettra un jour de
+  reconnaître et convertir un ancien format ;
+- **un fichier peut venir d'ailleurs.** On a désactivé `FAIL_ON_UNKNOWN_PROPERTIES` : un champ ajouté par une
+  version plus récente est ignoré au lieu de tout rendre illisible.
+
+Jackson existe en deux lignées : 2.x (`com.fasterxml.jackson`) et 3.x (`tools.jackson`, la version actuelle). La
+3 lit et écrit déjà les dates `java.time` sans module à ajouter, et ses exceptions (`JacksonException`) sont non
+vérifiées. Curiosité : elle dépend de `jackson-annotations` 2.22, resté dans l'ancien groupe `com.fasterxml`. C'est
+pourquoi le filtre du plugin *shade* couvre les deux groupes.
+
+### Un fichier n'est jamais fiable
+
+Lire un fichier, c'est accepter qu'il soit absent, abîmé, modifié à la main ou plus récent que le programme. Chaque
+cas a sa réponse :
+
+| Cas | Réponse |
+|---|---|
+| fichier absent | premier lancement : historique vide, sans erreur |
+| JSON illisible, région inconnue, fichier « null » | le fichier est **mis de côté** (`historique.json.illisible-…`), pas effacé : le joueur peut le récupérer ; le jeu repart de zéro et le prévient |
+| champ inconnu | ignoré |
+| échec d'écriture (disque plein, droits) | le joueur est prévenu une fois et peut continuer à jouer |
+
+Et pour l'écriture : on écrit d'abord un **fichier temporaire**, puis on le renomme. Un renommage est quasi
+instantané, et même « atomique » quand le système le permet. Si le jeu est coupé pendant l'écriture, l'ancien
+historique reste intact au lieu d'être remplacé par un fichier à moitié écrit.
+
+### Les exceptions vérifiées : forcer à traiter l'erreur
+
+`Sauvegarde.charger()` déclare `throws IOException`. C'est une exception *vérifiée* : le compilateur refuse qu'on
+l'appelle sans la traiter (`try / catch`) ou la transmettre (`throws`). C'est voulu, car une erreur de fichier n'est
+pas un bug du programme, mais un aléa normal qu'il faut prévoir. `SauvegardeIllisible` hérite d'`IOException` et
+transporte une information utile, le chemin où le fichier a été mis de côté. À l'inverse, jouer dans une partie
+terminée est une erreur de programmation : `Partie` lève une `IllegalStateException`, non vérifiée.
+
+### Les tests ne touchent jamais aux vraies données
+
+Les tests et la vérification ont enregistré des dizaines d'historiques. Aucun n'est allé dans le vrai
+`~/.francle` : la `Sauvegarde` reçoit son fichier en paramètre (encore l'injection de dépendance), et les tests
+utilisent `@TempDir`, un dossier que JUnit crée avant chaque test et efface après. Un test qui écrirait dans le
+dossier du joueur effacerait ses statistiques à chaque `mvnw test`.
+
+Et un test a trouvé un vrai bug : trois fichiers abîmés mis de côté **dans la même seconde** recevaient le même nom
+horodaté, et le deuxième déplacement échouait. Le fichier abîmé serait resté en place, et le jeu aurait buté dessus
+à chaque lancement. Désormais, un numéro est ajouté si le nom est pris (`-2`, `-3`…).
+
+### Dessiner soi-même : `paintComponent`
+
+Les barres de la répartition ne sont pas des composants : c'est un `JComponent` qui redéfinit `paintComponent`, et
+y dessine avec un `Graphics2D` (`fillRoundRect`, `drawString`, `FontMetrics` pour mesurer le texte). Les règles du
+dessin Swing :
+
+- c'est **Swing** qui appelle `paintComponent`, quand il le faut (affichage, redimensionnement, fenêtre découverte) :
+  on y dessine seulement, à partir des données, sans rien modifier ;
+- on travaille sur une **copie** du pinceau (`g.create()`, puis `dispose()`), pour que l'anticrénelage ou la couleur
+  choisis ne débordent pas sur le dessin des autres composants ;
+- les tailles se calculent à partir de `getWidth()`, `getHeight()` et des marges de la bordure (`getInsets()`).
+
+### Les notions Java rencontrées
+
+- **`java.nio.file`** : `Path`, `Files.readString` / `writeString` / `move` / `createDirectories` / `list`,
+  `StandardCopyOption`.
+- **try-with-resources** (`try (var fichiers = Files.list(dossier)) { … }`) : `Files.list` ouvre le dossier, et sous
+  Windows un dossier resté ouvert ne peut plus être effacé ; le `try` le referme quoi qu'il arrive.
+- **Le constructeur compact d'un record** (`public Resultat { propositions = List.copyOf(propositions); }`) : il
+  s'exécute avant que les champs soient remplis, pour valider ou copier les valeurs.
+- **Une exception personnalisée** (`SauvegardeIllisible extends IOException`) qui garde sa cause (`super(message, cause)`).
+- **Les blocs de texte** dans les tests, pour écrire un JSON lisible.
+
+---
+
+## Bilan de la Phase 5
+
+- **Ce qui était nouveau** : le temps (une réponse qui dépend de la date), et la persistance (des données qui
+  survivent au programme). Les deux posent la même question : de quoi dépend ce résultat, et que se passe-t-il
+  si cette chose change ou disparaît ?
+- **Les paramètres plutôt que l'environnement** : la date (`Clock`) et l'emplacement du fichier (`Sauvegarde`) sont
+  donnés au code au lieu qu'il aille les chercher. C'est ce qui a permis de tout vérifier en 2030, dans un dossier
+  temporaire, sans attendre le lendemain et sans toucher aux vraies statistiques.
+- **L'architecture des phases 3 et 4 a encore payé** : `Partie` n'a pas changé d'une ligne. Reprendre une partie,
+  c'est rejouer ses propositions à travers les règles existantes.
+
+---
+
 ## Aide-mémoire
 
 ### Raccourcis IntelliJ

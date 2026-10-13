@@ -23,6 +23,7 @@ final class Textes {
             Partie du jour : la même région pour tout le monde, une seule partie par jour,
             toujours parmi les nouvelles régions. Partie libre : autant que vous voulez,
             avec les régions choisies dans le menu Paramètres.
+            Seules les parties du jour comptent dans les statistiques (menu Jeu).
 
             Après chaque essai, le tableau indique :
               • la distance entre la capitale de votre proposition et celle de la région cachée ;
