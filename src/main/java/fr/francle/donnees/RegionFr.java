@@ -1,9 +1,12 @@
 package fr.francle.donnees;
 
+import java.text.Collator;
 import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
@@ -102,6 +105,49 @@ public enum RegionFr {
     public static Optional<RegionFr> chercher(String saisie, ModeRegions mode) {
         return Optional.ofNullable(PAR_CLE.get(simplifier(saisie))).filter(mode::reconnait);
     }
+
+    // les régions à proposer pendant la frappe, parmi celles acceptées dans ce mode, sans tenir compte des accents,
+    // majuscules, espaces et tirets : d'abord celles dont le NOM commence par la saisie ("nor" -> Normandie),
+    // puis celles dont un MOT commence par elle ("loire" -> Pays de la Loire) ; chaque groupe par ordre alphabétique
+    public static List<RegionFr> suggestions(String saisie, ModeRegions mode) {
+        String debut = simplifier(saisie);
+        List<RegionFr> parNom = new ArrayList<>();
+        List<RegionFr> parMot = new ArrayList<>();
+        if (debut.isEmpty()) {
+            return parNom;
+        }
+        for (RegionFr region : values()) {
+            if (!mode.reconnait(region)) {
+                continue;
+            }
+            if (region.getCle().startsWith(debut)) {
+                parNom.add(region);
+            } else if (region.mots().stream().anyMatch(mot -> mot.startsWith(debut))) {
+                parMot.add(region);
+            }
+        }
+        Comparator<RegionFr> alphabetique = Comparator.comparing(RegionFr::getNom, Collator.getInstance(Locale.FRENCH));
+        parNom.sort(alphabetique);
+        parMot.sort(alphabetique);
+        parNom.addAll(parMot);
+        return parNom;
+    }
+
+    // les mots du nom, simplifiés, sans les petits mots ("de", "la", "d'") : "Provence-Alpes-Côte d'Azur" ->
+    // provence, alpes, cote, azur. Sinon "d" ou "de" ferait apparaître la moitié des régions.
+    private List<String> mots() {
+        List<String> mots = new ArrayList<>();
+        for (String mot : MOTS.split(nom)) {
+            String simple = simplifier(mot);
+            if (simple.length() >= 3) {
+                mots.add(simple);
+            }
+        }
+        return mots;
+    }
+
+    // ce qui sépare les mots d'un nom : espaces, tirets, apostrophes
+    private static final Pattern MOTS = Pattern.compile("[\\s\\-'’]+");
 
     public static List<RegionFr> tirables(ModeRegions mode) {
         List<RegionFr> liste = new ArrayList<>();
