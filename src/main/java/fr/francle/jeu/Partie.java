@@ -61,7 +61,19 @@ public class Partie {
         }
     }
 
+    // les indices révélés jusqu'ici : un par essai raté, dans l'ordre (un essai gagnant n'en révèle pas)
+    public List<Indice> indicesReveles() {
+        List<Indice> indices = new ArrayList<>();
+        for (int i = 0; i < essais.size(); i++) {
+            if (essais.get(i).proposition() != cible) {
+                Indice.apresEssai(i).ifPresent(indices::add);
+            }
+        }
+        return indices;
+    }
+
     public RegionFr getCible() { return cible; }
+    public ModeRegions getMode() { return mode; }
     public Etat getEtat() { return etat; }
     public boolean enCours() { return etat == Etat.EN_COURS; }
     // une vue en lecture seule : l'interface peut lire les essais, pas en ajouter
