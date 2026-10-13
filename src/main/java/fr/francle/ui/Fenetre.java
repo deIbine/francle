@@ -87,8 +87,8 @@ class Fenetre {
     Fenetre() {
         construire();
         valider.addActionListener(e -> jouer());
-        // la touche Entrée dans le champ de saisie fait comme un clic sur « Valider »
-        saisie.addActionListener(e -> jouer());
+        // la touche Entrée dans le champ : l'autocomplétion choisit la suggestion surlignée, ou appelle jouer()
+        new Autocompletion(saisie, this::suggestions, this::jouer);
         commencer();
     }
 
@@ -162,8 +162,12 @@ class Fenetre {
             // celui-ci compte tout de suite : l'article « Liste des régions » du menu Jeu se grise ou non
             liste.setEnabled(reglages.isAvecListe());
         });
+        JCheckBoxMenuItem avecSuggestions = new JCheckBoxMenuItem("Suggestions pendant la frappe", reglages.isAvecSuggestions());
+        // compte dès la prochaine lettre tapée
+        avecSuggestions.addActionListener(e -> reglages.setAvecSuggestions(avecSuggestions.isSelected()));
         parametres.add(images);
         parametres.add(avecListe);
+        parametres.add(avecSuggestions);
 
         JMenu menuAide = new JMenu("Aide");
         menuAide.setMnemonic(KeyEvent.VK_A);
@@ -270,6 +274,14 @@ class Fenetre {
         } else {
             terminer();
         }
+    }
+
+    // les noms à suggérer pour ce début de saisie, parmi les régions acceptées dans le mode de la partie
+    private List<String> suggestions(String debut) {
+        if (!reglages.isAvecSuggestions()) {
+            return List.of();
+        }
+        return RegionFr.suggestions(debut, partie.getMode()).stream().map(RegionFr::getNom).toList();
     }
 
     private void abandonner() {

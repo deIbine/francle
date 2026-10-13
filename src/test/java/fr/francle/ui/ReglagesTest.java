@@ -11,13 +11,14 @@ import static org.junit.jupiter.api.Assertions.*;
 class ReglagesTest {
 
     @Test
-    @DisplayName("Réglages par défaut : nouvelles régions, avec images et avec liste")
+    @DisplayName("Réglages par défaut : nouvelles régions, avec images, liste et suggestions")
     void parDefaut() {
         Reglages reglages = new Reglages();
 
         assertEquals(ModeRegions.NOUVELLES, reglages.getMode());
         assertTrue(reglages.isAvecImages());
         assertTrue(reglages.isAvecListe());
+        assertTrue(reglages.isAvecSuggestions());
     }
 
     @Test

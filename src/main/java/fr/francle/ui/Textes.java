@@ -26,7 +26,9 @@ final class Textes {
             Chaque essai raté révèle un indice : la superficie, la spécialité culinaire,
             une personnalité, puis la capitale régionale.
 
-            Les accents, majuscules, espaces et tirets sont ignorés : « ile de france » est accepté.""";
+            Les accents, majuscules, espaces et tirets sont ignorés : « ile de france » est accepté.
+            Pendant la frappe, des suggestions s'affichent : ↓ et ↑ pour en choisir une, Entrée pour la reprendre,
+            puis Entrée encore pour valider (désactivables dans le menu Paramètres).""";
 
     // que des méthodes static : on n'a jamais besoin d'un objet Textes
     private Textes() {}

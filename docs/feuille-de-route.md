@@ -13,7 +13,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 1 | Corriger les bugs | ✅ Fait (4 bugs corrigés) |
 | 2 | Centraliser les données des régions | ✅ Fait (enum RegionFr, −466 lignes) |
 | 3 | Séparer logique et affichage, tests, Maven, packages | ✅ Fait (PR #21, #22 et 3.3) |
-| 4 | Interface Swing en une seule fenêtre | 🔄 En cours (4.1, 4.2 et 4.3 faites) |
+| 4 | Interface Swing en une seule fenêtre | ✅ Fait (PR #24 à #27) |
 | 5 | Nouvelles fonctionnalités | ⬜ À faire |
 
 ---
@@ -260,7 +260,7 @@ C'est la phase la plus formatrice sur l'architecture, et la plus grosse.
 
 ---
 
-## Phase 4 : une vraie interface Swing
+## Phase 4 : une vraie interface Swing ✅
 
 **Pourquoi.** Le jeu est une cascade de popups (saisir, valider, lire, OK, recommencer) ; l'historique
 est un texte dans la question suivante, et l'image s'ouvre dans une fenêtre séparée.
@@ -345,6 +345,24 @@ tableau des essais, indices. Plus de cascade de popups pour jouer.
   passait à la ligne et disparaissait. Elle est maintenant en `BorderLayout`.
 - **145 tests** (`Textes.mode`) ; menus vérifiés par programme (raccourcis déclarés, articles grisés, un seul
   bouton radio coché, mode appliqué à la partie suivante) et fenêtre dessinée en mémoire.
+
+### 4.4 : l'autocomplétion ✅
+
+- **`RegionFr.suggestions(saisie, mode)`** (`donnees`) : les régions acceptées dans le mode dont le **nom** commence
+  par la saisie (« nor » → Normandie), puis celles dont un **mot** commence par elle (« loire » → Pays de la Loire) ;
+  chaque groupe par ordre alphabétique. Mêmes simplifications que `chercher` (accents, majuscules, tirets) ; les
+  petits mots (« de », « la », « d' ») sont ignorés.
+- **`Autocompletion`** (`ui`), faite maison : une `JList` posée dans le calque des popups de la fenêtre, sous le champ,
+  mise à jour par un `DocumentListener` à chaque lettre. ↓ ↑ pour parcourir, Entrée pour choisir (ou valider s'il n'y
+  a pas de suggestion surlignée), Échap pour fermer, clic pour choisir. Elle ne connaît ni les régions ni le jeu.
+- **Paramètres** : nouvelle case « Suggestions pendant la frappe » ; deux lignes dans « Comment jouer ».
+- **161 tests**, dont `AutocompletionTest` : l'autocomplétion se teste **sans écran** (un champ dans un `JRootPane`),
+  en suivant les vraies liaisons des touches.
+
+Résultat de la Phase 4 : le jeu se joue dans une seule fenêtre (image, saisie avec suggestions, tableau des essais
+avec flèche de direction, indices, carte de France en fin de partie), réglée par des menus. Il n'y a plus aucun popup
+de saisie. Le package `ui` est réécrit (827 lignes en 7 classes, dont la moitié de logique testée sans écran) ; `jeu`
+et `donnees` n'ont reçu que des ajouts (`Direction`, `indicesReveles`, `suggestions`). 72 → 161 tests.
 
 **Comment le penser.** La *programmation événementielle* : le programme ne déroule plus ses lignes dans
 l'ordre, il **réagit** à des événements (`ActionListener`). Le *fil de Swing* (*Event Dispatch Thread*) :

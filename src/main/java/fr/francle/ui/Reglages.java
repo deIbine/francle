@@ -8,6 +8,7 @@ class Reglages {
     private ModeRegions mode = ModeRegions.NOUVELLES;
     private boolean avecImages = true;
     private boolean avecListe = true;
+    private boolean avecSuggestions = true;
 
     public ModeRegions getMode() { return mode; }
     public void setMode(ModeRegions mode) { this.mode = mode; }
@@ -17,4 +18,7 @@ class Reglages {
 
     public boolean isAvecListe() { return avecListe; }
     public void setAvecListe(boolean avecListe) { this.avecListe = avecListe; }
+
+    public boolean isAvecSuggestions() { return avecSuggestions; }
+    public void setAvecSuggestions(boolean avecSuggestions) { this.avecSuggestions = avecSuggestions; }
 }
