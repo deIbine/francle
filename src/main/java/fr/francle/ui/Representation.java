@@ -2,6 +2,7 @@ package fr.francle.ui;
 
 import fr.francle.donnees.ModeRegions;
 import fr.francle.donnees.RegionFr;
+import fr.francle.donnees.Zone;
 
 import java.awt.Dimension;
 import java.awt.Image;
@@ -19,8 +20,10 @@ Les images sont des ressources : Maven les copie depuis src/main/resources à c�
  */
 final class Representation {
 
+    // toutes ces images sont produites par outils/generer_images.py, sur fond transparent (thème clair comme sombre)
     static final String SILHOUETTES = "regions/";
-    static final String CARTES = "indices/";
+    static final String CARTES_NOUVELLES = "cartes/nouvelles/";
+    static final String CARTES_ANCIENNES = "cartes/anciennes/";
     static final String DEFAUT = SILHOUETTES + "defaut.png";
 
     private Representation() {}
@@ -39,22 +42,19 @@ final class Representation {
         }
     }
 
-    // l'image montrée pendant la partie. La silhouette seulement en mode "nouvelles régions" : les anciennes
-    // n'en ont pas, et en mode "toutes", la silhouette d'une région de 2016 trahirait l'époque de la réponse
-    static String silhouette(RegionFr cible, ModeRegions mode, boolean avecImages) {
-        if (avecImages && mode == ModeRegions.NOUVELLES && cible.getImage() != null) {
-            return SILHOUETTES + cible.getImage();
-        }
-        return DEFAUT;
+    // l'image montrée pendant la partie : la silhouette de la région, ou la France et un point d'interrogation
+    // quand le joueur a désactivé la silhouette
+    static String silhouette(RegionFr cible, boolean avecImages) {
+        return avecImages ? SILHOUETTES + cible.getImage() : DEFAUT;
     }
 
-    // la carte de France où la région est coloriée, pour la fin de partie : seulement en métropole
-    static Optional<String> carte(RegionFr cible) {
-        if (cible.getImage() == null) {
+    // la carte de France où la région est coloriée, pour la fin de partie : seulement en métropole. La France
+    // dessinée est celle du mode joué : la Bretagne n'est pas entourée des mêmes voisines avant et après 2016
+    static Optional<String> carte(RegionFr cible, ModeRegions mode) {
+        if (cible.getZone() != Zone.METROPOLE) {
             return Optional.empty();
         }
-        String chemin = CARTES + cible.getImage();
-        return Optional.of(chemin).filter(c -> Representation.class.getResource("/" + c) != null);
+        return Optional.of((mode == ModeRegions.ANCIENNES ? CARTES_ANCIENNES : CARTES_NOUVELLES) + cible.getImage());
     }
 
     // la taille d'une image agrandie ou réduite pour tenir dans le cadre, sans la déformer :

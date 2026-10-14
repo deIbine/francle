@@ -26,10 +26,10 @@ class ReglagesTest {
     void modification() {
         Reglages reglages = new Reglages();
 
-        reglages.setMode(ModeRegions.TOUTES);
+        reglages.setMode(ModeRegions.ANCIENNES);
         reglages.setAvecImages(false);
 
-        assertEquals(ModeRegions.TOUTES, reglages.getMode());
+        assertEquals(ModeRegions.ANCIENNES, reglages.getMode());
         assertFalse(reglages.isAvecImages());
         assertTrue(reglages.isAvecListe());
     }

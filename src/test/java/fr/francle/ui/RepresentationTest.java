@@ -21,8 +21,14 @@ class RepresentationTest {
     @EnumSource(RegionFr.class)
     @DisplayName("La silhouette de chaque région existe dans les ressources")
     void imageExiste(RegionFr region) {
-        String chemin = Representation.silhouette(region, ModeRegions.NOUVELLES, true);
+        String chemin = Representation.silhouette(region, true);
         assertNotNull(Representation.charger(chemin), chemin);
+    }
+
+    @Test
+    @DisplayName("L'image par défaut existe")
+    void defautExiste() {
+        assertNotNull(Representation.charger(Representation.DEFAUT));
     }
 
     @Test
@@ -33,23 +39,31 @@ class RepresentationTest {
     }
 
     @Test
-    @DisplayName("Silhouette seulement avec les images, en mode « nouvelles régions »")
+    @DisplayName("La silhouette, sauf si le joueur l'a désactivée")
     void choixDeLaSilhouette() {
-        assertEquals("regions/bretagne.png", Representation.silhouette(RegionFr.BRETAGNE, ModeRegions.NOUVELLES, true));
-        assertEquals(Representation.DEFAUT, Representation.silhouette(RegionFr.BRETAGNE, ModeRegions.NOUVELLES, false));
-        assertEquals(Representation.DEFAUT, Representation.silhouette(RegionFr.BRETAGNE, ModeRegions.TOUTES, true));
-        assertEquals(Representation.DEFAUT, Representation.silhouette(RegionFr.ALSACE, ModeRegions.ANCIENNES, true));
+        assertEquals("regions/bretagne.png", Representation.silhouette(RegionFr.BRETAGNE, true));
+        assertEquals("regions/alsace.png", Representation.silhouette(RegionFr.ALSACE, true));
+        assertEquals(Representation.DEFAUT, Representation.silhouette(RegionFr.BRETAGNE, false));
     }
 
     @ParameterizedTest
-    @EnumSource(RegionFr.class)
-    @DisplayName("Carte de fin de partie : pour chaque nouvelle région de métropole, et elle existe")
-    void carte(RegionFr region) {
-        Optional<String> carte = Representation.carte(region);
-        boolean attendue = region.getImage() != null && region.getZone() == Zone.METROPOLE;
+    @EnumSource(ModeRegions.class)
+    @DisplayName("Carte de fin de partie : pour chaque région de métropole du mode, et elle existe")
+    void carte(ModeRegions mode) {
+        for (RegionFr region : RegionFr.tirables(mode)) {
+            Optional<String> carte = Representation.carte(region, mode);
 
-        assertEquals(attendue, carte.isPresent(), region.name());
-        carte.ifPresent(chemin -> assertNotNull(Representation.charger(chemin), chemin));
+            assertEquals(region.getZone() == Zone.METROPOLE, carte.isPresent(), region.name());
+            carte.ifPresent(chemin -> assertNotNull(Representation.charger(chemin), chemin));
+        }
+    }
+
+    @Test
+    @DisplayName("Une région inchangée en 2016 a une carte de chaque époque")
+    void carteSelonLEpoque() {
+        assertEquals(Optional.of("cartes/nouvelles/bretagne.png"), Representation.carte(RegionFr.BRETAGNE, ModeRegions.NOUVELLES));
+        assertEquals(Optional.of("cartes/anciennes/bretagne.png"), Representation.carte(RegionFr.BRETAGNE, ModeRegions.ANCIENNES));
+        assertEquals(Optional.empty(), Representation.carte(RegionFr.GUYANE, ModeRegions.NOUVELLES));
     }
 
     @Test
@@ -66,7 +80,7 @@ class RepresentationTest {
     @Test
     @DisplayName("L'icône d'une vraie image tient dans le cadre")
     void icone() {
-        var icone = Representation.icone("indices/bretagne.png", 420, 320);
+        var icone = Representation.icone("cartes/nouvelles/bretagne.png", 420, 320);
 
         assertTrue(icone.getIconWidth() <= 420 && icone.getIconHeight() <= 320);
         assertTrue(icone.getIconWidth() == 420 || icone.getIconHeight() == 320);

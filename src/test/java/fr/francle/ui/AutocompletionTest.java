@@ -31,7 +31,7 @@ class AutocompletionTest {
         racine.getContentPane().add(champ);
         validations = 0;
         autocompletion = new Autocompletion(champ,
-                debut -> RegionFr.suggestions(debut, ModeRegions.TOUTES).stream().map(RegionFr::getNom).toList(),
+                debut -> RegionFr.suggestions(debut, ModeRegions.ANCIENNES).stream().map(RegionFr::getNom).toList(),
                 () -> validations++);
     }
 
@@ -48,7 +48,7 @@ class AutocompletionTest {
         champ.setText("nor");
 
         assertTrue(autocompletion.estOuverte());
-        assertEquals(List.of("Nord-Pas-de-Calais", "Normandie", "Basse-Normandie", "Haute-Normandie"),
+        assertEquals(List.of("Nord-Pas-de-Calais", "Basse-Normandie", "Haute-Normandie"),
                 autocompletion.suggestions());
     }
 
@@ -61,7 +61,7 @@ class AutocompletionTest {
         touche("DOWN");
         touche("ENTER");
 
-        assertEquals("Normandie", champ.getText());
+        assertEquals("Basse-Normandie", champ.getText());
         assertFalse(autocompletion.estOuverte(), "la liste se ferme, et ne se rouvre pas pour le texte écrit par le code");
         assertEquals(0, validations);
     }

@@ -64,7 +64,7 @@ class Fenetre {
     private static final int HAUTEUR_IMAGE = 220;
 
     // l'ordre des modes dans le menu : le mode par défaut d'abord (l'enum, lui, est rangé par époque)
-    private static final List<ModeRegions> MODES = List.of(ModeRegions.NOUVELLES, ModeRegions.ANCIENNES, ModeRegions.TOUTES);
+    private static final List<ModeRegions> MODES = List.of(ModeRegions.NOUVELLES, ModeRegions.ANCIENNES);
 
     // la touche des raccourcis de menu : Ctrl sous Windows et Linux, Cmd sur Mac
     private static final int RACCOURCI = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
@@ -330,7 +330,7 @@ class Fenetre {
             terminer();
             return;
         }
-        montrer(Representation.silhouette(partie.getCible(), partie.getMode(), reglages.isAvecImages()));
+        montrer(Representation.silhouette(partie.getCible(), reglages.isAvecImages()));
         message.setText(partie.getEssais().isEmpty() ? "Quelle est cette région française ?" : Textes.apresEssai(partie));
         activerSaisie(true);
         saisie.requestFocusInWindow();
@@ -413,8 +413,8 @@ class Fenetre {
     private void terminer() {
         message.setText(Textes.fin(partie));
         activerSaisie(false);
-        // la réponse sur la carte de France, quand elle existe ; sinon on garde l'image affichée
-        Representation.carte(partie.getCible()).ifPresent(this::montrer);
+        // la réponse sur la carte de France (métropole) ; pour l'outre-mer, on garde l'image affichée
+        Representation.carte(partie.getCible(), partie.getMode()).ifPresent(this::montrer);
         boutonRejouer.requestFocusInWindow();
     }
 

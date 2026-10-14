@@ -73,11 +73,7 @@ final class Textes {
 
     // le nom d'un mode de jeu, dans le menu Paramètres
     static String mode(ModeRegions mode) {
-        switch (mode) {
-            case NOUVELLES : return "Nouvelles régions (depuis 2016)";
-            case ANCIENNES : return "Anciennes régions (avant 2016)";
-            default : return "Toutes les régions";
-        }
+        return mode == ModeRegions.NOUVELLES ? "Nouvelles régions (depuis 2016)" : "Anciennes régions (avant 2016)";
     }
 
     // le message sous la saisie, après un essai raté

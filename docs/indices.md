@@ -47,4 +47,38 @@ fusionnées à l'époque, mais pourraient servir à varier les indices d'une par
 
 ## Anciennes régions (avant 2016)
 
-Pas encore d'indices : le jeu n'affiche pour l'instant que la distance et le pourcentage.
+Ajoutées en Phase 6. Les régions inchangées en 2016 (Bretagne, Pays de la Loire, Île-de-France,
+Provence-Alpes-Côte d'Azur, Corse et l'outre-mer) gardent les indices du tableau précédent.
+
+| Région | Spécialité culinaire | Capitale | Personnalité | Superficie (km²) |
+|---|---|---|---|---:|
+| Nord-Pas-de-Calais | Le potjevleesch | Lille | Robespierre (né à Arras) | 12 414 |
+| Picardie | La ficelle picarde | Amiens | Jean de La Fontaine (né à Château-Thierry) | 19 399 |
+| Haute-Normandie | Le canard à la rouennaise | Rouen | Gustave Flaubert (né à Rouen) | 12 317 |
+| Basse-Normandie | Le camembert | Caen | Guillaume le Conquérant (né à Falaise) | 17 589 |
+| Poitou-Charentes | Le cognac | Poitiers | François Mitterrand (né à Jarnac) | 25 810 |
+| Centre | La tarte Tatin | Orléans | Honoré de Balzac (né à Tours) | 39 151 |
+| Champagne-Ardenne | Le champagne | Châlons-en-Champagne | Arthur Rimbaud (né à Charleville) | 25 606 |
+| Lorraine | La quiche lorraine | Metz | Jeanne d'Arc (née à Domrémy) | 23 547 |
+| Alsace | La flammekueche | Strasbourg | Albert Schweitzer (né à Kaysersberg) | 8 280 |
+| Bourgogne | Les escargots de Bourgogne | Dijon | Gustave Eiffel (né à Dijon) | 31 582 |
+| Franche-Comté | Le comté | Besançon | Louis Pasteur (né à Dole) | 16 202 |
+| Rhône-Alpes | Le gratin dauphinois | Lyon | Antoine de Saint-Exupéry (né à Lyon) | 43 698 |
+| Auvergne | La truffade | Clermont-Ferrand | Blaise Pascal (né à Clermont-Ferrand) | 26 013 |
+| Limousin | Le clafoutis | Limoges | Auguste Renoir (né à Limoges) | 16 942 |
+| Aquitaine | Le canelé | Bordeaux | Montesquieu (né à La Brède) | 41 309 |
+| Midi-Pyrénées | La saucisse de Toulouse | Toulouse | Henri de Toulouse-Lautrec (né à Albi) | 45 348 |
+| Languedoc-Roussillon | Le cassoulet (Castelnaudary) | Montpellier | Georges Brassens (né à Sète) | 27 376 |
+
+**Sources et vérifications.** Superficies de l'INSEE, recoupées de deux façons : la somme des anciennes
+régions donne celle de la nouvelle région qui les a réunies, à 1 km² près (testé par
+`RegionFrTest.superficiesCoherentes`), et l'aire calculée sur les contours officiels concorde à 1 % près.
+Personnalités choisies parmi celles **nées** dans la région, pour que l'indice aide vraiment.
+Jeanne d'Arc apparaît deux fois : née en Lorraine, elle reste l'indice du Centre-Val de Loire, plus
+représentatif grâce à Orléans.
+
+## Images
+
+Les silhouettes et les cartes sont produites par `outils/generer_images.py` à partir des contours
+officiels des départements et des régions (dépôt `gregoiredavid/france-geojson`, données IGN et INSEE,
+licence ouverte Etalab). Le mode d'emploi est en tête du script.
