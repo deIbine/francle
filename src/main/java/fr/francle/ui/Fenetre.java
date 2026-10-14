@@ -69,7 +69,6 @@ class Fenetre {
     // la touche des raccourcis de menu : Ctrl sous Windows et Linux, Cmd sur Mac
     private static final int RACCOURCI = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
 
-    private final Reglages reglages = new Reglages();
     private final TableauEssais tableau = new TableauEssais();
 
     // les actions du joueur. Chacune réunit un nom, un raccourci et ce qu'il faut faire ; un article de menu et
@@ -103,24 +102,34 @@ class Fenetre {
     private Partie duJour;
     private LocalDate dateDuJour;
 
-    // l'historique des parties du jour et l'endroit où il est enregistré. La sauvegarde est un paramètre, comme
-    // l'horloge : la vérification utilise un dossier temporaire, jamais les vraies statistiques du joueur
-    private final Sauvegarde sauvegarde;
+    // l'historique des parties du jour, les réglages, et les fichiers où ils sont enregistrés. Les sauvegardes sont
+    // des paramètres, comme l'horloge : la vérification utilise un dossier temporaire, jamais les vrais fichiers du joueur
+    private final Sauvegarde<Historique> sauvegardeHistorique;
+    private final Sauvegarde<Reglages> sauvegardeReglages;
     private Historique historique;
-    // un problème de fichier à signaler au joueur dès que la fenêtre sera visible (ou null)
-    private String avertissement;
-    // un échec d'enregistrement n'est signalé qu'une fois, pas à chaque essai
+    private final Reglages reglages;
+    // les problèmes de fichier à signaler au joueur dès que la fenêtre sera visible
+    private final List<String> avertissements = new ArrayList<>();
+    // un échec d'enregistrement n'est signalé qu'une fois par fichier, pas à chaque essai ni à chaque réglage
     private boolean enregistrementSignale;
+    private boolean reglagesSignales;
 
     Fenetre() {
-        this(Clock.systemDefaultZone(), Sauvegarde.parDefaut());
+        this(Clock.systemDefaultZone(), Sauvegarde.historique(), Reglages.sauvegarde());
     }
 
-    Fenetre(Clock horloge, Sauvegarde sauvegarde) {
+    Fenetre(Clock horloge, Sauvegarde<Historique> sauvegardeHistorique, Sauvegarde<Reglages> sauvegardeReglages) {
         this.horloge = horloge;
-        this.sauvegarde = sauvegarde;
-        historique = chargerHistorique();
+        this.sauvegardeHistorique = sauvegardeHistorique;
+        this.sauvegardeReglages = sauvegardeReglages;
+        historique = charger(sauvegardeHistorique, "Les statistiques repartent de zéro.");
+        reglages = charger(sauvegardeReglages, "Les réglages reprennent leurs valeurs par défaut.");
         construire();
+        // les composants ont été créés avec le thème clair (installé par Francle.main) : s'il faut le sombre,
+        // ils s'y réabonnent tous avant que la fenêtre ne s'affiche
+        if (reglages.isThemeSombre()) {
+            Theme.changer(true);
+        }
         valider.addActionListener(e -> jouer());
         // la touche Entrée dans le champ : l'autocomplétion choisit la suggestion surlignée, ou appelle jouer()
         new Autocompletion(saisie, this::suggestions, this::jouer);
@@ -133,22 +142,23 @@ class Fenetre {
         frame.setLocationRelativeTo(null);  // centrée sur l'écran
         frame.setVisible(true);
         saisie.requestFocusInWindow();
-        if (avertissement != null) {
+        if (!avertissements.isEmpty()) {
             // invokeLater : la boîte de dialogue s'ouvre une fois la fenêtre dessinée, par-dessus elle
-            String texte = avertissement;
-            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(frame, texte, "Historique",
+            String texte = String.join("\n\n", avertissements);
+            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(frame, texte, "Fichiers de Francle",
                     JOptionPane.WARNING_MESSAGE));
         }
     }
 
-    // un fichier absent n'est pas une erreur (premier lancement) ; un fichier illisible a été mis de côté par
-    // la Sauvegarde : on le dit au joueur, et le jeu continue avec un historique vide
-    private Historique chargerHistorique() {
+    // un fichier absent n'est pas une erreur (premier lancement : valeur par défaut) ; un fichier illisible a été
+    // mis de côté par la Sauvegarde : on le dira au joueur, et le jeu continue avec la valeur par défaut.
+    // Une seule méthode pour l'historique et les réglages : <T> la rend générique, comme Sauvegarde<T>
+    private <T> T charger(Sauvegarde<T> sauvegarde, String consequence) {
         try {
             return sauvegarde.charger();
         } catch (IOException e) {
-            avertissement = e.getMessage() + "\nLes statistiques repartent de zéro.";
-            return Historique.vide();
+            avertissements.add(e.getMessage() + "\n" + consequence);
+            return sauvegarde.parDefaut();
         }
     }
 
@@ -200,6 +210,7 @@ class Fenetre {
             JRadioButtonMenuItem article = new JRadioButtonMenuItem(Textes.mode(mode), mode == reglages.getMode());
             article.addActionListener(e -> {
                 reglages.setMode(mode);
+                retenirReglages();
                 prevenirProchainePartie();
             });
             groupe.add(article);
@@ -210,20 +221,34 @@ class Fenetre {
         JCheckBoxMenuItem images = new JCheckBoxMenuItem("Silhouette de la région", reglages.isAvecImages());
         images.addActionListener(e -> {
             reglages.setAvecImages(images.isSelected());
+            retenirReglages();
             prevenirProchainePartie();
         });
         JCheckBoxMenuItem avecListe = new JCheckBoxMenuItem("Liste des régions", reglages.isAvecListe());
         avecListe.addActionListener(e -> {
             reglages.setAvecListe(avecListe.isSelected());
+            retenirReglages();
             // celui-ci compte tout de suite : l'article « Liste des régions » du menu Jeu se grise ou non
             liste.setEnabled(reglages.isAvecListe());
         });
         JCheckBoxMenuItem avecSuggestions = new JCheckBoxMenuItem("Suggestions pendant la frappe", reglages.isAvecSuggestions());
         // compte dès la prochaine lettre tapée
-        avecSuggestions.addActionListener(e -> reglages.setAvecSuggestions(avecSuggestions.isSelected()));
+        avecSuggestions.addActionListener(e -> {
+            reglages.setAvecSuggestions(avecSuggestions.isSelected());
+            retenirReglages();
+        });
+        JCheckBoxMenuItem themeSombre = new JCheckBoxMenuItem("Thème sombre", reglages.isThemeSombre());
+        // tout de suite : toute la fenêtre change de couleurs
+        themeSombre.addActionListener(e -> {
+            reglages.setThemeSombre(themeSombre.isSelected());
+            retenirReglages();
+            Theme.changer(reglages.isThemeSombre());
+        });
         parametres.add(images);
         parametres.add(avecListe);
         parametres.add(avecSuggestions);
+        parametres.addSeparator();
+        parametres.add(themeSombre);
 
         JMenu menuAide = new JMenu("Aide");
         menuAide.setMnemonic(KeyEvent.VK_A);
@@ -379,13 +404,29 @@ class Fenetre {
         }
         historique = historique.avec(dateDuJour, duJour);
         try {
-            sauvegarde.enregistrer(historique);
+            sauvegardeHistorique.enregistrer(historique);
         } catch (IOException e) {
             if (!enregistrementSignale) {
                 enregistrementSignale = true;
-                JOptionPane.showMessageDialog(frame, "Impossible d'enregistrer l'historique dans " + sauvegarde.getFichier()
-                        + " :\n" + e.getMessage() + "\nVous pouvez continuer à jouer, mais cette partie ne sera pas retenue.",
+                JOptionPane.showMessageDialog(frame, "Impossible d'enregistrer l'historique dans "
+                        + sauvegardeHistorique.getFichier() + " :\n" + e.getMessage()
+                        + "\nVous pouvez continuer à jouer, mais cette partie ne sera pas retenue.",
                         "Historique", JOptionPane.WARNING_MESSAGE);
+            }
+        }
+    }
+
+    // après chaque changement dans le menu Paramètres : retrouvé au prochain lancement
+    private void retenirReglages() {
+        try {
+            sauvegardeReglages.enregistrer(reglages);
+        } catch (IOException e) {
+            if (!reglagesSignales) {
+                reglagesSignales = true;
+                JOptionPane.showMessageDialog(frame, "Impossible d'enregistrer les réglages dans "
+                        + sauvegardeReglages.getFichier() + " :\n" + e.getMessage()
+                        + "\nIls comptent pour cette fois, mais ne seront pas retrouvés au prochain lancement.",
+                        "Réglages", JOptionPane.WARNING_MESSAGE);
             }
         }
     }

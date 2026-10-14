@@ -1,7 +1,5 @@
 package fr.francle.ui;
 
-import com.formdev.flatlaf.FlatLightLaf;
-
 import javax.swing.SwingUtilities;
 
 public class Francle {
@@ -11,8 +9,9 @@ public class Francle {
         // l'interface doit se faire sur un seul, l'Event Dispatch Thread. main() tourne sur un autre fil :
         // invokeLater confie donc la création de la fenêtre à l'EDT, qui l'exécutera dès qu'il sera prêt.
         SwingUtilities.invokeLater(() -> {
-            // le thème (Look and Feel) se choisit avant de créer le moindre composant
-            FlatLightLaf.setup();
+            // le thème (Look and Feel) s'installe avant de créer le moindre composant. Le clair d'abord : la fenêtre
+            // passera au sombre elle-même si le joueur l'a choisi (elle seule lit les réglages)
+            Theme.installer(false);
             new Fenetre().afficher();
         });
     }
