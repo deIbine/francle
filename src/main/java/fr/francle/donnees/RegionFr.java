@@ -38,24 +38,24 @@ public enum RegionFr {
     MARTINIQUE("Martinique", 14.6160647, -61.0587804, Epoque.LES_DEUX, Zone.OUTRE_MER, 1128, "le gratin de bananes", "Aimé Césaire", "Fort-de-France", "martinique.png"),
     GUADELOUPE("Guadeloupe", 17.302606, -62.717692, Epoque.LES_DEUX, Zone.OUTRE_MER, 1703, "les accras de morue", "Teddy Riner", "Basse-Terre", "guadeloupe.png"),
 
-    // anciennes régions (avant 2016) : pas encore d'indices ni d'image
-    NORD_PAS_DE_CALAIS("Nord-Pas-de-Calais", 50.62925, 3.057256),
-    PICARDIE("Picardie", 49.844067, 2.295753),
-    HAUTE_NORMANDIE("Haute-Normandie", 49.443232, 1.099971),
-    BASSE_NORMANDIE("Basse-Normandie", 49.182863, -0.370679),
-    POITOU_CHARENTES("Poitou-Charentes", 46.580224, 0.340375),
-    CENTRE("Centre", 47.902964, 1.909251),
-    CHAMPAGNE_ARDENNE("Champagne-Ardenne", 48.956682, 4.363073),
-    LORRAINE("Lorraine", 49.1193089, 6.1757156),
-    ALSACE("Alsace", 48.5734053, 7.7521113),
-    BOURGOGNE("Bourgogne", 47.322047, 5.04148),
-    FRANCHE_COMTE("Franche-Comté", 47.237829, 6.0240539),
-    RHONE_ALPES("Rhône-Alpes", 45.764043, 4.835659),
-    AUVERGNE("Auvergne", 45.777222, 3.087025),
-    LIMOUSIN("Limousin", 45.833619, 1.261105),
-    AQUITAINE("Aquitaine", 44.837789, -0.57918),
-    MIDI_PYRENEES("Midi-Pyrénées", 43.604652, 1.444209),
-    LANGUEDOC_ROUSSILLON("Languedoc-Roussillon", 43.610769, 3.876716);
+    // anciennes régions (avant 2016)
+    NORD_PAS_DE_CALAIS("Nord-Pas-de-Calais", 50.62925, 3.057256, 12414, "le potjevleesch", "Robespierre", "Lille", "nord-pas-de-calais.png"),
+    PICARDIE("Picardie", 49.844067, 2.295753, 19399, "la ficelle picarde", "Jean de La Fontaine", "Amiens", "picardie.png"),
+    HAUTE_NORMANDIE("Haute-Normandie", 49.443232, 1.099971, 12317, "le canard à la rouennaise", "Gustave Flaubert", "Rouen", "haute-normandie.png"),
+    BASSE_NORMANDIE("Basse-Normandie", 49.182863, -0.370679, 17589, "le camembert", "Guillaume le Conquérant", "Caen", "basse-normandie.png"),
+    POITOU_CHARENTES("Poitou-Charentes", 46.580224, 0.340375, 25810, "le cognac", "François Mitterrand", "Poitiers", "poitou-charentes.png"),
+    CENTRE("Centre", 47.902964, 1.909251, 39151, "la tarte Tatin", "Honoré de Balzac", "Orléans", "centre.png"),
+    CHAMPAGNE_ARDENNE("Champagne-Ardenne", 48.956682, 4.363073, 25606, "le champagne", "Arthur Rimbaud", "Châlons-en-Champagne", "champagne-ardenne.png"),
+    LORRAINE("Lorraine", 49.1193089, 6.1757156, 23547, "la quiche lorraine", "Jeanne d'Arc", "Metz", "lorraine.png"),
+    ALSACE("Alsace", 48.5734053, 7.7521113, 8280, "la flammekueche", "Albert Schweitzer", "Strasbourg", "alsace.png"),
+    BOURGOGNE("Bourgogne", 47.322047, 5.04148, 31582, "les escargots de Bourgogne", "Gustave Eiffel", "Dijon", "bourgogne.png"),
+    FRANCHE_COMTE("Franche-Comté", 47.237829, 6.0240539, 16202, "le comté", "Louis Pasteur", "Besançon", "franche-comte.png"),
+    RHONE_ALPES("Rhône-Alpes", 45.764043, 4.835659, 43698, "le gratin dauphinois", "Antoine de Saint-Exupéry", "Lyon", "rhone-alpes.png"),
+    AUVERGNE("Auvergne", 45.777222, 3.087025, 26013, "la truffade", "Blaise Pascal", "Clermont-Ferrand", "auvergne.png"),
+    LIMOUSIN("Limousin", 45.833619, 1.261105, 16942, "le clafoutis", "Auguste Renoir", "Limoges", "limousin.png"),
+    AQUITAINE("Aquitaine", 44.837789, -0.57918, 41309, "le canelé", "Montesquieu", "Bordeaux", "aquitaine.png"),
+    MIDI_PYRENEES("Midi-Pyrénées", 43.604652, 1.444209, 45348, "la saucisse de Toulouse", "Henri de Toulouse-Lautrec", "Toulouse", "midi-pyrenees.png"),
+    LANGUEDOC_ROUSSILLON("Languedoc-Roussillon", 43.610769, 3.876716, 27376, "le cassoulet", "Georges Brassens", "Montpellier", "languedoc-roussillon.png");
 
     private final String nom;
     private final double latitude;
@@ -82,9 +82,11 @@ public enum RegionFr {
         this.image = image;
     }
 
-    // constructeur des anciennes régions, toutes en métropole, qui n'ont ni indices ni image
-    RegionFr(String nom, double latitude, double longitude) {
-        this(nom, latitude, longitude, Epoque.ANCIENNE, Zone.METROPOLE, 0, "", "", "", null);
+    // constructeur des anciennes régions : toutes en métropole. Comme l'autre, il exige les quatre indices et l'image :
+    // une région incomplète ne compile pas
+    RegionFr(String nom, double latitude, double longitude, int superficie,
+             String specialite, String personnalite, String capitale, String image) {
+        this(nom, latitude, longitude, Epoque.ANCIENNE, Zone.METROPOLE, superficie, specialite, personnalite, capitale, image);
     }
 
     // compilée une seule fois, et non à chaque saisie. Déclarée AVANT le bloc static ci-dessous, qui s'en sert
@@ -103,7 +105,7 @@ public enum RegionFr {
 
     // la région correspondant à la saisie du joueur, ou Optional.empty() si elle est inconnue ou refusée dans ce mode
     public static Optional<RegionFr> chercher(String saisie, ModeRegions mode) {
-        return Optional.ofNullable(PAR_CLE.get(simplifier(saisie))).filter(mode::reconnait);
+        return Optional.ofNullable(PAR_CLE.get(simplifier(saisie))).filter(mode::contient);
     }
 
     // les régions à proposer pendant la frappe, parmi celles acceptées dans ce mode, sans tenir compte des accents,
@@ -117,7 +119,7 @@ public enum RegionFr {
             return parNom;
         }
         for (RegionFr region : values()) {
-            if (!mode.reconnait(region)) {
+            if (!mode.contient(region)) {
                 continue;
             }
             if (region.getCle().startsWith(debut)) {
@@ -152,7 +154,7 @@ public enum RegionFr {
     public static List<RegionFr> tirables(ModeRegions mode) {
         List<RegionFr> liste = new ArrayList<>();
         for (RegionFr region : values()) {
-            if (mode.peutTirer(region)) {
+            if (mode.contient(region)) {
                 liste.add(region);
             }
         }
@@ -197,6 +199,6 @@ public enum RegionFr {
     public String getSpecialite() { return specialite; }
     public String getPersonnalite() { return personnalite; }
     public String getCapitale() { return capitale; }
-    // null pour les régions sans image
+    // le nom du fichier de la silhouette et des cartes (« bretagne.png »)
     public String getImage() { return image; }
 }

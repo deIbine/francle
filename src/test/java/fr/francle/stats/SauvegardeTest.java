@@ -34,7 +34,7 @@ class SauvegardeTest {
     @Test
     @DisplayName("Premier lancement (pas de fichier) : historique vide, sans erreur")
     void pasDeFichier() throws IOException {
-        Sauvegarde sauvegarde = new Sauvegarde(dossier.resolve("francle/historique.json"));
+        Sauvegarde<Historique> sauvegarde = Sauvegarde.historique(dossier.resolve("francle/historique.json"));
 
         assertEquals(Historique.vide(), sauvegarde.charger());
     }
@@ -42,7 +42,7 @@ class SauvegardeTest {
     @Test
     @DisplayName("Enregistrer puis charger redonne exactement le même historique (dossier créé au besoin)")
     void allerRetour() throws IOException {
-        Sauvegarde sauvegarde = new Sauvegarde(dossier.resolve("sous/dossier/historique.json"));
+        Sauvegarde<Historique> sauvegarde = Sauvegarde.historique(dossier.resolve("sous/dossier/historique.json"));
 
         sauvegarde.enregistrer(exemple());
 
@@ -53,7 +53,7 @@ class SauvegardeTest {
     @DisplayName("Le fichier est du JSON lisible : dates ISO, régions par leur nom, et aucun fichier temporaire oublié")
     void formatLisible() throws IOException {
         Path fichier = dossier.resolve("historique.json");
-        new Sauvegarde(fichier).enregistrer(exemple());
+        Sauvegarde.historique(fichier).enregistrer(exemple());
 
         String json = Files.readString(fichier);
 
@@ -71,7 +71,7 @@ class SauvegardeTest {
     @Test
     @DisplayName("Enregistrer remplace l'ancien fichier")
     void remplacement() throws IOException {
-        Sauvegarde sauvegarde = new Sauvegarde(dossier.resolve("historique.json"));
+        Sauvegarde<Historique> sauvegarde = Sauvegarde.historique(dossier.resolve("historique.json"));
         sauvegarde.enregistrer(exemple());
 
         sauvegarde.enregistrer(Historique.vide());
@@ -87,7 +87,7 @@ class SauvegardeTest {
                 { "version" : 1, "resultats" : [ ], "enCours" : null, "theme" : "sombre" }
                 """);
 
-        assertEquals(Historique.vide(), new Sauvegarde(fichier).charger());
+        assertEquals(Historique.vide(), Sauvegarde.historique(fichier).charger());
     }
 
     @Test
@@ -96,14 +96,14 @@ class SauvegardeTest {
         Path fichier = dossier.resolve("historique.json");
         Files.writeString(fichier, "{ \"version\" : 1, \"resultats\" : [ { \"date\" : \"pas une date\" } ");
 
-        SauvegardeIllisible erreur = assertThrows(SauvegardeIllisible.class, () -> new Sauvegarde(fichier).charger());
+        SauvegardeIllisible erreur = assertThrows(SauvegardeIllisible.class, () -> Sauvegarde.historique(fichier).charger());
 
         assertFalse(Files.exists(fichier), "le fichier abîmé ne reste pas à sa place");
         assertTrue(Files.exists(erreur.getDeCote()), "il est gardé de côté");
         assertTrue(erreur.getDeCote().getFileName().toString().startsWith("historique.json.illisible-"));
         assertTrue(Files.readString(erreur.getDeCote()).contains("pas une date"), "son contenu est intact");
         // et le jeu peut repartir : le chargement suivant donne un historique vide
-        assertEquals(Historique.vide(), new Sauvegarde(fichier).charger());
+        assertEquals(Historique.vide(), Sauvegarde.historique(fichier).charger());
     }
 
     @Test
@@ -114,7 +114,7 @@ class SauvegardeTest {
                 "{ \"version\" : 1, \"resultats\" : [ { \"date\" : \"2030-03-09\", \"region\" : \"ATLANTIDE\","
                         + " \"propositions\" : [ ], \"etat\" : \"GAGNEE\" } ] }")) {
             Files.writeString(fichier, contenu);
-            assertThrows(SauvegardeIllisible.class, () -> new Sauvegarde(fichier).charger(), "« " + contenu + " »");
+            assertThrows(SauvegardeIllisible.class, () -> Sauvegarde.historique(fichier).charger(), "« " + contenu + " »");
         }
         // trois fichiers abîmés dans la même seconde : trois copies distinctes, aucune écrasée
         try (var fichiers = Files.list(dossier)) {

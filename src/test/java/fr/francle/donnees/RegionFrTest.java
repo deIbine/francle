@@ -28,22 +28,26 @@ class RegionFrTest {
     }
 
     @Test
-    @DisplayName("Chaque région se retrouve par son propre nom dans le mode « toutes »")
+    @DisplayName("Chaque région se retrouve par son propre nom dans au moins un mode")
     void chercherSonNom() {
         for (RegionFr region : RegionFr.values()) {
-            assertEquals(Optional.of(region), RegionFr.chercher(region.getNom(), ModeRegions.TOUTES));
+            boolean trouvee = Arrays.stream(ModeRegions.values())
+                    .anyMatch(mode -> RegionFr.chercher(region.getNom(), mode).equals(Optional.of(region)));
+            assertTrue(trouvee, region.name());
         }
     }
 
     @Test
-    @DisplayName("Recherche selon le mode : les anciennes régions sont refusées seulement en mode « nouvelles »")
+    @DisplayName("Recherche selon le mode : chaque mode refuse les régions de l'autre époque")
     void chercherSelonLeMode() {
         assertTrue(RegionFr.chercher("Alsace", ModeRegions.NOUVELLES).isEmpty());
         assertEquals(Optional.of(RegionFr.ALSACE), RegionFr.chercher("Alsace", ModeRegions.ANCIENNES));
-        assertEquals(Optional.of(RegionFr.ALSACE), RegionFr.chercher("Alsace", ModeRegions.TOUTES));
-        // une nouvelle région reste reconnue comme proposition en mode « anciennes »
-        assertEquals(Optional.of(RegionFr.GRAND_EST), RegionFr.chercher("Grand Est", ModeRegions.ANCIENNES));
-        assertTrue(RegionFr.chercher("Paris", ModeRegions.TOUTES).isEmpty());
+        assertTrue(RegionFr.chercher("Grand Est", ModeRegions.ANCIENNES).isEmpty());
+        assertEquals(Optional.of(RegionFr.GRAND_EST), RegionFr.chercher("Grand Est", ModeRegions.NOUVELLES));
+        // les régions inchangées en 2016 sont des deux époques
+        assertEquals(Optional.of(RegionFr.BRETAGNE), RegionFr.chercher("Bretagne", ModeRegions.ANCIENNES));
+        assertEquals(Optional.of(RegionFr.BRETAGNE), RegionFr.chercher("Bretagne", ModeRegions.NOUVELLES));
+        assertTrue(RegionFr.chercher("Paris", ModeRegions.NOUVELLES).isEmpty());
     }
 
     @ParameterizedTest(name = "« {0} » en mode {1} → {2}")
@@ -51,12 +55,12 @@ class RegionFrTest {
             "bre        | NOUVELLES | BRETAGNE",
             "  ÎLE-de   | NOUVELLES | ILE_DE_FRANCE",
             "nor        | NOUVELLES | NORMANDIE",
-            // les anciennes régions n'apparaissent que si elles sont acceptées ; Nord < Norm ; puis le mot « Normandie »
-            "nor        | TOUTES    | NORD_PAS_DE_CALAIS NORMANDIE BASSE_NORMANDIE HAUTE_NORMANDIE",
+            // jamais de région de l'autre époque (pas de Normandie ici) ; d'abord le nom, puis le mot « Normandie »
+            "nor        | ANCIENNES | NORD_PAS_DE_CALAIS BASSE_NORMANDIE HAUTE_NORMANDIE",
             // un mot du nom, pas son début : chaque groupe trié, Centre avant Pays
             "loire      | NOUVELLES | CENTRE_VAL_DE_LOIRE PAYS_DE_LA_LOIRE",
             // d'abord le nom qui commence par la saisie, puis ceux dont un mot commence par elle
-            "normandie  | TOUTES    | NORMANDIE BASSE_NORMANDIE HAUTE_NORMANDIE",
+            "normandie  | ANCIENNES | BASSE_NORMANDIE HAUTE_NORMANDIE",
             "azur       | NOUVELLES | PROVENCE_ALPES_COTE_D_AZUR",
     })
     @DisplayName("Suggestions : nom qui commence par la saisie, puis mot qui commence par elle")
@@ -68,32 +72,36 @@ class RegionFrTest {
     @Test
     @DisplayName("Pas de suggestion pour une saisie vide, inconnue, ou un petit mot (« de », « d' »)")
     void pasDeSuggestion() {
-        assertEquals(List.of(), RegionFr.suggestions("", ModeRegions.TOUTES));
-        assertEquals(List.of(), RegionFr.suggestions("  -' ", ModeRegions.TOUTES));
-        assertEquals(List.of(), RegionFr.suggestions("xyz", ModeRegions.TOUTES));
-        assertEquals(List.of(), RegionFr.suggestions("de", ModeRegions.TOUTES));
-        assertEquals(List.of(), RegionFr.suggestions("d", ModeRegions.TOUTES));
+        for (ModeRegions mode : ModeRegions.values()) {
+            assertEquals(List.of(), RegionFr.suggestions("", mode));
+            assertEquals(List.of(), RegionFr.suggestions("  -' ", mode));
+            assertEquals(List.of(), RegionFr.suggestions("xyz", mode));
+            assertEquals(List.of(), RegionFr.suggestions("de", mode));
+            assertEquals(List.of(), RegionFr.suggestions("d", mode));
+        }
     }
 
-    @Test
-    @DisplayName("Chaque région est la première suggestion pour son nom complet, et elle est reconnue")
-    void premiereSuggestion() {
-        for (RegionFr region : RegionFr.values()) {
-            List<RegionFr> suggestions = RegionFr.suggestions(region.getNom(), ModeRegions.TOUTES);
+    @ParameterizedTest
+    @EnumSource(ModeRegions.class)
+    @DisplayName("Chaque région du mode est la première suggestion pour son nom complet, et elle est reconnue")
+    void premiereSuggestion(ModeRegions mode) {
+        for (RegionFr region : RegionFr.tirables(mode)) {
+            List<RegionFr> suggestions = RegionFr.suggestions(region.getNom(), mode);
             assertEquals(region, suggestions.get(0), region.name());
             // une suggestion choisie doit toujours être acceptée par chercher() : les deux règles restent d'accord
             for (RegionFr suggestion : suggestions) {
-                assertEquals(Optional.of(suggestion), RegionFr.chercher(suggestion.getNom(), ModeRegions.TOUTES));
+                assertEquals(Optional.of(suggestion), RegionFr.chercher(suggestion.getNom(), mode));
             }
         }
     }
 
-    @Test
-    @DisplayName("En mode « nouvelles », jamais d'ancienne région suggérée")
-    void suggestionsSelonLeMode() {
+    @ParameterizedTest(name = "mode {0} : jamais de région {1}")
+    @CsvSource({"NOUVELLES, ANCIENNE", "ANCIENNES, NOUVELLE"})
+    @DisplayName("Jamais de région de l'autre époque suggérée")
+    void suggestionsSelonLeMode(ModeRegions mode, Epoque interdite) {
         for (char lettre = 'a'; lettre <= 'z'; lettre++) {
-            for (RegionFr region : RegionFr.suggestions(String.valueOf(lettre), ModeRegions.NOUVELLES)) {
-                assertNotEquals(Epoque.ANCIENNE, region.getEpoque(), lettre + " → " + region);
+            for (RegionFr region : RegionFr.suggestions(String.valueOf(lettre), mode)) {
+                assertNotEquals(interdite, region.getEpoque(), lettre + " → " + region);
             }
         }
     }
@@ -125,7 +133,7 @@ class RegionFrTest {
     }
 
     @ParameterizedTest(name = "{0} : {1} régions")
-    @CsvSource({"NOUVELLES, 18", "ANCIENNES, 27", "TOUTES, 35"})
+    @CsvSource({"NOUVELLES, 18", "ANCIENNES, 27"})
     @DisplayName("Nombre de régions tirables dans chaque mode")
     void tirables(ModeRegions mode, int attendu) {
         assertEquals(attendu, RegionFr.tirables(mode).size());
@@ -137,20 +145,43 @@ class RegionFrTest {
     void tirer(ModeRegions mode) {
         for (int i = 0; i < 200; i++) {
             RegionFr region = RegionFr.tirer(mode);
-            assertTrue(mode.peutTirer(region));
-            assertTrue(mode.reconnait(region));
+            assertTrue(mode.contient(region));
         }
     }
 
     @Test
-    @DisplayName("Toute région qu'on peut faire deviner en mode « nouvelles » a ses 4 indices")
+    @DisplayName("Chaque région, ancienne comme nouvelle, a ses 4 indices et son image")
     void indicesRemplis() {
-        // les anciennes régions n'ont pas encore d'indices (Phase 5)
-        for (RegionFr region : RegionFr.tirables(ModeRegions.NOUVELLES)) {
+        for (RegionFr region : RegionFr.values()) {
             assertTrue(region.getSuperficie() > 0, region.getNom());
             assertFalse(region.getSpecialite().isBlank(), region.getNom());
             assertFalse(region.getPersonnalite().isBlank(), region.getNom());
             assertFalse(region.getCapitale().isBlank(), region.getNom());
+            assertNotNull(region.getImage(), region.getNom());
         }
+    }
+
+    @Test
+    @DisplayName("Deux régions n'ont jamais le même fichier d'image")
+    void imagesDistinctes() {
+        assertEquals(RegionFr.values().length,
+                Arrays.stream(RegionFr.values()).map(RegionFr::getImage).distinct().count());
+    }
+
+    @ParameterizedTest(name = "{0} = {1}")
+    @CsvSource(delimiter = '|', value = {
+            "HAUTS_DE_FRANCE         | NORD_PAS_DE_CALAIS PICARDIE",
+            "NORMANDIE               | HAUTE_NORMANDIE BASSE_NORMANDIE",
+            "GRAND_EST               | ALSACE CHAMPAGNE_ARDENNE LORRAINE",
+            "BOURGOGNE_FRANCHE_COMTE | BOURGOGNE FRANCHE_COMTE",
+            "AUVERGNE_RHONE_ALPES    | AUVERGNE RHONE_ALPES",
+            "NOUVELLE_AQUITAINE      | AQUITAINE LIMOUSIN POITOU_CHARENTES",
+            "OCCITANIE               | LANGUEDOC_ROUSSILLON MIDI_PYRENEES",
+            "CENTRE_VAL_DE_LOIRE     | CENTRE",
+    })
+    @DisplayName("La superficie d'une nouvelle région est la somme de celles qu'elle a réunies (à 2 km² près : arrondis)")
+    void superficiesCoherentes(RegionFr nouvelle, String anciennes) {
+        int somme = Arrays.stream(anciennes.split(" ")).map(RegionFr::valueOf).mapToInt(RegionFr::getSuperficie).sum();
+        assertEquals(nouvelle.getSuperficie(), somme, 2);
     }
 }

@@ -61,6 +61,27 @@ class TableauEssaisTest {
     }
 
     @Test
+    @DisplayName("Passer aux miles réaffiche les essais déjà joués, sans rien changer à la partie")
+    void miles() {
+        Partie partie = new Partie(RegionFr.GRAND_EST, ModeRegions.NOUVELLES);
+        TableauEssais tableau = new TableauEssais();
+        tableau.setPartie(partie);
+        partie.proposer("Bretagne");
+        List<TableModelEvent> recus = new ArrayList<>();
+        tableau.addTableModelListener(recus::add);
+
+        tableau.setUnitesAnglaises(true);
+
+        // Bretagne → Grand Est : 698 km, soit 434 miles
+        assertEquals("434 mi", tableau.getValueAt(0, 2));
+        assertEquals(1, recus.size(), "la JTable est prévenue : elle redessine le tableau");
+        assertEquals(698, partie.getEssais().get(0).distance(), 1, "la partie, elle, compte toujours en km");
+
+        tableau.setUnitesAnglaises(false);
+        assertEquals("698 km", tableau.getValueAt(0, 2));
+    }
+
+    @Test
     @DisplayName("Le modèle prévient la JTable : tout le tableau pour une partie, une seule ligne pour un essai")
     void evenements() {
         TableauEssais tableau = new TableauEssais();

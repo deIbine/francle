@@ -1339,6 +1339,160 @@ dessin Swing :
 
 ---
 
+## Phase 6.1 : les anciennes régions
+
+### Rendre l'erreur impossible plutôt que d'y penser
+
+**Pourquoi.** Les anciennes régions passaient par un constructeur « court » qui mettait 0 et "" partout. Le jeu
+compilait, les tests passaient (ils ne vérifiaient que les nouvelles régions), et le joueur voyait « Superficie :
+0 km² ». Le défaut n'était pas une donnée oubliée, mais un code qui **permettait** de l'oublier.
+
+**Comment le faire.** On a remplacé ce constructeur par un autre qui exige les quatre indices et l'image : une ligne
+incomplète dans l'enum ne compile plus. Un test parcourt ensuite **toutes** les régions (`RegionFr.values()`) au lieu
+d'une partie d'entre elles. Repérer ce genre de piège : chercher les valeurs « bouche-trou » (`0`, `""`, `null`) passées
+par un constructeur ou une méthode « simplifiée ».
+
+> *La question à se poser :* « Qu'est-ce qui empêche quelqu'un de refaire cette erreur ? » Le mieux est le
+> compilateur, puis un test, et en dernier un commentaire ou sa mémoire.
+
+### Croiser deux sources indépendantes
+
+Une superficie recopiée d'un site ne se vérifie pas à l'œil. On a croisé deux sources : la somme des anciennes
+régions doit donner la nouvelle région qui les a réunies (Alsace + Champagne-Ardenne + Lorraine = Grand Est, au km²
+près), et l'aire calculée sur les contours officiels doit concorder. La première vérification est devenue un **test**
+(`superficiesCoherentes`) : une faute de frappe future dans l'enum sera attrapée.
+
+### Une seule règle quand deux disent la même chose
+
+`ModeRegions` avait deux règles : `peutTirer` (la région à deviner) et `reconnait` (les propositions acceptées). Elles
+différaient seulement à cause du mode « toutes ». Une fois ce mode supprimé, elles donnaient exactement le même
+résultat, et on les a fusionnées en `contient`. Garder deux méthodes identiques, c'est risquer qu'un jour l'une
+change sans l'autre. La règle du jeu devient aussi plus simple à dire : « on ne peut proposer que ce qu'on pourrait
+avoir à deviner ».
+
+### Générer ses ressources par un script
+
+**Pourquoi.** Il fallait 35 images de plus, dans le même style que les autres. Les dessiner ou les chercher une à une,
+c'était 35 occasions d'incohérence. Et chaque retouche (couleur, marge, épaisseur du trait) aurait coûté 35 fois.
+
+**Comment le faire.** `outils/generer_images.py` lit les contours officiels (GeoJSON : du JSON qui décrit des
+polygones en longitude/latitude) et les dessine avec matplotlib. Une retouche, c'est **une ligne** à changer, puis on
+relance le script. Le script est dans le dépôt, mais les 6 Mo de contours n'y sont pas : son en-tête dit d'où les
+télécharger. Ce qui compte, c'est que le résultat soit **reproductible**.
+
+Deux détails techniques utiles :
+
+- **la projection** : un degré de longitude est plus court qu'un degré de latitude, d'un facteur `cos(latitude)`.
+  Sans correction, la France paraît écrasée. C'est aussi pourquoi la Guyane (près de l'équateur) se projette avec sa
+  propre latitude ;
+- **la transparence et le flou** : flouter une image transparente mélange le noir des pixels invisibles aux bords
+  (liseré sombre). On floute donc en couleurs « prémultipliées » (`RGBa` dans Pillow), puis on réduit à 256 couleurs
+  (palette) : quatre à cinq fois plus léger.
+
+> *La question à se poser :* « Vais-je refaire cette tâche, ou la retoucher ? » Si oui, l'automatiser coûte moins
+> cher dès la deuxième fois, et le script documente la façon de faire.
+
+---
+
+## Phase 6.2 : les réglages enregistrés et le thème sombre
+
+### Les génériques : écrire le mécanisme une seule fois
+
+**Pourquoi.** Il fallait enregistrer les réglages comme l'historique : JSON, écriture sûre, fichier abîmé mis de côté.
+Copier `Sauvegarde` en `SauvegardeReglages` aurait dupliqué une trentaine de lignes délicates, et un correctif futur
+n'aurait été appliqué qu'à une des deux copies.
+
+**Comment le faire.** `Sauvegarde<T>` : le `T` est un **paramètre de type**, remplacé par `Historique` ou `Reglages`
+à l'utilisation (`Sauvegarde<Reglages>`). Le compilateur vérifie qu'on n'enregistre pas des réglages dans la
+sauvegarde de l'historique. Deux particularités :
+
+- Java **efface** les types génériques à la compilation (*type erasure*) : à l'exécution, `Sauvegarde<Reglages>` ne
+  sait plus que son `T` est `Reglages`. Jackson doit pourtant savoir quoi fabriquer : on lui passe la classe
+  elle-même, `Reglages.class` ;
+- la valeur par défaut est un `Supplier<T>` (`Reglages::new`), pas un objet tout fait : `Reglages` est modifiable,
+  et un même objet partagé entre deux appels changerait « tout seul ».
+
+Une méthode peut aussi être générique : `private <T> T charger(Sauvegarde<T> sauvegarde, …)` dans `Fenetre` charge
+l'historique comme les réglages.
+
+> *La question à se poser :* « Ces deux codes ne diffèrent-ils que par le **type** de ce qu'ils manipulent ? » Si oui,
+> un générique les réunit.
+
+### Compatible avec le passé et l'avenir
+
+Un fichier de réglages peut venir d'une version plus ancienne (sans `themeSombre`) ou plus récente (avec un réglage
+inconnu). Avec Jackson et une classe à accesseurs (`isThemeSombre` / `setThemeSombre`), un champ **absent** garde la
+valeur par défaut écrite dans la classe, et un champ **inconnu** est ignoré. Un mode qui n'existe plus (`"TOUTES"`)
+rend le fichier illisible : il est mis de côté, et les réglages repartent des valeurs par défaut. C'est testé.
+
+### Le *Look and Feel* et le thème à chaud
+
+Un *Look and Feel* Swing est une grande table (`UIManager`) de couleurs, polices et bordures. Chaque composant y
+puise **quand il est créé**. Changer de thème se fait donc en deux temps : installer la nouvelle table
+(`FlatDarkLaf.setup()`), puis demander à tous les composants existants de s'y réabonner (`FlatLaf.updateUI()`).
+Deux conséquences :
+
+- une couleur **écrite dans le code** ne suit pas le thème. Il fallait donc des images sur fond transparent, et
+  vérifier les rares couleurs en dur (les barres grises des statistiques, lisibles dans les deux thèmes) ;
+- un composant qui n'est dans **aucune fenêtre** au moment du changement (la liste des suggestions, ajoutée à la
+  fenêtre seulement quand elle s'ouvre) est oublié : on le met à jour nous-mêmes en l'ajoutant
+  (`SwingUtilities.updateComponentTreeUI`).
+
+---
+
+## Phase 6.3 : les unités anglo-saxonnes et la silhouette tournée
+
+### Stocker dans une unité, convertir à l'affichage
+
+Le jeu calcule tout en kilomètres : distances, pourcentages, historique. L'option « miles » ne change **aucune**
+donnée. Seul `Textes` divise par 1,609344 au moment d'écrire le texte. C'est pourquoi on peut basculer en pleine
+partie : le tableau relit les kilomètres de chaque `Essai` et les réécrit dans la nouvelle unité. Si on avait
+converti les données elles-mêmes, il aurait fallu tout reconvertir dans l'autre sens, avec des arrondis qui
+s'accumulent.
+
+> *Où ce réflexe s'applique ailleurs :* les dates (enregistrées en UTC, affichées dans le fuseau du joueur), l'argent
+> (en centimes, affiché en euros), les textes traduits.
+
+### Le hasard reproductible, encore
+
+La silhouette du jour doit être tournée du **même angle** pour tout le monde, et du même après une relance. On
+retrouve la solution de la Phase 5.1 : `new Random(graine).nextInt(360)`, avec une graine tirée de la date.
+Un « sel » différent de celui des régions évite que l'angle et le mélange viennent de la même suite de nombres.
+En partie libre, un `Random` ordinaire suffit.
+
+### Tourner une image : les transformations de `Graphics2D`
+
+On ne déplace pas les pixels un par un : on règle la **transformation** du pinceau, puis on dessine l'image
+normalement. `translate` (centrer), `rotate` (tourner), `translate` (ramener au centre de la nouvelle toile) : Java2D
+applique ces opérations **de la dernière écrite à la première** à chaque point de l'image. La toile doit être assez
+grande pour le rectangle tourné, `|L cos a| + |H sin a|` sur `|L sin a| + |H cos a|`. Ensuite, on **rogne** les marges
+transparentes, sinon la silhouette paraîtrait plus petite qu'à l'endroit une fois ajustée au cadre.
+
+### Les notions Java rencontrées
+
+- **Les génériques** : classe générique `Sauvegarde<T>`, méthode générique `<T> T charger(…)`, `Class<T>` pour
+  contourner l'effacement des types, `Supplier<T>` et la référence de constructeur `Reglages::new`.
+- **`Graphics2D`** : `translate`, `rotate`, `RenderingHints` (interpolation bilinéaire, anticrénelage).
+- **`BufferedImage`** : `getRGB` (couleur ARGB, l'opacité dans l'octet de poids fort : `>>> 24`), `getSubimage`.
+- **L'opérateur `>>>`** : décalage à droite sans signe, pour lire l'octet de poids fort d'un `int`.
+- **`JCheckBoxMenuItem.setEnabled`** : griser une option qui n'a pas de sens dans l'état actuel.
+
+---
+
+## Bilan de la Phase 6
+
+- **Une phase en une seule PR**, mais en trois commits (6.1, 6.2, 6.3) : l'historique reste lisible, et la relecture
+  peut se faire commit par commit.
+- **Les décisions avant le code** : les données, le style des images et le sort du mode « toutes » ont été tranchés
+  avant d'écrire une ligne. Le codage n'a plus posé que des questions techniques.
+- **Supprimer est aussi une amélioration** : le mode « toutes » mélangeait deux époques (Alsace à 0 km du Grand Est),
+  compliquait les règles et justifiait une exception pour la silhouette. Sans lui, trois règles sont devenues plus
+  simples.
+- **L'architecture a encore payé** : les options n'ont touché que l'interface (`ui`), sauf l'angle du jour, qui est
+  une règle de la partie du jour et va donc dans `jeu`, où la future version web le retrouvera.
+
+---
+
 ## Aide-mémoire
 
 ### Raccourcis IntelliJ
@@ -1394,3 +1548,12 @@ Sous PowerShell, le `.\` est obligatoire : par sécurité, PowerShell ne lance j
 courant sans qu'on le désigne explicitement (sinon un faux `notepad.cmd` déposé dans un dossier serait lancé à la
 place du vrai). Les guillemets autour de `-Dtest=…` évitent que PowerShell découpe l'argument.
 Sous Git Bash, macOS ou Linux : `./mvnw test`.
+
+### Images (Python)
+
+| Commande | Usage |
+|---|---|
+| `pip install matplotlib pillow` | Installer ce dont le script a besoin (une fois) |
+| `python outils/generer_images.py <dossier des contours> src/main/resources` | Régénérer toutes les silhouettes et cartes |
+
+Les contours (fichiers GeoJSON) se téléchargent depuis le dépôt indiqué en tête du script.

@@ -184,6 +184,8 @@ class Autocompletion {
             return;
         }
         if (cadre.getParent() != calques) {
+            // tant qu'elle n'était dans aucune fenêtre, la liste n'a pas suivi un éventuel changement de thème
+            SwingUtilities.updateComponentTreeUI(cadre);
             calques.add(cadre, JLayeredPane.POPUP_LAYER);
         }
         cadre.setVisible(true);

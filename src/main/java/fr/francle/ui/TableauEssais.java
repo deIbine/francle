@@ -16,6 +16,14 @@ class TableauEssais extends AbstractTableModel {
     static final String TROUVE = "✓";
 
     private Partie partie;
+    private boolean unitesAnglaises;
+
+    // le joueur change d'unité : les essais déjà joués se réaffichent tout de suite dans la nouvelle. Rien n'est
+    // recalculé ni stocké en miles : getValueAt convertit à chaque fois les kilomètres de l'Essai
+    void setUnitesAnglaises(boolean unitesAnglaises) {
+        this.unitesAnglaises = unitesAnglaises;
+        fireTableDataChanged();
+    }
 
     // une nouvelle partie : tout le tableau change
     void setPartie(Partie partie) {
@@ -51,7 +59,7 @@ class TableauEssais extends AbstractTableModel {
         boolean trouve = essai.proposition() == partie.getCible();
         switch (colonne) {
             case 1 : return essai.proposition().getNom();
-            case 2 : return Textes.distance(essai.distance());
+            case 2 : return Textes.distance(essai.distance(), unitesAnglaises);
             case 3 : return trouve ? TROUVE : essai.direction().getSymbole();
             default : return essai.pourcentage() + " %";
         }

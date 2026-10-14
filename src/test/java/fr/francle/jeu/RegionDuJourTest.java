@@ -86,4 +86,19 @@ class RegionDuJourTest {
         LocalDate date = LocalDate.of(2030, 6, 15);
         assertEquals(RegionDuJour.pour(date), RegionDuJour.pour(LocalDate.of(2030, 6, 15)));
     }
+
+    @Test
+    @DisplayName("L'angle de la silhouette du jour : le même pour une même date, entre 0 et 359°, et varié")
+    void angle() {
+        Set<Integer> angles = new HashSet<>();
+        LocalDate jour = RegionDuJour.PREMIER_JOUR;
+        for (int i = 0; i < 100; i++, jour = jour.plusDays(1)) {
+            int angle = RegionDuJour.angle(jour);
+            assertTrue(angle >= 0 && angle < 360, jour + " : " + angle);
+            assertEquals(angle, RegionDuJour.angle(LocalDate.of(jour.getYear(), jour.getMonth(), jour.getDayOfMonth())));
+            angles.add(angle);
+        }
+        // 100 jours, 360 angles possibles : s'ils étaient presque tous pareils, le hasard serait mal fait
+        assertTrue(angles.size() > 50, angles.size() + " angles différents seulement");
+    }
 }

@@ -31,13 +31,30 @@ class TextesTest {
         Locale avant = Locale.getDefault();
         Locale.setDefault(Locale.US);
         try {
-            assertEquals("912 km", Textes.distance(912.37));
-            assertEquals("913 km", Textes.distance(912.5));
-            assertEquals("6 789 km", Textes.distance(6789.4));
-            assertEquals("0 km", Textes.distance(0));
+            assertEquals("912 km", Textes.distance(912.37, false));
+            assertEquals("913 km", Textes.distance(912.5, false));
+            assertEquals("6 789 km", Textes.distance(6789.4, false));
+            assertEquals("0 km", Textes.distance(0, false));
         } finally {
             Locale.setDefault(avant); // ne pas perturber les autres tests
         }
+    }
+
+    @Test
+    @DisplayName("En miles : 1 mile = 1,609344 km, arrondi au mile, avec séparateur de milliers")
+    void distanceEnMiles() {
+        assertEquals("1 mi", Textes.distance(1.609344, true));
+        assertEquals("567 mi", Textes.distance(912.37, true));
+        assertEquals("4 219 mi", Textes.distance(6789.4, true));
+        assertEquals("0 mi", Textes.distance(0, true));
+    }
+
+    @Test
+    @DisplayName("Superficie en km² ou en miles carrés (1 mi² ≈ 2,59 km²)")
+    void superficie() {
+        assertEquals("27 208 km²", Textes.superficie(27208, false));
+        assertEquals("10 505 mi²", Textes.superficie(27208, true));
+        assertEquals("144 mi²", Textes.superficie(374, true));
     }
 
     @Test
@@ -45,10 +62,11 @@ class TextesTest {
     void indices() {
         RegionFr bretagne = RegionFr.BRETAGNE;
 
-        assertEquals("Superficie : 27 208 km²", Textes.indice(Indice.SUPERFICIE, bretagne));
-        assertEquals("Spécialité culinaire : la crêpe", Textes.indice(Indice.SPECIALITE, bretagne));
-        assertEquals("Personnalité : Louis Guilloux", Textes.indice(Indice.PERSONNALITE, bretagne));
-        assertEquals("Capitale régionale : Rennes", Textes.indice(Indice.CAPITALE, bretagne));
+        assertEquals("Superficie : 27 208 km²", Textes.indice(Indice.SUPERFICIE, bretagne, false));
+        assertEquals("Superficie : 10 505 mi²", Textes.indice(Indice.SUPERFICIE, bretagne, true));
+        assertEquals("Spécialité culinaire : la crêpe", Textes.indice(Indice.SPECIALITE, bretagne, false));
+        assertEquals("Personnalité : Louis Guilloux", Textes.indice(Indice.PERSONNALITE, bretagne, false));
+        assertEquals("Capitale régionale : Rennes", Textes.indice(Indice.CAPITALE, bretagne, true));
     }
 
     @Test
@@ -63,7 +81,6 @@ class TextesTest {
     void modes() {
         assertEquals("Nouvelles régions (depuis 2016)", Textes.mode(ModeRegions.NOUVELLES));
         assertEquals("Anciennes régions (avant 2016)", Textes.mode(ModeRegions.ANCIENNES));
-        assertEquals("Toutes les régions", Textes.mode(ModeRegions.TOUTES));
         // deux modes avec le même nom seraient indiscernables dans le menu
         assertEquals(ModeRegions.values().length,
                 java.util.Arrays.stream(ModeRegions.values()).map(Textes::mode).distinct().count());

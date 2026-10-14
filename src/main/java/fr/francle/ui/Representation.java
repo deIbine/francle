@@ -2,9 +2,12 @@ package fr.francle.ui;
 
 import fr.francle.donnees.ModeRegions;
 import fr.francle.donnees.RegionFr;
+import fr.francle.donnees.Zone;
 
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
@@ -19,8 +22,10 @@ Les images sont des ressources : Maven les copie depuis src/main/resources à c�
  */
 final class Representation {
 
+    // toutes ces images sont produites par outils/generer_images.py, sur fond transparent (thème clair comme sombre)
     static final String SILHOUETTES = "regions/";
-    static final String CARTES = "indices/";
+    static final String CARTES_NOUVELLES = "cartes/nouvelles/";
+    static final String CARTES_ANCIENNES = "cartes/anciennes/";
     static final String DEFAUT = SILHOUETTES + "defaut.png";
 
     private Representation() {}
@@ -39,22 +44,19 @@ final class Representation {
         }
     }
 
-    // l'image montrée pendant la partie. La silhouette seulement en mode "nouvelles régions" : les anciennes
-    // n'en ont pas, et en mode "toutes", la silhouette d'une région de 2016 trahirait l'époque de la réponse
-    static String silhouette(RegionFr cible, ModeRegions mode, boolean avecImages) {
-        if (avecImages && mode == ModeRegions.NOUVELLES && cible.getImage() != null) {
-            return SILHOUETTES + cible.getImage();
-        }
-        return DEFAUT;
+    // l'image montrée pendant la partie : la silhouette de la région, ou la France et un point d'interrogation
+    // quand le joueur a désactivé la silhouette
+    static String silhouette(RegionFr cible, boolean avecImages) {
+        return avecImages ? SILHOUETTES + cible.getImage() : DEFAUT;
     }
 
-    // la carte de France où la région est coloriée, pour la fin de partie : seulement en métropole
-    static Optional<String> carte(RegionFr cible) {
-        if (cible.getImage() == null) {
+    // la carte de France où la région est coloriée, pour la fin de partie : seulement en métropole. La France
+    // dessinée est celle du mode joué : la Bretagne n'est pas entourée des mêmes voisines avant et après 2016
+    static Optional<String> carte(RegionFr cible, ModeRegions mode) {
+        if (cible.getZone() != Zone.METROPOLE) {
             return Optional.empty();
         }
-        String chemin = CARTES + cible.getImage();
-        return Optional.of(chemin).filter(c -> Representation.class.getResource("/" + c) != null);
+        return Optional.of((mode == ModeRegions.ANCIENNES ? CARTES_ANCIENNES : CARTES_NOUVELLES) + cible.getImage());
     }
 
     // la taille d'une image agrandie ou réduite pour tenir dans le cadre, sans la déformer :
@@ -66,11 +68,68 @@ final class Representation {
 
     // l'image prête à mettre dans un JLabel, ajustée au cadre ; null si elle est introuvable
     static ImageIcon icone(String chemin, int largeurMax, int hauteurMax) {
+        return icone(chemin, largeurMax, hauteurMax, 0);
+    }
+
+    // la même, tournée de « degres » dans le sens des aiguilles d'une montre (0 : telle quelle)
+    static ImageIcon icone(String chemin, int largeurMax, int hauteurMax, int degres) {
         BufferedImage image = charger(chemin);
         if (image == null) {
             return null;
         }
+        if (degres % 360 != 0) {
+            image = rogner(tourner(image, degres));
+        }
         Dimension taille = ajuster(image.getWidth(), image.getHeight(), largeurMax, hauteurMax);
         return new ImageIcon(image.getScaledInstance(taille.width, taille.height, Image.SCALE_SMOOTH));
+    }
+
+    /*
+    L'image tournée autour de son centre, sur une toile transparente assez grande pour qu'aucun coin ne soit coupé.
+    Un rectangle L × H tourné d'un angle a occupe une boîte de |L cos a| + |H sin a| sur |L sin a| + |H cos a|.
+    On ne déplace pas les pixels un par un : on règle la « transformation » du pinceau (Graphics2D), puis on dessine
+    l'image normalement ; Java2D calcule où va chaque pixel.
+     */
+    static BufferedImage tourner(BufferedImage image, int degres) {
+        double angle = Math.toRadians(degres);
+        double cos = Math.abs(Math.cos(angle));
+        double sin = Math.abs(Math.sin(angle));
+        int largeur = (int) Math.ceil(image.getWidth() * cos + image.getHeight() * sin);
+        int hauteur = (int) Math.ceil(image.getWidth() * sin + image.getHeight() * cos);
+
+        BufferedImage tournee = new BufferedImage(largeur, hauteur, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D pinceau = tournee.createGraphics();
+        // sans ce réglage, les bords tournés seraient en escalier
+        pinceau.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        pinceau.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        // les transformations s'appliquent de la dernière écrite à la première : l'image est d'abord centrée sur
+        // l'origine, puis tournée, puis ramenée au centre de la nouvelle toile
+        pinceau.translate(largeur / 2.0, hauteur / 2.0);
+        pinceau.rotate(angle);
+        pinceau.translate(-image.getWidth() / 2.0, -image.getHeight() / 2.0);
+        pinceau.drawImage(image, 0, 0, null);
+        pinceau.dispose();
+        return tournee;
+    }
+
+    // l'image réduite au plus petit rectangle qui contient tous ses pixels visibles : après une rotation, les marges
+    // transparentes grandissent, et la silhouette paraîtrait plus petite qu'à l'endroit une fois ajustée au cadre
+    static BufferedImage rogner(BufferedImage image) {
+        int gauche = image.getWidth(), haut = image.getHeight(), droite = -1, bas = -1;
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                // l'opacité (alpha) est l'octet de poids fort de la couleur ARGB
+                if ((image.getRGB(x, y) >>> 24) != 0) {
+                    gauche = Math.min(gauche, x);
+                    droite = Math.max(droite, x);
+                    haut = Math.min(haut, y);
+                    bas = Math.max(bas, y);
+                }
+            }
+        }
+        if (droite < 0) {
+            return image;   // entièrement transparente : rien à rogner
+        }
+        return image.getSubimage(gauche, haut, droite - gauche + 1, bas - haut + 1);
     }
 }

@@ -94,7 +94,7 @@ class PartieTest {
     @Test
     @DisplayName("Abandonner termine la partie dans l'état ABANDONNEE")
     void abandon() {
-        Partie partie = jouer(RegionFr.CORSE, ModeRegions.TOUTES, "Alsace");
+        Partie partie = jouer(RegionFr.CORSE, ModeRegions.ANCIENNES, "Alsace");
 
         partie.abandonner();
 
@@ -103,15 +103,17 @@ class PartieTest {
     }
 
     @Test
-    @DisplayName("Une région de même capitale que la cible est à 0 km, mais ce n'est pas une victoire")
-    void memeCapitale() {
-        Partie partie = new Partie(RegionFr.GRAND_EST, ModeRegions.TOUTES);
+    @DisplayName("On ne peut proposer que les régions du mode joué : une région de l'autre époque ne coûte pas d'essai")
+    void autreEpoqueRefusee() {
+        Partie anciennes = new Partie(RegionFr.ALSACE, ModeRegions.ANCIENNES);
+        Partie nouvelles = new Partie(RegionFr.GRAND_EST, ModeRegions.NOUVELLES);
 
-        Essai essai = partie.proposer("Alsace").orElseThrow();
-
-        assertEquals(RegionFr.ALSACE, essai.proposition());
-        assertEquals(0, essai.distance());
-        assertTrue(partie.enCours());
+        // Grand Est et Alsace ont la même capitale : avant la Phase 6, le mode « toutes » permettait de proposer
+        // l'une pour l'autre, à 0 km, sans gagner. Les deux époques ne se mélangent plus
+        assertTrue(anciennes.proposer("Grand Est").isEmpty());
+        assertTrue(nouvelles.proposer("Alsace").isEmpty());
+        assertTrue(anciennes.getEssais().isEmpty());
+        assertTrue(nouvelles.getEssais().isEmpty());
     }
 
     @Test
