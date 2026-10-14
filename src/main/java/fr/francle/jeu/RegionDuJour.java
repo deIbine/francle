@@ -44,6 +44,17 @@ public final class RegionDuJour {
         return ordre(cycle).get(position);
     }
 
+    // l'angle (0 à 359 degrés) de la silhouette tournée, pour la partie du jour : le même pour tout le monde, et le
+    // même après une relance du jeu. Comme la région, il ne dépend que de la date : un Random dont on fixe la graine
+    // donne toujours la même suite de nombres. Un autre sel que celui des régions : sinon l'angle et le mélange
+    // viendraient de la même suite, et l'un trahirait peut-être quelque chose de l'autre
+    public static int angle(LocalDate date) {
+        return new Random(SEL_ANGLE + numero(date)).nextInt(360);
+    }
+
+    // les octets ASCII de « Angle »
+    private static final long SEL_ANGLE = 0x416E676C65L;
+
     // l'ordre des régions pendant un cycle
     static List<RegionFr> ordre(long cycle) {
         List<RegionFr> ordre = melange(cycle);

@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
@@ -101,6 +102,10 @@ class Fenetre {
     // (sinon, revenir à la partie du jour l'effacerait, et donnerait des essais en plus)
     private Partie duJour;
     private LocalDate dateDuJour;
+    // l'angle de la silhouette tournée pour la partie libre en cours, tiré au hasard à sa création
+    // (celui de la partie du jour se recalcule à partir de la date : RegionDuJour.angle)
+    private int angleLibre;
+    private static final Random HASARD = new Random();
 
     // l'historique des parties du jour, les réglages, et les fichiers où ils sont enregistrés. Les sauvegardes sont
     // des paramètres, comme l'horloge : la vérification utilise un dossier temporaire, jamais les vrais fichiers du joueur
@@ -124,6 +129,7 @@ class Fenetre {
         this.sauvegardeReglages = sauvegardeReglages;
         historique = charger(sauvegardeHistorique, "Les statistiques repartent de zéro.");
         reglages = charger(sauvegardeReglages, "Les réglages reprennent leurs valeurs par défaut.");
+        tableau.setUnitesAnglaises(reglages.isUnitesAnglaises());
         construire();
         // les composants ont été créés avec le thème clair (installé par Francle.main) : s'il faut le sombre,
         // ils s'y réabonnent tous avant que la fenêtre ne s'affiche
@@ -219,8 +225,17 @@ class Fenetre {
         parametres.addSeparator();
         // cases à cocher : indépendantes l'une de l'autre
         JCheckBoxMenuItem images = new JCheckBoxMenuItem("Silhouette de la région", reglages.isAvecImages());
+        JCheckBoxMenuItem tournee = new JCheckBoxMenuItem("Silhouette tournée au hasard", reglages.isSilhouetteTournee());
+        // sans silhouette, rien à tourner : la case est grisée
+        tournee.setEnabled(reglages.isAvecImages());
         images.addActionListener(e -> {
             reglages.setAvecImages(images.isSelected());
+            retenirReglages();
+            tournee.setEnabled(reglages.isAvecImages());
+            prevenirProchainePartie();
+        });
+        tournee.addActionListener(e -> {
+            reglages.setSilhouetteTournee(tournee.isSelected());
             retenirReglages();
             prevenirProchainePartie();
         });
@@ -244,11 +259,21 @@ class Fenetre {
             retenirReglages();
             Theme.changer(reglages.isThemeSombre());
         });
+        JCheckBoxMenuItem miles = new JCheckBoxMenuItem("Unités anglo-saxonnes (miles)", reglages.isUnitesAnglaises());
+        // tout de suite aussi : le tableau et les indices se réaffichent dans la nouvelle unité
+        miles.addActionListener(e -> {
+            reglages.setUnitesAnglaises(miles.isSelected());
+            retenirReglages();
+            tableau.setUnitesAnglaises(reglages.isUnitesAnglaises());
+            afficherIndices();
+        });
         parametres.add(images);
+        parametres.add(tournee);
         parametres.add(avecListe);
         parametres.add(avecSuggestions);
         parametres.addSeparator();
         parametres.add(themeSombre);
+        parametres.add(miles);
 
         JMenu menuAide = new JMenu("Aide");
         menuAide.setMnemonic(KeyEvent.VK_A);
@@ -339,6 +364,7 @@ class Fenetre {
     // une partie libre : une nouvelle Partie à chaque fois, avec le mode choisi dans les réglages
     private void jouerLibre() {
         ModeRegions mode = reglages.getMode();
+        angleLibre = HASARD.nextInt(360);
         montrerPartie(new Partie(RegionFr.tirer(mode), mode));
     }
 
@@ -355,7 +381,7 @@ class Fenetre {
             terminer();
             return;
         }
-        montrer(Representation.silhouette(partie.getCible(), reglages.isAvecImages()));
+        montrer(Representation.silhouette(partie.getCible(), reglages.isAvecImages()), angleSilhouette());
         message.setText(partie.getEssais().isEmpty() ? "Quelle est cette région française ?" : Textes.apresEssai(partie));
         activerSaisie(true);
         saisie.requestFocusInWindow();
@@ -495,14 +521,27 @@ class Fenetre {
     }
 
     private void montrer(String chemin) {
-        ImageIcon icone = Representation.icone(chemin, LARGEUR_IMAGE, HAUTEUR_IMAGE);
+        montrer(chemin, 0);
+    }
+
+    private void montrer(String chemin, int degres) {
+        ImageIcon icone = Representation.icone(chemin, LARGEUR_IMAGE, HAUTEUR_IMAGE, degres);
         image.setIcon(icone);
+    }
+
+    // de combien tourner la silhouette : 0 si l'option est décochée ou s'il n'y a pas de silhouette ; sinon l'angle de
+    // la partie du jour (le même pour tous) ou celui tiré pour la partie libre
+    private int angleSilhouette() {
+        if (!reglages.isAvecImages() || !reglages.isSilhouetteTournee()) {
+            return 0;
+        }
+        return partie == duJour ? RegionDuJour.angle(dateDuJour) : angleLibre;
     }
 
     private void afficherIndices() {
         List<String> lignes = new ArrayList<>();
         for (Indice indice : partie.indicesReveles()) {
-            lignes.add(Textes.indice(indice, partie.getCible()));
+            lignes.add(Textes.indice(indice, partie.getCible(), reglages.isUnitesAnglaises()));
         }
         indices.setText(String.join("\n", lignes));
     }

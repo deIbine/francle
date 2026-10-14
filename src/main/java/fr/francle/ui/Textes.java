@@ -22,7 +22,7 @@ final class Textes {
 
             Partie du jour : la même région pour tout le monde, une seule partie par jour,
             toujours parmi les nouvelles régions. Partie libre : autant que vous voulez,
-            avec les régions choisies dans le menu Paramètres.
+            avec les régions choisies dans le menu Paramètres (anciennes ou nouvelles).
             Seules les parties du jour comptent dans les statistiques (menu Jeu).
 
             Après chaque essai, le tableau indique :
@@ -35,7 +35,10 @@ final class Textes {
 
             Les accents, majuscules, espaces et tirets sont ignorés : « ile de france » est accepté.
             Pendant la frappe, des suggestions s'affichent : ↓ et ↑ pour en choisir une, Entrée pour la reprendre,
-            puis Entrée encore pour valider (désactivables dans le menu Paramètres).""";
+            puis Entrée encore pour valider (désactivables dans le menu Paramètres).
+
+            Le menu Paramètres propose aussi un thème sombre, les distances en miles,
+            et une silhouette tournée au hasard pour corser le jeu. Ils sont retenus d'un lancement à l'autre.""";
 
     // des titres courts : avec FlatLaf sous Windows, la barre de menus est intégrée à la barre de titre, et un titre
     // plus long (« Francle — Partie du jour n° 1 · 13 octobre 2026 ») y était coupé
@@ -57,14 +60,27 @@ final class Textes {
         return new DecimalFormat("#,##0", symboles).format(nombre);
     }
 
-    // 912.37 -> "912 km" : au kilomètre près, c'est bien assez pour jouer
-    static String distance(double kilometres) {
-        return milliers(Math.round(kilometres)) + " km";
+    // le mile international, défini exactement en mètres depuis 1959. Un mile carré vaut donc 1,609344² km²
+    static final double KM_PAR_MILE = 1.609344;
+
+    // 912.37 -> "912 km" ou "567 mi" : à l'unité près, c'est bien assez pour jouer. La distance arrive toujours en km
+    // (c'est l'unité de tout le jeu) ; on ne convertit qu'ici, au dernier moment, pour l'afficher
+    static String distance(double kilometres, boolean unitesAnglaises) {
+        return unitesAnglaises
+                ? milliers(Math.round(kilometres / KM_PAR_MILE)) + " mi"
+                : milliers(Math.round(kilometres)) + " km";
     }
 
-    static String indice(Indice indice, RegionFr cible) {
+    // 27208 -> "27 208 km²" ou "10 505 mi²"
+    static String superficie(int kilometresCarres, boolean unitesAnglaises) {
+        return unitesAnglaises
+                ? milliers(Math.round(kilometresCarres / (KM_PAR_MILE * KM_PAR_MILE))) + " mi²"
+                : milliers(kilometresCarres) + " km²";
+    }
+
+    static String indice(Indice indice, RegionFr cible, boolean unitesAnglaises) {
         switch (indice) {
-            case SUPERFICIE : return "Superficie : " + milliers(cible.getSuperficie()) + " km²";
+            case SUPERFICIE : return "Superficie : " + superficie(cible.getSuperficie(), unitesAnglaises);
             case SPECIALITE : return "Spécialité culinaire : " + cible.getSpecialite();
             case PERSONNALITE : return "Personnalité : " + cible.getPersonnalite();
             default : return "Capitale régionale : " + cible.getCapitale();

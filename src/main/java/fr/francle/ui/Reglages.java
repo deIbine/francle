@@ -20,6 +20,8 @@ class Reglages {
     private boolean avecListe = true;
     private boolean avecSuggestions = true;
     private boolean themeSombre = false;
+    private boolean unitesAnglaises = false;
+    private boolean silhouetteTournee = false;
 
     // ~/.francle/reglages.json, à côté de l'historique
     static Sauvegarde<Reglages> sauvegarde() {
@@ -44,4 +46,11 @@ class Reglages {
 
     public boolean isThemeSombre() { return themeSombre; }
     public void setThemeSombre(boolean themeSombre) { this.themeSombre = themeSombre; }
+
+    // miles et miles carrés au lieu des kilomètres : seulement à l'affichage, le jeu calcule toujours en km
+    public boolean isUnitesAnglaises() { return unitesAnglaises; }
+    public void setUnitesAnglaises(boolean unitesAnglaises) { this.unitesAnglaises = unitesAnglaises; }
+
+    public boolean isSilhouetteTournee() { return silhouetteTournee; }
+    public void setSilhouetteTournee(boolean silhouetteTournee) { this.silhouetteTournee = silhouetteTournee; }
 }

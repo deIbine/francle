@@ -5,7 +5,9 @@ import fr.francle.donnees.RegionFr;
 import fr.francle.donnees.Zone;
 
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.Image;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
@@ -66,11 +68,68 @@ final class Representation {
 
     // l'image prête à mettre dans un JLabel, ajustée au cadre ; null si elle est introuvable
     static ImageIcon icone(String chemin, int largeurMax, int hauteurMax) {
+        return icone(chemin, largeurMax, hauteurMax, 0);
+    }
+
+    // la même, tournée de « degres » dans le sens des aiguilles d'une montre (0 : telle quelle)
+    static ImageIcon icone(String chemin, int largeurMax, int hauteurMax, int degres) {
         BufferedImage image = charger(chemin);
         if (image == null) {
             return null;
         }
+        if (degres % 360 != 0) {
+            image = rogner(tourner(image, degres));
+        }
         Dimension taille = ajuster(image.getWidth(), image.getHeight(), largeurMax, hauteurMax);
         return new ImageIcon(image.getScaledInstance(taille.width, taille.height, Image.SCALE_SMOOTH));
+    }
+
+    /*
+    L'image tournée autour de son centre, sur une toile transparente assez grande pour qu'aucun coin ne soit coupé.
+    Un rectangle L × H tourné d'un angle a occupe une boîte de |L cos a| + |H sin a| sur |L sin a| + |H cos a|.
+    On ne déplace pas les pixels un par un : on règle la « transformation » du pinceau (Graphics2D), puis on dessine
+    l'image normalement ; Java2D calcule où va chaque pixel.
+     */
+    static BufferedImage tourner(BufferedImage image, int degres) {
+        double angle = Math.toRadians(degres);
+        double cos = Math.abs(Math.cos(angle));
+        double sin = Math.abs(Math.sin(angle));
+        int largeur = (int) Math.ceil(image.getWidth() * cos + image.getHeight() * sin);
+        int hauteur = (int) Math.ceil(image.getWidth() * sin + image.getHeight() * cos);
+
+        BufferedImage tournee = new BufferedImage(largeur, hauteur, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D pinceau = tournee.createGraphics();
+        // sans ce réglage, les bords tournés seraient en escalier
+        pinceau.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        pinceau.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        // les transformations s'appliquent de la dernière écrite à la première : l'image est d'abord centrée sur
+        // l'origine, puis tournée, puis ramenée au centre de la nouvelle toile
+        pinceau.translate(largeur / 2.0, hauteur / 2.0);
+        pinceau.rotate(angle);
+        pinceau.translate(-image.getWidth() / 2.0, -image.getHeight() / 2.0);
+        pinceau.drawImage(image, 0, 0, null);
+        pinceau.dispose();
+        return tournee;
+    }
+
+    // l'image réduite au plus petit rectangle qui contient tous ses pixels visibles : après une rotation, les marges
+    // transparentes grandissent, et la silhouette paraîtrait plus petite qu'à l'endroit une fois ajustée au cadre
+    static BufferedImage rogner(BufferedImage image) {
+        int gauche = image.getWidth(), haut = image.getHeight(), droite = -1, bas = -1;
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                // l'opacité (alpha) est l'octet de poids fort de la couleur ARGB
+                if ((image.getRGB(x, y) >>> 24) != 0) {
+                    gauche = Math.min(gauche, x);
+                    droite = Math.max(droite, x);
+                    haut = Math.min(haut, y);
+                    bas = Math.max(bas, y);
+                }
+            }
+        }
+        if (droite < 0) {
+            return image;   // entièrement transparente : rien à rogner
+        }
+        return image.getSubimage(gauche, haut, droite - gauche + 1, bas - haut + 1);
     }
 }

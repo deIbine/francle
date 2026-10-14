@@ -30,6 +30,8 @@ class ReglagesTest {
         assertTrue(reglages.isAvecListe());
         assertTrue(reglages.isAvecSuggestions());
         assertFalse(reglages.isThemeSombre());
+        assertFalse(reglages.isUnitesAnglaises());
+        assertFalse(reglages.isSilhouetteTournee());
     }
 
     @Test
@@ -62,6 +64,8 @@ class ReglagesTest {
         reglages.setMode(ModeRegions.ANCIENNES);
         reglages.setAvecSuggestions(false);
         reglages.setThemeSombre(true);
+        reglages.setUnitesAnglaises(true);
+        reglages.setSilhouetteTournee(true);
 
         sauvegarde.enregistrer(reglages);
         Reglages relus = sauvegarde.charger();
@@ -70,6 +74,8 @@ class ReglagesTest {
         assertTrue(relus.isAvecImages());
         assertFalse(relus.isAvecSuggestions());
         assertTrue(relus.isThemeSombre());
+        assertTrue(relus.isUnitesAnglaises());
+        assertTrue(relus.isSilhouetteTournee());
         assertTrue(Files.readString(sauvegarde.getFichier()).contains("\"themeSombre\" : true"));
     }
 
