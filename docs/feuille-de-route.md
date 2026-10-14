@@ -15,7 +15,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 3 | Séparer logique et affichage, tests, Maven, packages | ✅ Fait (PR #21, #22 et 3.3) |
 | 4 | Interface Swing en une seule fenêtre | ✅ Fait (PR #24 à #28) |
 | 5 | Région du jour et statistiques | ✅ Fait (PR #29 et #30) |
-| 6 | Indices plus riches | ⬜ À faire |
+| 6 | Anciennes régions complètes, réglages enregistrés, options | ✅ Fait (PR #31) |
 | 7 | Version web (Spring Boot) | ⬜ À faire |
 
 ---
@@ -383,7 +383,7 @@ interface ne fait que la brancher ; sans elle, il faudrait réécrire les règle
 
 ---
 
-## Phase 5 : la région du jour et les statistiques
+## Phase 5 : la région du jour et les statistiques ✅
 
 **Pourquoi.** Francle s'inspire de Wordle et Worldle, mais il lui manque ce qui fait revenir chaque jour : une même
 énigme pour tout le monde, et des statistiques qui racontent ses parties dans la durée.
@@ -450,15 +450,66 @@ fermeture du jeu, ne se rejoue pas, et alimente des statistiques à la Wordle. 1
 
 ---
 
-## Phase 6 : des indices plus riches
+## Phase 6 : les anciennes régions, les réglages enregistrés et les options ✅
 
-| Fonctionnalité | Ce que ça apprend | Difficulté |
-|---|---|---|
-| **Indices des anciennes régions** (aujourd'hui ni superficie ni indices) | Recherche de données | Très facile : 1 ligne par région dans `RegionFr` |
-| **Indices variés**, tirés parmi les personnalités alternatives de `docs/indices.md` | `List` dans un `enum`, hasard | Facile (attention : la partie du jour doit tirer les mêmes indices pour tout le monde) |
+**Pourquoi.** En mode « anciennes » ou « toutes », un indice d'ancienne région s'affichait vide (« Superficie : 0 km² »),
+sans silhouette ni carte : la moitié du jeu était inachevée. Et les réglages disparaissaient à chaque fermeture.
 
-**Autres idées notées dans le code d'origine** (commentaires retirés en Phase 3.3, conservés ici) : distances en miles,
-thème sombre, silhouette tournée au hasard pour corser le jeu, comparaison proximité / taille de la région.
+**Décisions** (le 14 octobre 2026, Claude code et explique, **une seule PR** pour toute la phase, un commit par
+sous-phase) : données proposées par Claude et validées par l'utilisateur ; toutes les images régénérées par un script ;
+mode « toutes » supprimé ; les indices variés reportés (voir « Idées en réserve »).
+
+**Comment le penser.** *Rendre l'erreur impossible plutôt que d'y penser* : une région sans indices ne compile plus.
+*Une seule règle quand deux disent la même chose* : sans le mode « toutes », « peut tirer » et « reconnaît » étaient
+identiques. *Stocker dans une unité, convertir à l'affichage* : le jeu compte en kilomètres, les miles ne sont qu'une
+façon de l'écrire.
+
+**Ce que tu apprends :** générer ses ressources par un script, les génériques (`Sauvegarde<T>`), le *Look and Feel*
+Swing et le changement de thème à chaud, `Graphics2D` et les transformations (rotation), le hasard reproductible
+(encore), la compatibilité d'un fichier avec les versions passées et futures.
+
+### 6.1 : les anciennes régions ✅
+
+- **Indices des 17 anciennes régions** (tableau dans [indices.md](indices.md)) : superficies de l'INSEE, recoupées
+  (la somme des anciennes régions donne la nouvelle, testé) ; personnalités **nées** dans la région.
+- **Le constructeur sans indices disparaît** : celui des anciennes régions exige lui aussi les 4 indices et l'image.
+- **Le mode « toutes » est supprimé** : on joue les anciennes **ou** les nouvelles régions. `ModeRegions` n'a plus
+  qu'une règle, `contient`, pour tirer la région **et** accepter une proposition : en mode « anciennes », « Grand Est »
+  est désormais refusé, comme « Alsace » en mode « nouvelles ».
+- **Toutes les images régénérées** par `outils/generer_images.py` (Python, matplotlib, Pillow) à partir des contours
+  officiels (IGN/INSEE, licence ouverte) : 35 silhouettes, l'image par défaut (la France et un « ? »), 35 cartes de
+  fin de partie en deux séries, `cartes/nouvelles/` et `cartes/anciennes/` (les 5 régions inchangées en 2016 ont les
+  deux). Fond **transparent**, palette de 256 couleurs : 1,4 Mo au lieu de 5,6 Mo.
+- La silhouette s'affiche dans les deux modes (la cacher n'avait de sens qu'en mode « toutes »).
+
+### 6.2 : les réglages enregistrés et le thème sombre ✅
+
+- **`Sauvegarde<T>`** devient générique : le même mécanisme (JSON, écriture sûre, fichier abîmé mis de côté) sert à
+  l'historique et aux réglages. Elle reste la seule classe à connaître Jackson.
+- **Réglages enregistrés** dans `~/.francle/reglages.json` à chaque changement, retrouvés au lancement. Un réglage
+  absent (fichier d'une version plus ancienne) garde sa valeur par défaut.
+- **Thème sombre** (case du menu Paramètres) : FlatDarkLaf, appliqué **tout de suite** à toute la fenêtre (classe
+  `Theme`). Vérifié dans les deux thèmes : fenêtre, tableau, statistiques, suggestions.
+
+### 6.3 : les unités anglo-saxonnes et la silhouette tournée ✅
+
+- **Unités anglo-saxonnes** : distances en miles et superficie en miles carrés, converties **seulement à l'affichage**
+  (`Textes`) ; le tableau des essais déjà joués se réaffiche tout de suite.
+- **Silhouette tournée au hasard** : un angle quelconque. Partie du jour : `RegionDuJour.angle(date)`, le même pour
+  tous et après une relance ; partie libre : un vrai hasard. La carte de fin reste à l'endroit ; la case est grisée
+  sans silhouette. `Representation.tourner` (`Graphics2D`) puis `rogner` (les marges transparentes).
+- **189 tests** (199 avant la phase : les tests qui parcouraient les 35 régions en mode « toutes » ont disparu avec
+  lui).
+
+Résultat de la Phase 6 : les deux époques sont jouables avec leurs indices et leurs images, le jeu se souvient des
+réglages, et trois options changent l'expérience (thème sombre, miles, silhouette tournée).
+
+### Idées en réserve
+
+- **Indices variés**, tirés parmi les personnalités alternatives de [indices.md](indices.md) : une `List` dans
+  l'enum, et un tirage fait à la création de la partie. Piège : la partie du jour doit tirer les mêmes indices pour
+  tout le monde et après une relance (graine tirée de la date, comme `RegionDuJour.angle`).
+- **Comparaison proximité / taille de la région** (idée du code d'origine).
 
 ---
 
