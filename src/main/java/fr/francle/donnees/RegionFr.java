@@ -263,7 +263,7 @@ public enum RegionFr {
 
     // les mots d'un nom, simplifiés, sans les petits mots ("de", "la", "d'") : "Provence-Alpes-Côte d'Azur" ->
     // provence, alpes, cote, azur. Sinon "d" ou "de" ferait apparaître la moitié des régions.
-    private static List<String> mots(String nom) {
+    static List<String> mots(String nom) {
         List<String> mots = new ArrayList<>();
         for (String mot : MOTS.split(nom)) {
             String simple = simplifier(mot);
@@ -333,4 +333,9 @@ public enum RegionFr {
     public Texte getMonument() { return monument; }
     // le nom du fichier de la silhouette et des cartes (« bretagne.png »)
     public String getImage() { return image; }
+    // le même sans « .png » : le nom de la région dans les fichiers des départements (« bretagne »)
+    public String getFichier() { return image.substring(0, image.length() - ".png".length()); }
+    // ses départements, par ordre de numéro : ceux de la région à son époque (la Picardie en a trois, les
+    // Hauts-de-France cinq)
+    public List<Departement> getDepartements() { return Decoupage.de(this); }
 }
