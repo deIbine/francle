@@ -25,6 +25,22 @@ class TextesTest {
     private static final Textes EN = new Textes(Langue.EN);
 
     @Test
+    @DisplayName("Chaque clé de texte écrite dans le code existe dans le fichier de textes")
+    void clesUtilisees() throws java.io.IOException {
+        // les clés écrites en toutes lettres : texte("cle"…) et action("cle"…). Une clé oubliée dans le fichier ne
+        // se verrait qu'en jeu, au moment d'afficher la phrase (MissingResourceException)
+        var motif = java.util.regex.Pattern.compile("(?:texte|action)\\(\"([a-zA-Z.]+)\"");
+        try (var fichiers = java.nio.file.Files.walk(java.nio.file.Path.of("src/main/java"))) {
+            for (var fichier : fichiers.filter(f -> f.toString().endsWith(".java")).toList()) {
+                var cles = motif.matcher(java.nio.file.Files.readString(fichier)).results().map(r -> r.group(1));
+                // une clé qui finit par un point est un début, complété par le code (« indice. » + le nom de l'indice)
+                cles.filter(cle -> !cle.endsWith("."))
+                        .forEach(cle -> assertTrue(FR.cles().contains(cle), cle + " (" + fichier.getFileName() + ")"));
+            }
+        }
+    }
+
+    @Test
     @DisplayName("Bonus : la question, la réponse et la fin, selon la sorte de question")
     void bonus() {
         Bonus bretagne = new Bonus(RegionFr.BRETAGNE, RegionFr.BRETAGNE.getDepartements(), Bonus.Question.CARTE);
