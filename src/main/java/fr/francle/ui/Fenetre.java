@@ -5,6 +5,7 @@ import fr.francle.donnees.Langue;
 import fr.francle.donnees.ModeRegions;
 import fr.francle.donnees.RegionFr;
 import fr.francle.jeu.Bonus;
+import fr.francle.jeu.Essai;
 import fr.francle.jeu.Indice;
 import fr.francle.jeu.ModesDifficiles;
 import fr.francle.jeu.Partie;
@@ -22,6 +23,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
@@ -33,6 +35,8 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +48,8 @@ import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
+import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -707,9 +713,46 @@ class Fenetre {
         }
     }
 
+    // la liste des régions du mode joué, sur deux colonnes, comme dans la version web : un clic sur un nom le propose,
+    // comme si on l'avait tapé ; les régions déjà proposées sont barrées et ne se cliquent plus. Chaque nom est un vrai
+    // bouton : il se choisit aussi au clavier (Tab, Espace)
     private void montrerListe() {
-        JOptionPane.showMessageDialog(frame, textes.listeDesRegions(partie.getMode()),
-                textes.texte("action.liste"), JOptionPane.PLAIN_MESSAGE);
+        if (dansLeBonus) {
+            return;
+        }
+        JDialog fenetre = new JDialog(frame, textes.texte("action.liste"), true);
+        Set<RegionFr> proposees = new HashSet<>(partie.getEssais().stream().map(Essai::proposition).toList());
+        boolean finie = !partie.enCours();
+        JPanel noms = new JPanel(new GridLayout(0, 2, 6, 0));
+        for (RegionFr region : textes.regionsTriees(partie.getMode())) {
+            boolean dejaProposee = proposees.contains(region);
+            // <s> : le nom barré. Swing sait afficher un peu de HTML dans le texte d'un bouton ou d'une étiquette
+            JButton nom = new JButton(dejaProposee ? "<html><s>" + textes.nom(region) + "</s></html>" : textes.nom(region));
+            nom.setHorizontalAlignment(SwingConstants.LEFT);
+            // un bouton sans bordure de FlatLaf : une liste de noms plutôt qu'un mur de boutons
+            nom.putClientProperty("JButton.buttonType", "borderless");
+            nom.setEnabled(!finie && !dejaProposee);
+            nom.addActionListener(e -> {
+                // la liste se ferme d'abord : si l'essai termine la partie, la suite s'affiche dans la fenêtre du jeu
+                fenetre.dispose();
+                saisie.setText(textes.nom(region));
+                jouer();
+            });
+            noms.add(nom);
+        }
+        JLabel aide = new JLabel(textes.texte(finie ? "liste.finie" : "liste.aide"));
+        aide.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
+        JPanel contenu = new JPanel(new BorderLayout());
+        contenu.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        contenu.add(aide, BorderLayout.NORTH);
+        contenu.add(noms, BorderLayout.CENTER);
+        fenetre.setContentPane(contenu);
+        // Échap ferme la liste, comme une boîte de dialogue ordinaire
+        fenetre.getRootPane().registerKeyboardAction(e -> fenetre.dispose(), KeyStroke.getKeyStroke("ESCAPE"),
+                JComponent.WHEN_IN_FOCUSED_WINDOW);
+        fenetre.pack();
+        fenetre.setLocationRelativeTo(frame);
+        fenetre.setVisible(true);
     }
 
     private void montrerAide() {

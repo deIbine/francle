@@ -20,6 +20,7 @@ import java.text.DecimalFormatSymbols;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -208,11 +209,11 @@ final class Textes {
         return texte("bonus.resume", bonus.score(), bonus.total());
     }
 
-    // les noms des régions jouables, dans l'ordre alphabétique de la langue (Île-de-France rangée à la lettre I)
-    String listeDesRegions(ModeRegions mode) {
-        List<String> noms = new ArrayList<>(RegionFr.tirables(mode).stream().map(this::nom).toList());
-        noms.sort(Collator.getInstance(langue.getLocale()));
-        return texte("liste.intro") + "\n" + String.join("\n", noms);
+    // les régions jouables, dans l'ordre alphabétique de leur nom dans la langue (Île-de-France rangée à la lettre I)
+    List<RegionFr> regionsTriees(ModeRegions mode) {
+        List<RegionFr> regions = new ArrayList<>(RegionFr.tirables(mode));
+        regions.sort(Comparator.comparing(this::nom, Collator.getInstance(langue.getLocale())));
+        return regions;
     }
 
     // un fichier texte rangé dans le .jar, lu en entier

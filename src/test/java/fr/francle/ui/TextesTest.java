@@ -190,8 +190,7 @@ class TextesTest {
     @Test
     @DisplayName("La liste des régions est triée à la française (Île-de-France à la lettre I)")
     void listeTriee() {
-        List<String> lignes = List.of(FR.listeDesRegions(ModeRegions.NOUVELLES).split("\n"));
-        List<String> noms = lignes.subList(1, lignes.size());     // sans la phrase d'introduction
+        List<String> noms = FR.regionsTriees(ModeRegions.NOUVELLES).stream().map(FR::nom).toList();
 
         assertEquals(18, noms.size());
         assertEquals("Auvergne-Rhône-Alpes", noms.get(0));
@@ -245,9 +244,8 @@ class TextesTest {
     @Test
     @DisplayName("La liste en anglais est triée selon les noms anglais")
     void listeEnAnglais() {
-        List<String> lignes = List.of(EN.listeDesRegions(ModeRegions.NOUVELLES).split("\n"));
+        List<String> lignes = EN.regionsTriees(ModeRegions.NOUVELLES).stream().map(EN::nom).toList();
 
-        assertEquals("The possible regions:", lignes.get(0));
         assertTrue(lignes.indexOf("Brittany") < lignes.indexOf("Burgundy-Franche-Comté"));
         assertTrue(lignes.indexOf("Corsica") < lignes.indexOf("French Guiana"));
     }
