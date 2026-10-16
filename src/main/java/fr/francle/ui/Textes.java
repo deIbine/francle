@@ -5,9 +5,11 @@ import fr.francle.donnees.Langue;
 import fr.francle.donnees.ModeRegions;
 import fr.francle.donnees.RegionFr;
 import fr.francle.jeu.Bonus;
+import fr.francle.jeu.Essai;
 import fr.francle.jeu.Indice;
 import fr.francle.jeu.Partie;
 import fr.francle.jeu.RegionDuJour;
+import fr.francle.jeu.Reponse;
 import fr.francle.jeu.Tentative;
 
 import java.io.IOException;
@@ -63,8 +65,19 @@ final class Textes {
         return phrases.keySet();
     }
 
+    // l'aide, avec son exemple. Comme dans la version web, l'exemple est un vrai essai, calculé par les règles du jeu
+    // plutôt qu'écrit à la main : il reste juste si une règle change (la Normandie proposée pour trouver la Bretagne)
     String aide() {
-        return aide;
+        return aide.replace("{exemple}", exemple());
+    }
+
+    String exemple() {
+        Partie partie = new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES);
+        Reponse.Jouee jouee = (Reponse.Jouee) partie.proposer(RegionFr.NORMANDIE.getNom());
+        Essai essai = jouee.essai();
+        // en km, quelle que soit l'unité choisie : c'est une explication, pas un essai
+        return texte("aide.exemple", nom(RegionFr.NORMANDIE), distance(essai.distance(), false),
+                essai.direction().getSymbole(), pourcentage(essai.pourcentage()), nom(RegionFr.BRETAGNE));
     }
 
     // « Francle n° 1 » ou « Francle #1 », comme « Wordle 1234 ». Des titres courts : avec FlatLaf sous Windows, la

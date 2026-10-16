@@ -1,29 +1,36 @@
 Guess the hidden French region in 6 guesses or fewer.
 
-Daily game: the same region for everyone, one game per day,
-always among the current regions. Free game: as many as you like,
-with the regions chosen in the Settings menu (former or current).
-Only daily games count in the statistics (Game menu).
-
-Département bonus: after winning the daily game, find each département of the region
-on the map (one click per département; green: found, red: missed).
-For a region with a single département, give its number. The bonus counts from the first
-answer, even if skipped or interrupted, and its average score appears in the statistics.
-
 After each guess, the table shows:
   • the distance between the capital of your guess and that of the hidden region;
   • the direction to follow to reach the hidden region (↑ north, → east…);
   • the proximity percentage (100%: you are there).
+{exemple}
 
 Each wrong guess reveals a clue: the area, a food specialty,
 a famous person, the regional capital, then a landmark.
 Guessing the same region twice does not cost a guess.
 
-Accents, capitals, spaces and hyphens are ignored: “ile de france” is accepted,
-and so are the French names (“Bretagne”).
-While you type, suggestions appear: ↓ and ↑ to pick one, Enter to take it,
-then Enter again to guess (they can be turned off in the Settings menu).
+Daily game: the same region for everyone, one game per day,
+always among the current regions; it changes at midnight. Free game: as many as
+you like, with the regions chosen in the Settings menu (former or current).
+Only daily games count in the statistics (Game menu), where you can also
+copy your result to share it, without giving the answer away.
 
-The Settings menu also offers a dark theme, distances in miles,
-a randomly rotated silhouette to make the game harder, and the language (French or English).
-They are remembered from one launch to the next.
+Département bonus: after each win, find each département of the region on the map
+(one click per département; green: found, red: missed). For a region with a single
+département, give its number. The daily bonus counts from the first answer,
+even if skipped or interrupted, and its average score appears in the statistics.
+
+Accents, capitals, spaces and hyphens are ignored: “ile de france” is accepted,
+and so are the French names (“Bretagne”). While you type, suggestions appear:
+↓ and ↑ to pick one, Enter to take it, then Enter again to guess.
+Enter on the start of a name (“brit”) plays the only region it matches.
+The list of regions (Game menu) also lets you guess a region with one click.
+
+The Settings menu offers a dark theme, distances in miles, the language,
+and two hard modes: a rotated 🌀 or hidden 🙈 silhouette. They are set at
+the first guess: in a game already started, a change counts for the next one.
+
+Outlines of the regions and départements: IGN and INSEE, Etalab open licence.
+Inspired by Worldle. Source code: github.com/deIbine/francle.
+Online version: deibine.github.io/francle-web.

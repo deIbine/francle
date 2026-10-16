@@ -255,5 +255,9 @@ class TextesTest {
     void aide() {
         assertTrue(FR.aide().startsWith("Devinez la région française cachée en 6 essais"));
         assertTrue(EN.aide().startsWith("Guess the hidden French region in 6 guesses"));
+        // l'exemple, calculé par les règles, a remplacé sa marque
+        assertFalse(FR.aide().contains("{exemple}"));
+        assertTrue(FR.aide().contains("Par exemple, « Normandie · 251 km · ↙ · 76 % » : Bretagne"), FR.exemple());
+        assertTrue(EN.aide().contains("For example, “Normandy · 251 km · ↙ · 76%”: Brittany"), EN.exemple());
     }
 }

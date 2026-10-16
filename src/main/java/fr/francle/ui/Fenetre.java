@@ -216,6 +216,12 @@ class Fenetre {
         frame.setLocationRelativeTo(null);  // centrée sur l'écran
         frame.setVisible(true);
         saisie.requestFocusInWindow();
+        // « Comment jouer » s'ouvre de lui-même au premier lancement, comme sur le web, puis plus jamais
+        if (!reglages.isAideVue()) {
+            reglages.setAideVue(true);
+            retenirReglages();
+            SwingUtilities.invokeLater(this::montrerAide);
+        }
         if (!avertissements.isEmpty()) {
             List<String> lignes = avertissements.stream()
                     .map(avertissement -> avertissement.erreur() + "\n" + textes.texte(avertissement.consequence()))
@@ -755,8 +761,18 @@ class Fenetre {
         fenetre.setVisible(true);
     }
 
+    // l'aide dans une zone à défilement de taille fixe : le texte, crédits compris, dépasserait sinon la hauteur d'un
+    // écran portable (672 points utilisables)
     private void montrerAide() {
-        JOptionPane.showMessageDialog(frame, textes.aide(), textes.texte("action.aide"), JOptionPane.INFORMATION_MESSAGE);
+        JTextArea texte = new JTextArea(textes.aide());
+        texte.setEditable(false);
+        // une ligne trop longue (l'exemple, en anglais surtout) passe à la ligne, entre deux mots
+        texte.setLineWrap(true);
+        texte.setWrapStyleWord(true);
+        texte.setCaretPosition(0);       // le début du texte, pas la fin
+        JScrollPane defilement = new JScrollPane(texte);
+        defilement.setPreferredSize(new Dimension(600, 420));
+        JOptionPane.showMessageDialog(frame, defilement, textes.texte("action.aide"), JOptionPane.INFORMATION_MESSAGE);
     }
 
     // le joueur choisit une langue dans le menu : tout change tout de suite, même au milieu d'une partie (rien dans

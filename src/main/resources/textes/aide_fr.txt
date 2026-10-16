@@ -1,29 +1,36 @@
 Devinez la région française cachée en 6 essais au plus.
 
-Partie du jour : la même région pour tout le monde, une seule partie par jour,
-toujours parmi les nouvelles régions. Partie libre : autant que vous voulez,
-avec les régions choisies dans le menu Paramètres (anciennes ou nouvelles).
-Seules les parties du jour comptent dans les statistiques (menu Jeu).
-
-Bonus des départements : après une victoire en partie du jour, retrouvez sur la carte
-chaque département de la région (un seul clic par département ; vert : trouvé, rouge : raté).
-Pour une région d'un seul département, donnez son numéro. Le bonus compte dès la première
-réponse, même passé ou interrompu, et son score moyen apparaît dans les statistiques.
-
 Après chaque essai, le tableau indique :
   • la distance entre la capitale de votre proposition et celle de la région cachée ;
   • la direction à suivre pour aller vers la région cachée (↑ nord, → est…) ;
   • le pourcentage de proximité (100 % : vous y êtes).
+{exemple}
 
 Chaque essai raté révèle un indice : la superficie, la spécialité culinaire,
 une personnalité, la capitale régionale, puis un monument.
 Proposer deux fois la même région ne coûte pas d'essai.
 
-Les accents, majuscules, espaces et tirets sont ignorés : « ile de france » est accepté,
-tout comme les noms anglais (« Brittany »).
-Pendant la frappe, des suggestions s'affichent : ↓ et ↑ pour en choisir une, Entrée pour la reprendre,
-puis Entrée encore pour valider (désactivables dans le menu Paramètres).
+Partie du jour : la même région pour tout le monde, une seule partie par jour,
+toujours parmi les nouvelles régions ; elle change à minuit. Partie libre : autant que
+vous voulez, avec les régions choisies dans le menu Paramètres (anciennes ou nouvelles).
+Seules les parties du jour comptent dans les statistiques (menu Jeu), d'où l'on peut
+aussi copier son résultat pour le partager, sans dévoiler la réponse.
 
-Le menu Paramètres propose aussi un thème sombre, les distances en miles,
-une silhouette tournée au hasard pour corser le jeu, et la langue (français ou anglais).
-Ils sont retenus d'un lancement à l'autre.
+Bonus des départements : après chaque victoire, retrouvez sur la carte chaque département
+de la région (un seul clic par département ; vert : trouvé, rouge : raté). Pour une région
+d'un seul département, donnez son numéro. Le bonus du jour compte dès la première réponse,
+même passé ou interrompu, et son score moyen apparaît dans les statistiques.
+
+Les accents, majuscules, espaces et tirets sont ignorés : « ile de france » est accepté,
+tout comme les noms anglais (« Brittany »). Pendant la frappe, des suggestions s'affichent :
+↓ et ↑ pour en choisir une, Entrée pour la reprendre, puis Entrée encore pour valider.
+Entrée sur un début de nom (« bret ») joue la seule région qu'il évoque.
+La liste des régions (menu Jeu) permet aussi de proposer une région d'un clic.
+
+Le menu Paramètres propose un thème sombre, les distances en miles, la langue,
+et deux modes difficiles : la silhouette tournée 🌀 ou cachée 🙈. Ils sont fixés
+au premier essai : dans une partie commencée, un changement compte pour la suivante.
+
+Contours des régions et des départements : IGN et INSEE, licence ouverte Etalab.
+Inspiré de Worldle. Code source : github.com/deIbine/francle.
+Version en ligne : deibine.github.io/francle-web.
