@@ -7,7 +7,7 @@ import javax.swing.table.AbstractTableModel;
 
 /*
 Le modèle du tableau des essais : la JTable ne stocke rien, elle demande chaque case à ce modèle (getValueAt),
-qui la lit dans la Partie. Toujours 5 lignes : les lignes vides montrent les essais qui restent.
+qui la lit dans la Partie. Toujours 6 lignes : les lignes vides montrent les essais qui restent.
 Aucune fenêtre ici : le modèle se teste sans écran.
  */
 class TableauEssais extends AbstractTableModel {

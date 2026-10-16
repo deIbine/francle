@@ -95,7 +95,7 @@ final class FenetreStatistiques {
             int x0 = marges.left + 6;
             int largeurUtile = getWidth() - marges.left - marges.right - 12;
             int y0 = marges.top + 4;
-            int colonneChiffre = mesures.stringWidth("5") + 10;
+            int colonneChiffre = mesures.stringWidth(String.valueOf(Partie.ESSAIS_MAX)) + 10;
             // la plus longue barre prend toute la largeur ; Math.max(1, …) évite une division par zéro sans victoire
             int maximum = Math.max(1, Collections.max(valeurs));
             Color accent = UIManager.getColor("Component.accentColor");

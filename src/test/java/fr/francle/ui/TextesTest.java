@@ -67,6 +67,7 @@ class TextesTest {
         assertEquals("Spécialité culinaire : la crêpe", Textes.indice(Indice.SPECIALITE, bretagne, false));
         assertEquals("Personnalité : Louis Guilloux", Textes.indice(Indice.PERSONNALITE, bretagne, false));
         assertEquals("Capitale régionale : Rennes", Textes.indice(Indice.CAPITALE, bretagne, true));
+        assertEquals("Monument : les alignements de Carnac", Textes.indice(Indice.MONUMENT, bretagne, false));
     }
 
     @Test
@@ -91,11 +92,12 @@ class TextesTest {
     void apresEssai() {
         Partie partie = new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES);
         partie.proposer("Corse");
-        assertEquals("C'est raté ! Encore 4 essais.", Textes.apresEssai(partie));
+        assertEquals("C'est raté ! Encore 5 essais.", Textes.apresEssai(partie));
 
         partie.proposer("Normandie");
         partie.proposer("Occitanie");
         partie.proposer("Grand Est");
+        partie.proposer("Guyane");
         assertEquals("C'est raté ! Encore 1 essai.", Textes.apresEssai(partie));
     }
 
@@ -107,7 +109,7 @@ class TextesTest {
         assertEquals("Bravo ! Trouvé en 1 essai.", Textes.fin(gagnee));
 
         Partie perdue = new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES);
-        for (String proposition : List.of("Corse", "Normandie", "Occitanie", "Grand Est", "Guyane")) {
+        for (String proposition : List.of("Corse", "Normandie", "Occitanie", "Grand Est", "Guyane", "Mayotte")) {
             perdue.proposer(proposition);
         }
         assertEquals("C'est raté ! La réponse était Bretagne.", Textes.fin(perdue));

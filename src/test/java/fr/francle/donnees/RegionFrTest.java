@@ -150,13 +150,14 @@ class RegionFrTest {
     }
 
     @Test
-    @DisplayName("Chaque région, ancienne comme nouvelle, a ses 4 indices et son image")
+    @DisplayName("Chaque région, ancienne comme nouvelle, a ses 5 indices et son image")
     void indicesRemplis() {
         for (RegionFr region : RegionFr.values()) {
             assertTrue(region.getSuperficie() > 0, region.getNom());
             assertFalse(region.getSpecialite().isBlank(), region.getNom());
             assertFalse(region.getPersonnalite().isBlank(), region.getNom());
             assertFalse(region.getCapitale().isBlank(), region.getNom());
+            assertFalse(region.getMonument().isBlank(), region.getNom());
             assertNotNull(region.getImage(), region.getNom());
         }
     }

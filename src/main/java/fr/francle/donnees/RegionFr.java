@@ -18,44 +18,44 @@ Le reste du code vient chercher ses données dans cet enum.
  */
 public enum RegionFr {
     // nouvelles régions et régions inchangées : nom, latitude, longitude, époque, zone, superficie,
-    // spécialité culinaire, personnalité, capitale régionale, image
-    HAUTS_DE_FRANCE("Hauts-de-France", 50.62925, 3.057256, Epoque.NOUVELLE, Zone.METROPOLE, 31814, "la bière", "Charles de Gaulle", "Lille", "hauts-de-france.png"),
-    NORMANDIE("Normandie", 49.443232, 1.099971, Epoque.NOUVELLE, Zone.METROPOLE, 29907, "la matelote", "Guillaume le Conquérant", "Rouen", "normandie.png"),
-    BRETAGNE("Bretagne", 48.117266, -1.6777926, Epoque.LES_DEUX, Zone.METROPOLE, 27208, "la crêpe", "Louis Guilloux", "Rennes", "bretagne.png"),
-    PAYS_DE_LA_LOIRE("Pays de la Loire", 47.218371, -1.553621, Epoque.LES_DEUX, Zone.METROPOLE, 32082, "la fouace", "Jules Verne", "Nantes", "pays-de-la-loire.png"),
-    ILE_DE_FRANCE("Île-de-France", 48.856614, 2.3522219, Epoque.LES_DEUX, Zone.METROPOLE, 12012, "le macaron", "Alexandre Dumas", "Paris", "ile-de-france.png"),
-    CENTRE_VAL_DE_LOIRE("Centre-Val de Loire", 47.902964, 1.909251, Epoque.NOUVELLE, Zone.METROPOLE, 39151, "la tarte Tatin", "Jeanne d'Arc", "Orléans", "centre-val-de-loire.png"),
-    GRAND_EST("Grand Est", 48.5734053, 7.7521113, Epoque.NOUVELLE, Zone.METROPOLE, 57433, "la choucroute", "Paul Verlaine", "Strasbourg", "grand-est.png"),
-    BOURGOGNE_FRANCHE_COMTE("Bourgogne-Franche-Comté", 47.322047, 5.04148, Epoque.NOUVELLE, Zone.METROPOLE, 47784, "le bœuf bourguignon", "Victor Hugo", "Dijon", "bourgogne-franche-comte.png"),
-    AUVERGNE_RHONE_ALPES("Auvergne-Rhône-Alpes", 45.764043, 4.835659, Epoque.NOUVELLE, Zone.METROPOLE, 69711, "le coq au vin", "Jean Moulin", "Lyon", "auvergne-rhone-alpes.png"),
-    NOUVELLE_AQUITAINE("Nouvelle-Aquitaine", 44.837789, -0.57918, Epoque.NOUVELLE, Zone.METROPOLE, 84060, "les huîtres du Bassin d'Arcachon", "Montaigne", "Bordeaux", "nouvelle-aquitaine.png"),
-    OCCITANIE("Occitanie", 43.604652, 1.444209, Epoque.NOUVELLE, Zone.METROPOLE, 72724, "le confit de canard", "Jean Jaurès", "Toulouse", "occitanie.png"),
-    PROVENCE_ALPES_COTE_D_AZUR("Provence-Alpes-Côte d'Azur", 43.296482, 5.36978, Epoque.LES_DEUX, Zone.METROPOLE, 31400, "la bouillabaisse", "Fernandel", "Marseille", "provence-alpes-cote-dazur.png"),
-    CORSE("Corse", 41.919229, 8.738635, Epoque.LES_DEUX, Zone.METROPOLE, 8680, "le figatellu", "Napoléon Bonaparte", "Ajaccio", "corse.png"),
-    MAYOTTE("Mayotte", -12.780600, 45.227800, Epoque.LES_DEUX, Zone.OUTRE_MER, 374, "le mataba", "Zéna M'Déré", "Mamoudzou", "mayotte.png"),
-    LA_REUNION("La Réunion", -20.882057, 55.450675, Epoque.LES_DEUX, Zone.OUTRE_MER, 2504, "le rhum arrangé", "Michel Houellebecq", "Saint-Denis", "la-reunion.png"),
-    GUYANE("Guyane", 4.9227, -52.3269, Epoque.LES_DEUX, Zone.OUTRE_MER, 83534, "le poulet boucané", "Henri Salvador", "Cayenne", "guyane.png"),
-    MARTINIQUE("Martinique", 14.6160647, -61.0587804, Epoque.LES_DEUX, Zone.OUTRE_MER, 1128, "le gratin de bananes", "Aimé Césaire", "Fort-de-France", "martinique.png"),
-    GUADELOUPE("Guadeloupe", 17.302606, -62.717692, Epoque.LES_DEUX, Zone.OUTRE_MER, 1703, "les accras de morue", "Teddy Riner", "Basse-Terre", "guadeloupe.png"),
+    // spécialité culinaire, personnalité, capitale régionale, monument, image
+    HAUTS_DE_FRANCE("Hauts-de-France", 50.62925, 3.057256, Epoque.NOUVELLE, Zone.METROPOLE, 31814, "la bière", "Charles de Gaulle", "Lille", "la cathédrale d'Amiens", "hauts-de-france.png"),
+    NORMANDIE("Normandie", 49.443232, 1.099971, Epoque.NOUVELLE, Zone.METROPOLE, 29907, "la matelote", "Guillaume le Conquérant", "Rouen", "le Mont-Saint-Michel", "normandie.png"),
+    BRETAGNE("Bretagne", 48.117266, -1.6777926, Epoque.LES_DEUX, Zone.METROPOLE, 27208, "la crêpe", "Louis Guilloux", "Rennes", "les alignements de Carnac", "bretagne.png"),
+    PAYS_DE_LA_LOIRE("Pays de la Loire", 47.218371, -1.553621, Epoque.LES_DEUX, Zone.METROPOLE, 32082, "la fouace", "Jules Verne", "Nantes", "le château de Saumur", "pays-de-la-loire.png"),
+    ILE_DE_FRANCE("Île-de-France", 48.856614, 2.3522219, Epoque.LES_DEUX, Zone.METROPOLE, 12012, "le macaron", "Alexandre Dumas", "Paris", "la tour Eiffel", "ile-de-france.png"),
+    CENTRE_VAL_DE_LOIRE("Centre-Val de Loire", 47.902964, 1.909251, Epoque.NOUVELLE, Zone.METROPOLE, 39151, "la tarte Tatin", "Jeanne d'Arc", "Orléans", "le château de Chambord", "centre-val-de-loire.png"),
+    GRAND_EST("Grand Est", 48.5734053, 7.7521113, Epoque.NOUVELLE, Zone.METROPOLE, 57433, "la choucroute", "Paul Verlaine", "Strasbourg", "la cathédrale de Reims", "grand-est.png"),
+    BOURGOGNE_FRANCHE_COMTE("Bourgogne-Franche-Comté", 47.322047, 5.04148, Epoque.NOUVELLE, Zone.METROPOLE, 47784, "le bœuf bourguignon", "Victor Hugo", "Dijon", "les Hospices de Beaune", "bourgogne-franche-comte.png"),
+    AUVERGNE_RHONE_ALPES("Auvergne-Rhône-Alpes", 45.764043, 4.835659, Epoque.NOUVELLE, Zone.METROPOLE, 69711, "le coq au vin", "Jean Moulin", "Lyon", "le mont Blanc", "auvergne-rhone-alpes.png"),
+    NOUVELLE_AQUITAINE("Nouvelle-Aquitaine", 44.837789, -0.57918, Epoque.NOUVELLE, Zone.METROPOLE, 84060, "les huîtres du Bassin d'Arcachon", "Montaigne", "Bordeaux", "la dune du Pilat", "nouvelle-aquitaine.png"),
+    OCCITANIE("Occitanie", 43.604652, 1.444209, Epoque.NOUVELLE, Zone.METROPOLE, 72724, "le confit de canard", "Jean Jaurès", "Toulouse", "la cité de Carcassonne", "occitanie.png"),
+    PROVENCE_ALPES_COTE_D_AZUR("Provence-Alpes-Côte d'Azur", 43.296482, 5.36978, Epoque.LES_DEUX, Zone.METROPOLE, 31400, "la bouillabaisse", "Fernandel", "Marseille", "le palais des Papes d'Avignon", "provence-alpes-cote-dazur.png"),
+    CORSE("Corse", 41.919229, 8.738635, Epoque.LES_DEUX, Zone.METROPOLE, 8680, "le figatellu", "Napoléon Bonaparte", "Ajaccio", "les calanques de Piana", "corse.png"),
+    MAYOTTE("Mayotte", -12.780600, 45.227800, Epoque.LES_DEUX, Zone.OUTRE_MER, 374, "le mataba", "Zéna M'Déré", "Mamoudzou", "le lac Dziani", "mayotte.png"),
+    LA_REUNION("La Réunion", -20.882057, 55.450675, Epoque.LES_DEUX, Zone.OUTRE_MER, 2504, "le rhum arrangé", "Michel Houellebecq", "Saint-Denis", "le piton de la Fournaise", "la-reunion.png"),
+    GUYANE("Guyane", 4.9227, -52.3269, Epoque.LES_DEUX, Zone.OUTRE_MER, 83534, "le poulet boucané", "Henri Salvador", "Cayenne", "le centre spatial de Kourou", "guyane.png"),
+    MARTINIQUE("Martinique", 14.6160647, -61.0587804, Epoque.LES_DEUX, Zone.OUTRE_MER, 1128, "le gratin de bananes", "Aimé Césaire", "Fort-de-France", "la montagne Pelée", "martinique.png"),
+    GUADELOUPE("Guadeloupe", 17.302606, -62.717692, Epoque.LES_DEUX, Zone.OUTRE_MER, 1703, "les accras de morue", "Teddy Riner", "Basse-Terre", "le volcan de la Soufrière", "guadeloupe.png"),
 
     // anciennes régions (avant 2016)
-    NORD_PAS_DE_CALAIS("Nord-Pas-de-Calais", 50.62925, 3.057256, 12414, "le potjevleesch", "Robespierre", "Lille", "nord-pas-de-calais.png"),
-    PICARDIE("Picardie", 49.844067, 2.295753, 19399, "la ficelle picarde", "Jean de La Fontaine", "Amiens", "picardie.png"),
-    HAUTE_NORMANDIE("Haute-Normandie", 49.443232, 1.099971, 12317, "le canard à la rouennaise", "Gustave Flaubert", "Rouen", "haute-normandie.png"),
-    BASSE_NORMANDIE("Basse-Normandie", 49.182863, -0.370679, 17589, "le camembert", "Guillaume le Conquérant", "Caen", "basse-normandie.png"),
-    POITOU_CHARENTES("Poitou-Charentes", 46.580224, 0.340375, 25810, "le cognac", "François Mitterrand", "Poitiers", "poitou-charentes.png"),
-    CENTRE("Centre", 47.902964, 1.909251, 39151, "la tarte Tatin", "Honoré de Balzac", "Orléans", "centre.png"),
-    CHAMPAGNE_ARDENNE("Champagne-Ardenne", 48.956682, 4.363073, 25606, "le champagne", "Arthur Rimbaud", "Châlons-en-Champagne", "champagne-ardenne.png"),
-    LORRAINE("Lorraine", 49.1193089, 6.1757156, 23547, "la quiche lorraine", "Jeanne d'Arc", "Metz", "lorraine.png"),
-    ALSACE("Alsace", 48.5734053, 7.7521113, 8280, "la flammekueche", "Albert Schweitzer", "Strasbourg", "alsace.png"),
-    BOURGOGNE("Bourgogne", 47.322047, 5.04148, 31582, "les escargots de Bourgogne", "Gustave Eiffel", "Dijon", "bourgogne.png"),
-    FRANCHE_COMTE("Franche-Comté", 47.237829, 6.0240539, 16202, "le comté", "Louis Pasteur", "Besançon", "franche-comte.png"),
-    RHONE_ALPES("Rhône-Alpes", 45.764043, 4.835659, 43698, "le gratin dauphinois", "Antoine de Saint-Exupéry", "Lyon", "rhone-alpes.png"),
-    AUVERGNE("Auvergne", 45.777222, 3.087025, 26013, "la truffade", "Blaise Pascal", "Clermont-Ferrand", "auvergne.png"),
-    LIMOUSIN("Limousin", 45.833619, 1.261105, 16942, "le clafoutis", "Auguste Renoir", "Limoges", "limousin.png"),
-    AQUITAINE("Aquitaine", 44.837789, -0.57918, 41309, "le canelé", "Montesquieu", "Bordeaux", "aquitaine.png"),
-    MIDI_PYRENEES("Midi-Pyrénées", 43.604652, 1.444209, 45348, "la saucisse de Toulouse", "Henri de Toulouse-Lautrec", "Toulouse", "midi-pyrenees.png"),
-    LANGUEDOC_ROUSSILLON("Languedoc-Roussillon", 43.610769, 3.876716, 27376, "le cassoulet", "Georges Brassens", "Montpellier", "languedoc-roussillon.png");
+    NORD_PAS_DE_CALAIS("Nord-Pas-de-Calais", 50.62925, 3.057256, 12414, "le potjevleesch", "Robespierre", "Lille", "le beffroi d'Arras", "nord-pas-de-calais.png"),
+    PICARDIE("Picardie", 49.844067, 2.295753, 19399, "la ficelle picarde", "Jean de La Fontaine", "Amiens", "la baie de Somme", "picardie.png"),
+    HAUTE_NORMANDIE("Haute-Normandie", 49.443232, 1.099971, 12317, "le canard à la rouennaise", "Gustave Flaubert", "Rouen", "les falaises d'Étretat", "haute-normandie.png"),
+    BASSE_NORMANDIE("Basse-Normandie", 49.182863, -0.370679, 17589, "le camembert", "Guillaume le Conquérant", "Caen", "le Mont-Saint-Michel", "basse-normandie.png"),
+    POITOU_CHARENTES("Poitou-Charentes", 46.580224, 0.340375, 25810, "le cognac", "François Mitterrand", "Poitiers", "Fort Boyard", "poitou-charentes.png"),
+    CENTRE("Centre", 47.902964, 1.909251, 39151, "la tarte Tatin", "Honoré de Balzac", "Orléans", "le château de Chambord", "centre.png"),
+    CHAMPAGNE_ARDENNE("Champagne-Ardenne", 48.956682, 4.363073, 25606, "le champagne", "Arthur Rimbaud", "Châlons-en-Champagne", "la cathédrale de Reims", "champagne-ardenne.png"),
+    LORRAINE("Lorraine", 49.1193089, 6.1757156, 23547, "la quiche lorraine", "Jeanne d'Arc", "Metz", "la place Stanislas à Nancy", "lorraine.png"),
+    ALSACE("Alsace", 48.5734053, 7.7521113, 8280, "la flammekueche", "Albert Schweitzer", "Strasbourg", "le château du Haut-Kœnigsbourg", "alsace.png"),
+    BOURGOGNE("Bourgogne", 47.322047, 5.04148, 31582, "les escargots de Bourgogne", "Gustave Eiffel", "Dijon", "les Hospices de Beaune", "bourgogne.png"),
+    FRANCHE_COMTE("Franche-Comté", 47.237829, 6.0240539, 16202, "le comté", "Louis Pasteur", "Besançon", "la saline royale d'Arc-et-Senans", "franche-comte.png"),
+    RHONE_ALPES("Rhône-Alpes", 45.764043, 4.835659, 43698, "le gratin dauphinois", "Antoine de Saint-Exupéry", "Lyon", "le mont Blanc", "rhone-alpes.png"),
+    AUVERGNE("Auvergne", 45.777222, 3.087025, 26013, "la truffade", "Blaise Pascal", "Clermont-Ferrand", "le puy de Dôme", "auvergne.png"),
+    LIMOUSIN("Limousin", 45.833619, 1.261105, 16942, "le clafoutis", "Auguste Renoir", "Limoges", "le lac de Vassivière", "limousin.png"),
+    AQUITAINE("Aquitaine", 44.837789, -0.57918, 41309, "le canelé", "Montesquieu", "Bordeaux", "la dune du Pilat", "aquitaine.png"),
+    MIDI_PYRENEES("Midi-Pyrénées", 43.604652, 1.444209, 45348, "la saucisse de Toulouse", "Henri de Toulouse-Lautrec", "Toulouse", "le cirque de Gavarnie", "midi-pyrenees.png"),
+    LANGUEDOC_ROUSSILLON("Languedoc-Roussillon", 43.610769, 3.876716, 27376, "le cassoulet", "Georges Brassens", "Montpellier", "le pont du Gard", "languedoc-roussillon.png");
 
     private final String nom;
     private final double latitude;
@@ -66,10 +66,11 @@ public enum RegionFr {
     private final String specialite;
     private final String personnalite;
     private final String capitale;
+    private final String monument;
     private final String image;
 
     RegionFr(String nom, double latitude, double longitude, Epoque epoque, Zone zone, int superficie,
-             String specialite, String personnalite, String capitale, String image) {
+             String specialite, String personnalite, String capitale, String monument, String image) {
         this.nom = nom;
         this.latitude = latitude;
         this.longitude = longitude;
@@ -79,14 +80,16 @@ public enum RegionFr {
         this.specialite = specialite;
         this.personnalite = personnalite;
         this.capitale = capitale;
+        this.monument = monument;
         this.image = image;
     }
 
-    // constructeur des anciennes régions : toutes en métropole. Comme l'autre, il exige les quatre indices et l'image :
+    // constructeur des anciennes régions : toutes en métropole. Comme l'autre, il exige les cinq indices et l'image :
     // une région incomplète ne compile pas
     RegionFr(String nom, double latitude, double longitude, int superficie,
-             String specialite, String personnalite, String capitale, String image) {
-        this(nom, latitude, longitude, Epoque.ANCIENNE, Zone.METROPOLE, superficie, specialite, personnalite, capitale, image);
+             String specialite, String personnalite, String capitale, String monument, String image) {
+        this(nom, latitude, longitude, Epoque.ANCIENNE, Zone.METROPOLE, superficie, specialite, personnalite, capitale,
+                monument, image);
     }
 
     // compilée une seule fois, et non à chaque saisie. Déclarée AVANT le bloc static ci-dessous, qui s'en sert
@@ -199,6 +202,8 @@ public enum RegionFr {
     public String getSpecialite() { return specialite; }
     public String getPersonnalite() { return personnalite; }
     public String getCapitale() { return capitale; }
+    // un lieu célèbre de la région, cinquième et dernier indice (repris de la version web)
+    public String getMonument() { return monument; }
     // le nom du fichier de la silhouette et des cartes (« bretagne.png »)
     public String getImage() { return image; }
 }

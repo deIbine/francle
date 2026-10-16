@@ -342,7 +342,7 @@ class Fenetre {
         table.setRowHeight(Math.round(table.getRowHeight() * 1.2f));
         table.getColumnModel().getColumn(0).setMaxWidth(40);
         table.getColumnModel().getColumn(1).setPreferredWidth(200);
-        // la zone visible fait exactement 5 lignes : pas de barre de défilement, pas de vide en dessous
+        // la zone visible fait exactement 6 lignes : pas de barre de défilement, pas de vide en dessous
         table.setPreferredScrollableViewportSize(new Dimension(LARGEUR_IMAGE, table.getRowHeight() * Partie.ESSAIS_MAX));
         return new JScrollPane(table);
     }

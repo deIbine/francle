@@ -18,7 +18,7 @@ import java.util.Locale;
 final class Textes {
 
     static final String REGLES = """
-            Devinez la région française cachée en 5 essais au plus.
+            Devinez la région française cachée en 6 essais au plus.
 
             Partie du jour : la même région pour tout le monde, une seule partie par jour,
             toujours parmi les nouvelles régions. Partie libre : autant que vous voulez,
@@ -31,7 +31,8 @@ final class Textes {
               • le pourcentage de proximité (100 % : vous y êtes).
 
             Chaque essai raté révèle un indice : la superficie, la spécialité culinaire,
-            une personnalité, puis la capitale régionale.
+            une personnalité, la capitale régionale, puis un monument.
+            Proposer deux fois la même région ne coûte pas d'essai.
 
             Les accents, majuscules, espaces et tirets sont ignorés : « ile de france » est accepté.
             Pendant la frappe, des suggestions s'affichent : ↓ et ↑ pour en choisir une, Entrée pour la reprendre,
@@ -83,7 +84,8 @@ final class Textes {
             case SUPERFICIE : return "Superficie : " + superficie(cible.getSuperficie(), unitesAnglaises);
             case SPECIALITE : return "Spécialité culinaire : " + cible.getSpecialite();
             case PERSONNALITE : return "Personnalité : " + cible.getPersonnalite();
-            default : return "Capitale régionale : " + cible.getCapitale();
+            case CAPITALE : return "Capitale régionale : " + cible.getCapitale();
+            default : return "Monument : " + cible.getMonument();
         }
     }
 

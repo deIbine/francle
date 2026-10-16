@@ -65,29 +65,29 @@ class PartieTest {
     }
 
     @Test
-    @DisplayName("Cinq essais ratés font perdre la partie")
+    @DisplayName("Six essais ratés font perdre la partie")
     void defaite() {
         Partie partie = jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES,
-                "Corse", "Normandie", "Occitanie", "Grand Est", "Guyane");
+                "Corse", "Normandie", "Occitanie", "Grand Est", "Guyane", "Mayotte");
 
         assertEquals(Partie.Etat.PERDUE, partie.getEtat());
         assertEquals(Partie.ESSAIS_MAX, partie.getEssais().size());
     }
 
     @Test
-    @DisplayName("Quatre essais ratés : la partie continue")
-    void quatreEchecs() {
+    @DisplayName("Cinq essais ratés : la partie continue")
+    void cinqEchecs() {
         Partie partie = jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES,
-                "Corse", "Normandie", "Occitanie", "Grand Est");
+                "Corse", "Normandie", "Occitanie", "Grand Est", "Guyane");
 
         assertTrue(partie.enCours());
     }
 
     @Test
-    @DisplayName("Trouver au 5e essai est une victoire, pas une défaite")
-    void victoireAuCinquiemeEssai() {
+    @DisplayName("Trouver au 6e essai est une victoire, pas une défaite")
+    void victoireAuSixiemeEssai() {
         Partie partie = jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES,
-                "Corse", "Normandie", "Occitanie", "Grand Est", "Bretagne");
+                "Corse", "Normandie", "Occitanie", "Grand Est", "Guyane", "Bretagne");
 
         assertEquals(Partie.Etat.GAGNEE, partie.getEtat());
     }
@@ -139,13 +139,14 @@ class PartieTest {
     }
 
     @Test
-    @DisplayName("Indices : superficie, spécialité, personnalité, capitale, puis plus rien")
+    @DisplayName("Indices : superficie, spécialité, personnalité, capitale, monument, puis plus rien")
     void ordreDesIndices() {
         assertEquals(Indice.SUPERFICIE, Indice.apresEssai(0).orElseThrow());
         assertEquals(Indice.SPECIALITE, Indice.apresEssai(1).orElseThrow());
         assertEquals(Indice.PERSONNALITE, Indice.apresEssai(2).orElseThrow());
         assertEquals(Indice.CAPITALE, Indice.apresEssai(3).orElseThrow());
-        assertTrue(Indice.apresEssai(4).isEmpty());
+        assertEquals(Indice.MONUMENT, Indice.apresEssai(4).orElseThrow());
+        assertTrue(Indice.apresEssai(5).isEmpty());
         assertTrue(Indice.apresEssai(-1).isEmpty());
     }
 
@@ -157,10 +158,10 @@ class PartieTest {
                 jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES, "Corse", "Normandie").indicesReveles());
         assertEquals(List.of(Indice.SUPERFICIE),
                 jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES, "Corse", "Bretagne").indicesReveles());
-        // 5 essais ratés : 4 indices seulement, il n'y en a pas de cinquième
+        // 6 essais ratés : 5 indices seulement, il n'y en a pas de sixième
         assertEquals(List.of(Indice.values()),
                 jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES,
-                        "Corse", "Normandie", "Occitanie", "Grand Est", "Guyane").indicesReveles());
+                        "Corse", "Normandie", "Occitanie", "Grand Est", "Guyane", "Mayotte").indicesReveles());
     }
 
     @Test

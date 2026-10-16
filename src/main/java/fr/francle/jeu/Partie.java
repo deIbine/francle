@@ -15,7 +15,8 @@ C'est l'interface (Francle, Message) qui demande les saisies et affiche les rés
  */
 public class Partie {
 
-    public static final int ESSAIS_MAX = 5;
+    // 6, comme Worldle et la version web (5 jusqu'à la Phase 6) : un essai de plus pour le cinquième indice
+    public static final int ESSAIS_MAX = 6;
 
     public enum Etat { EN_COURS, GAGNEE, PERDUE, ABANDONNEE }
 
