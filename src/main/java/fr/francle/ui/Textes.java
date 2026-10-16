@@ -102,6 +102,10 @@ final class Textes {
         return "« " + saisie.strip() + " » n'est pas une région reconnue : réessayez.";
     }
 
+    static String dejaProposee(RegionFr region) {
+        return region.getNom() + " a déjà été proposée : essayez une autre région.";
+    }
+
     static String fin(Partie partie) {
         switch (partie.getEtat()) {
             case GAGNEE :

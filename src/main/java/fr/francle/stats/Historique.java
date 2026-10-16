@@ -35,7 +35,7 @@ public record Historique(int version, List<Resultat> resultats, PartieEnCours en
     public Partie partieDuJour(LocalDate date) {
         for (Resultat resultat : resultats) {
             if (resultat.date().equals(date)) {
-                return rejouer(resultat.region(), resultat.propositions(), resultat.etat() == Partie.Etat.ABANDONNEE);
+                return rejouer(resultat.region(), resultat.propositions(), true);
             }
         }
         if (enCours != null && enCours.date().equals(date)) {
@@ -58,14 +58,18 @@ public record Historique(int version, List<Resultat> resultats, PartieEnCours en
         return new Historique(VERSION, nouveaux, null);
     }
 
-    private static Partie rejouer(RegionFr cible, List<RegionFr> propositions, boolean abandon) {
+    // terminee : la partie était finie quand elle a été enregistrée. Si elle ne l'est pas après les avoir rejouées,
+    // c'est qu'elle a été abandonnée… ou que les règles ont changé depuis : une partie perdue en 5 essais avant le
+    // passage à 6, ou dont une proposition en double ne compte plus. Elle reste finie : on ne rouvre jamais une
+    // partie du jour terminée (le résultat enregistré, lui, garde son état pour les statistiques)
+    private static Partie rejouer(RegionFr cible, List<RegionFr> propositions, boolean terminee) {
         Partie partie = new Partie(cible, RegionDuJour.MODE);
         for (RegionFr proposition : propositions) {
             if (partie.enCours()) {
                 partie.proposer(proposition.getNom());
             }
         }
-        if (abandon && partie.enCours()) {
+        if (terminee && partie.enCours()) {
             partie.abandonner();
         }
         return partie;

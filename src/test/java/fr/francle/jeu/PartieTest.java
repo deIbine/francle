@@ -27,7 +27,7 @@ class PartieTest {
     void victoireAuPremierEssai() {
         Partie partie = new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES);
 
-        Essai essai = partie.proposer("  BRETAGNE ").orElseThrow();
+        Essai essai = assertInstanceOf(Reponse.Jouee.class, partie.proposer("  BRETAGNE ")).essai();
 
         assertEquals(Partie.Etat.GAGNEE, partie.getEtat());
         assertFalse(partie.enCours());
@@ -40,9 +40,19 @@ class PartieTest {
     void saisieInconnue() {
         Partie partie = new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES);
 
-        assertTrue(partie.proposer("Paris").isEmpty());
-        assertTrue(partie.proposer("").isEmpty());
+        assertEquals(new Reponse.Inconnue(), partie.proposer("Paris"));
+        assertEquals(new Reponse.Inconnue(), partie.proposer(""));
         assertTrue(partie.getEssais().isEmpty());
+        assertTrue(partie.enCours());
+    }
+
+    @Test
+    @DisplayName("Une région déjà proposée est refusée sans coûter d'essai, même écrite autrement")
+    void regionDejaProposee() {
+        Partie partie = jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES, "Corse");
+
+        assertEquals(new Reponse.DejaProposee(RegionFr.CORSE), partie.proposer("corse"));
+        assertEquals(1, partie.getEssais().size());
         assertTrue(partie.enCours());
     }
 
@@ -51,7 +61,7 @@ class PartieTest {
     void ancienneRegionRefusee() {
         Partie partie = new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES);
 
-        assertTrue(partie.proposer("Alsace").isEmpty());
+        assertEquals(new Reponse.Inconnue(), partie.proposer("Alsace"));
     }
 
     @Test
@@ -110,8 +120,8 @@ class PartieTest {
 
         // Grand Est et Alsace ont la même capitale : avant la Phase 6, le mode « toutes » permettait de proposer
         // l'une pour l'autre, à 0 km, sans gagner. Les deux époques ne se mélangent plus
-        assertTrue(anciennes.proposer("Grand Est").isEmpty());
-        assertTrue(nouvelles.proposer("Alsace").isEmpty());
+        assertEquals(new Reponse.Inconnue(), anciennes.proposer("Grand Est"));
+        assertEquals(new Reponse.Inconnue(), nouvelles.proposer("Alsace"));
         assertTrue(anciennes.getEssais().isEmpty());
         assertTrue(nouvelles.getEssais().isEmpty());
     }

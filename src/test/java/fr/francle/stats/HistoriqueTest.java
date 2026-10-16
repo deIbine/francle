@@ -101,6 +101,20 @@ class HistoriqueTest {
     }
 
     @Test
+    @DisplayName("Une partie finie sous d'anciennes règles (une proposition en double) reste finie")
+    void anciennesRegles() {
+        // enregistrée avant que les doublons soient refusés : rejouée aujourd'hui, elle n'a plus qu'un essai
+        List<RegionFr> propositions = List.of(autre(0), autre(0));
+        Historique historique = new Historique(Historique.VERSION,
+                List.of(new Resultat(JOUR, CIBLE, propositions, Partie.Etat.PERDUE)), null);
+
+        Partie reprise = historique.partieDuJour(JOUR);
+
+        assertFalse(reprise.enCours());
+        assertEquals(1, reprise.getEssais().size());
+    }
+
+    @Test
     @DisplayName("Une partie en cours d'un autre jour est ignorée : aujourd'hui, une partie neuve")
     void enCoursDHier() {
         Partie hier = Historique.vide().partieDuJour(JOUR.minusDays(1));

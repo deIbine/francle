@@ -29,15 +29,18 @@ public class Partie {
         this.mode = mode;
     }
 
-    // joue la saisie du joueur : renvoie l'essai joué, ou Optional.empty() si la saisie n'est pas reconnue
-    // (une saisie non reconnue ne coûte pas d'essai)
-    public Optional<Essai> proposer(String saisie) {
+    // joue la saisie du joueur et dit ce qui s'est passé : un essai joué, une saisie inconnue ou une région déjà
+    // proposée. Seul le premier cas coûte un essai
+    public Reponse proposer(String saisie) {
         verifierEnCours();
         Optional<RegionFr> trouvee = RegionFr.chercher(saisie, mode);
         if (trouvee.isEmpty()) {
-            return Optional.empty();
+            return new Reponse.Inconnue();
         }
         RegionFr proposition = trouvee.get();
+        if (essais.stream().anyMatch(essai -> essai.proposition() == proposition)) {
+            return new Reponse.DejaProposee(proposition);
+        }
         double distance = cible.distance(proposition);
         Essai essai = new Essai(proposition, distance, pourcentage(cible, distance), Direction.entre(proposition, cible));
         essais.add(essai);
@@ -46,7 +49,7 @@ public class Partie {
         } else if (essais.size() == ESSAIS_MAX) {
             etat = Etat.PERDUE;
         }
-        return Optional.of(essai);
+        return new Reponse.Jouee(essai);
     }
 
     public void abandonner() {

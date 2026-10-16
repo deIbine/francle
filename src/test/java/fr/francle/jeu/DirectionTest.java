@@ -59,7 +59,7 @@ class DirectionTest {
     void essaiAvecDirection() {
         Partie partie = new Partie(RegionFr.GRAND_EST, ModeRegions.NOUVELLES);
 
-        Essai essai = partie.proposer("Bretagne").orElseThrow();
+        Essai essai = assertInstanceOf(Reponse.Jouee.class, partie.proposer("Bretagne")).essai();
 
         assertEquals(Direction.EST, essai.direction());
         assertEquals("→", essai.direction().getSymbole());

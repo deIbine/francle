@@ -131,6 +131,12 @@ class TextesTest {
     }
 
     @Test
+    @DisplayName("Région déjà proposée : son nom et une invitation à en essayer une autre")
+    void dejaProposee() {
+        assertEquals("Corse a déjà été proposée : essayez une autre région.", Textes.dejaProposee(RegionFr.CORSE));
+    }
+
+    @Test
     @DisplayName("La liste des régions est triée à la française (Île-de-France à la lettre I)")
     void listeTriee() {
         List<String> noms = List.of(Textes.listeDesRegions(ModeRegions.NOUVELLES).split("\n"));

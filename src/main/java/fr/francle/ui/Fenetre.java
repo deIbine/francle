@@ -2,9 +2,9 @@ package fr.francle.ui;
 
 import fr.francle.donnees.ModeRegions;
 import fr.francle.donnees.RegionFr;
-import fr.francle.jeu.Essai;
 import fr.francle.jeu.Indice;
 import fr.francle.jeu.Partie;
+import fr.francle.jeu.Reponse;
 import fr.francle.jeu.RegionDuJour;
 import fr.francle.stats.Historique;
 import fr.francle.stats.Sauvegarde;
@@ -24,7 +24,6 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Random;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -388,13 +387,22 @@ class Fenetre {
     }
 
     private void jouer() {
-        Optional<Essai> essai = partie.proposer(saisie.getText());
-        if (essai.isEmpty()) {
-            // une saisie non reconnue ne coûte pas d'essai : on la laisse dans le champ, sélectionnée, pour la corriger
-            message.setText(Textes.nonReconnue(saisie.getText()));
-            saisie.selectAll();
-            return;
+        // un switch sur les trois réponses possibles : Reponse est « sealed », le compilateur vérifie qu'aucune
+        // n'est oubliée. « case Reponse.DejaProposee(RegionFr region) » teste le type ET sort le champ du record
+        switch (partie.proposer(saisie.getText())) {
+            case Reponse.Inconnue() -> refuser(Textes.nonReconnue(saisie.getText()));
+            case Reponse.DejaProposee(RegionFr region) -> refuser(Textes.dejaProposee(region));
+            case Reponse.Jouee jouee -> essaiJoue();
         }
+    }
+
+    // une saisie refusée ne coûte pas d'essai : on la laisse dans le champ, sélectionnée, pour la corriger
+    private void refuser(String explication) {
+        message.setText(explication);
+        saisie.selectAll();
+    }
+
+    private void essaiJoue() {
         tableau.essaiJoue();
         saisie.setText("");
         afficherIndices();
