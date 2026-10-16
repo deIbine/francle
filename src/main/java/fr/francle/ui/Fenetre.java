@@ -1,5 +1,6 @@
 package fr.francle.ui;
 
+import fr.francle.donnees.Langue;
 import fr.francle.donnees.ModeRegions;
 import fr.francle.donnees.RegionFr;
 import fr.francle.jeu.Indice;
@@ -23,7 +24,9 @@ import java.io.IOException;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -70,21 +73,27 @@ class Fenetre {
     private static final int RACCOURCI = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
 
     private final TableauEssais tableau = new TableauEssais();
+    private final JTable table = new JTable(tableau);
+
+    // chaque action et la clé de son nom dans les fichiers de textes : à chaque changement de langue, on leur donne
+    // leur nouveau nom. Déclarée AVANT les actions : les champs s'initialisent dans l'ordre du fichier, et action()
+    // la remplit
+    private final Map<Action, String> nomsDesActions = new LinkedHashMap<>();
 
     // les actions du joueur. Chacune réunit un nom, un raccourci et ce qu'il faut faire ; un article de menu et
     // un bouton peuvent partager la même : la désactiver grise les deux à la fois
-    private final Action partieDuJour = action("Partie du jour", KeyStroke.getKeyStroke(KeyEvent.VK_D, RACCOURCI), this::jouerDuJour);
-    private final Action partieLibre = action("Partie libre", KeyStroke.getKeyStroke(KeyEvent.VK_N, RACCOURCI), this::jouerLibre);
-    private final Action liste = action("Liste des régions", KeyStroke.getKeyStroke(KeyEvent.VK_L, RACCOURCI), this::montrerListe);
-    private final Action abandonner = action("Abandonner", null, this::abandonner);
-    private final Action statistiques = action("Statistiques", KeyStroke.getKeyStroke(KeyEvent.VK_T, RACCOURCI), this::montrerStatistiques);
-    private final Action quitter = action("Quitter", KeyStroke.getKeyStroke(KeyEvent.VK_Q, RACCOURCI), this::quitter);
-    private final Action aide = action("Comment jouer", KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), this::montrerAide);
+    private final Action partieDuJour = action("action.duJour", KeyStroke.getKeyStroke(KeyEvent.VK_D, RACCOURCI), this::jouerDuJour);
+    private final Action partieLibre = action("action.libre", KeyStroke.getKeyStroke(KeyEvent.VK_N, RACCOURCI), this::jouerLibre);
+    private final Action liste = action("action.liste", KeyStroke.getKeyStroke(KeyEvent.VK_L, RACCOURCI), this::montrerListe);
+    private final Action abandonner = action("action.abandonner", null, this::abandonner);
+    private final Action statistiques = action("action.statistiques", KeyStroke.getKeyStroke(KeyEvent.VK_T, RACCOURCI), this::montrerStatistiques);
+    private final Action quitter = action("action.quitter", KeyStroke.getKeyStroke(KeyEvent.VK_Q, RACCOURCI), this::quitter);
+    private final Action aide = action("action.aide", KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), this::montrerAide);
 
     private final JFrame frame = new JFrame("Francle");
     private final JLabel image = new JLabel();
     private final JTextField saisie = new JTextField(20);
-    private final JButton valider = new JButton("Valider");
+    private final JButton valider = new JButton();
     private final JButton boutonAbandonner = new JButton(abandonner);
     // à la fin de la partie, « Partie libre » prend la place d'« Abandonner »
     private final JButton boutonRejouer = new JButton(partieLibre);
@@ -112,8 +121,12 @@ class Fenetre {
     private final Sauvegarde<Reglages> sauvegardeReglages;
     private Historique historique;
     private final Reglages reglages;
-    // les problèmes de fichier à signaler au joueur dès que la fenêtre sera visible
-    private final List<String> avertissements = new ArrayList<>();
+    // les textes dans la langue choisie : remplacés à chaque changement de langue
+    private Textes textes;
+    // les problèmes de fichier à signaler au joueur dès que la fenêtre sera visible : le message de l'erreur, et la
+    // clé de sa conséquence (traduite au moment de l'afficher, quand la langue est connue)
+    private record Avertissement(String erreur, String consequence) {}
+    private final List<Avertissement> avertissements = new ArrayList<>();
     // un échec d'enregistrement n'est signalé qu'une fois par fichier, pas à chaque essai ni à chaque réglage
     private boolean enregistrementSignale;
     private boolean reglagesSignales;
@@ -126,10 +139,12 @@ class Fenetre {
         this.horloge = horloge;
         this.sauvegardeHistorique = sauvegardeHistorique;
         this.sauvegardeReglages = sauvegardeReglages;
-        historique = charger(sauvegardeHistorique, "Les statistiques repartent de zéro.");
-        reglages = charger(sauvegardeReglages, "Les réglages reprennent leurs valeurs par défaut.");
-        tableau.setUnitesAnglaises(reglages.isUnitesAnglaises());
+        historique = charger(sauvegardeHistorique, "fichiers.historique");
+        reglages = charger(sauvegardeReglages, "fichiers.reglages");
+        textes = new Textes(reglages.langue());
+        tableau.setUnitesAnglaises(reglages.unitesAnglaises());
         construire();
+        appliquerLangue();
         // les composants ont été créés avec le thème clair (installé par Francle.main) : s'il faut le sombre,
         // ils s'y réabonnent tous avant que la fenêtre ne s'affiche
         if (reglages.isThemeSombre()) {
@@ -148,9 +163,12 @@ class Fenetre {
         frame.setVisible(true);
         saisie.requestFocusInWindow();
         if (!avertissements.isEmpty()) {
+            List<String> lignes = avertissements.stream()
+                    .map(avertissement -> avertissement.erreur() + "\n" + textes.texte(avertissement.consequence()))
+                    .toList();
+            String texte = String.join("\n\n", lignes);
             // invokeLater : la boîte de dialogue s'ouvre une fois la fenêtre dessinée, par-dessus elle
-            String texte = String.join("\n\n", avertissements);
-            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(frame, texte, "Fichiers de Francle",
+            SwingUtilities.invokeLater(() -> JOptionPane.showMessageDialog(frame, texte, textes.texte("fichiers.titre"),
                     JOptionPane.WARNING_MESSAGE));
         }
     }
@@ -162,14 +180,15 @@ class Fenetre {
         try {
             return sauvegarde.charger();
         } catch (IOException e) {
-            avertissements.add(e.getMessage() + "\n" + consequence);
+            avertissements.add(new Avertissement(e.getMessage(), consequence));
             return sauvegarde.parDefaut();
         }
     }
 
-    // une Action à partir d'un nom, d'un raccourci (ou null) et du code à exécuter
-    private static Action action(String nom, KeyStroke raccourci, Runnable quoiFaire) {
-        Action action = new AbstractAction(nom) {
+    // une Action à partir de la clé de son nom, d'un raccourci (ou null) et du code à exécuter. Le nom lui-même
+    // est donné par appliquerLangue
+    private Action action(String cleDuNom, KeyStroke raccourci, Runnable quoiFaire) {
+        Action action = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 quoiFaire.run();
@@ -177,6 +196,7 @@ class Fenetre {
         };
         // le raccourci n'est utilisé que par les articles de menu (un bouton l'ignore)
         action.putValue(Action.ACCELERATOR_KEY, raccourci);
+        nomsDesActions.put(action, cleDuNom);
         return action;
     }
 
@@ -184,7 +204,6 @@ class Fenetre {
 
     private void construire() {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setJMenuBar(menus());
         JPanel contenu = new JPanel(new BorderLayout(0, 10));
         contenu.setBorder(BorderFactory.createEmptyBorder(10, 16, 16, 16));
         image.setHorizontalAlignment(SwingConstants.CENTER);
@@ -194,10 +213,10 @@ class Fenetre {
         frame.setContentPane(contenu);
     }
 
+    // la barre de menus, dans la langue du moment : reconstruite à chaque changement de langue (plus simple que de
+    // renommer un à un chaque article, et les cases cochées y reprennent l'état des réglages)
     private JMenuBar menus() {
-        JMenu jeu = new JMenu("Jeu");
-        // Alt+J ouvre le menu (la lettre est soulignée quand on appuie sur Alt)
-        jeu.setMnemonic(KeyEvent.VK_J);
+        JMenu jeu = menu("menu.jeu");
         jeu.add(partieDuJour);
         jeu.add(partieLibre);
         jeu.add(abandonner);
@@ -207,12 +226,11 @@ class Fenetre {
         jeu.addSeparator();
         jeu.add(quitter);
 
-        JMenu parametres = new JMenu("Paramètres");
-        parametres.setMnemonic(KeyEvent.VK_P);
+        JMenu parametres = menu("menu.parametres");
         // boutons radio : le ButtonGroup garantit qu'un seul mode est coché à la fois
         ButtonGroup groupe = new ButtonGroup();
         for (ModeRegions mode : MODES) {
-            JRadioButtonMenuItem article = new JRadioButtonMenuItem(Textes.mode(mode), mode == reglages.getMode());
+            JRadioButtonMenuItem article = new JRadioButtonMenuItem(textes.mode(mode), mode == reglages.getMode());
             article.addActionListener(e -> {
                 reglages.setMode(mode);
                 retenirReglages();
@@ -223,8 +241,8 @@ class Fenetre {
         }
         parametres.addSeparator();
         // cases à cocher : indépendantes l'une de l'autre
-        JCheckBoxMenuItem images = new JCheckBoxMenuItem("Silhouette de la région", reglages.isAvecImages());
-        JCheckBoxMenuItem tournee = new JCheckBoxMenuItem("Silhouette tournée au hasard", reglages.isSilhouetteTournee());
+        JCheckBoxMenuItem images = new JCheckBoxMenuItem(textes.texte("parametre.silhouette"), reglages.isAvecImages());
+        JCheckBoxMenuItem tournee = new JCheckBoxMenuItem(textes.texte("parametre.tournee"), reglages.isSilhouetteTournee());
         // sans silhouette, rien à tourner : la case est grisée
         tournee.setEnabled(reglages.isAvecImages());
         images.addActionListener(e -> {
@@ -238,34 +256,44 @@ class Fenetre {
             retenirReglages();
             prevenirProchainePartie();
         });
-        JCheckBoxMenuItem avecListe = new JCheckBoxMenuItem("Liste des régions", reglages.isAvecListe());
+        JCheckBoxMenuItem avecListe = new JCheckBoxMenuItem(textes.texte("parametre.liste"), reglages.isAvecListe());
         avecListe.addActionListener(e -> {
             reglages.setAvecListe(avecListe.isSelected());
             retenirReglages();
             // celui-ci compte tout de suite : l'article « Liste des régions » du menu Jeu se grise ou non
             liste.setEnabled(reglages.isAvecListe());
         });
-        JCheckBoxMenuItem avecSuggestions = new JCheckBoxMenuItem("Suggestions pendant la frappe", reglages.isAvecSuggestions());
+        JCheckBoxMenuItem avecSuggestions = new JCheckBoxMenuItem(textes.texte("parametre.suggestions"), reglages.isAvecSuggestions());
         // compte dès la prochaine lettre tapée
         avecSuggestions.addActionListener(e -> {
             reglages.setAvecSuggestions(avecSuggestions.isSelected());
             retenirReglages();
         });
-        JCheckBoxMenuItem themeSombre = new JCheckBoxMenuItem("Thème sombre", reglages.isThemeSombre());
+        JCheckBoxMenuItem themeSombre = new JCheckBoxMenuItem(textes.texte("parametre.themeSombre"), reglages.isThemeSombre());
         // tout de suite : toute la fenêtre change de couleurs
         themeSombre.addActionListener(e -> {
             reglages.setThemeSombre(themeSombre.isSelected());
             retenirReglages();
             Theme.changer(reglages.isThemeSombre());
         });
-        JCheckBoxMenuItem miles = new JCheckBoxMenuItem("Unités anglo-saxonnes (miles)", reglages.isUnitesAnglaises());
-        // tout de suite aussi : le tableau et les indices se réaffichent dans la nouvelle unité
+        JCheckBoxMenuItem miles = new JCheckBoxMenuItem(textes.texte("parametre.miles"), reglages.unitesAnglaises());
+        // tout de suite aussi : le tableau et les indices se réaffichent dans la nouvelle unité. Dès ce clic, l'unité
+        // est un choix du joueur : elle ne suivra plus la langue
         miles.addActionListener(e -> {
             reglages.setUnitesAnglaises(miles.isSelected());
             retenirReglages();
-            tableau.setUnitesAnglaises(reglages.isUnitesAnglaises());
+            tableau.setUnitesAnglaises(reglages.unitesAnglaises());
             afficherIndices();
         });
+        // la langue : un sous-menu, avec le nom de chaque langue écrit dans cette langue
+        JMenu langues = new JMenu(textes.texte("menu.langue"));
+        ButtonGroup groupeLangues = new ButtonGroup();
+        for (Langue langue : Langue.values()) {
+            JRadioButtonMenuItem article = new JRadioButtonMenuItem(langue.getNomPropre(), langue == textes.getLangue());
+            article.addActionListener(e -> changerLangue(langue));
+            groupeLangues.add(article);
+            langues.add(article);
+        }
         parametres.add(images);
         parametres.add(tournee);
         parametres.add(avecListe);
@@ -273,9 +301,9 @@ class Fenetre {
         parametres.addSeparator();
         parametres.add(themeSombre);
         parametres.add(miles);
+        parametres.add(langues);
 
-        JMenu menuAide = new JMenu("Aide");
-        menuAide.setMnemonic(KeyEvent.VK_A);
+        JMenu menuAide = menu("menu.aide");
         menuAide.add(aide);
 
         JMenuBar barre = new JMenuBar();
@@ -283,6 +311,14 @@ class Fenetre {
         barre.add(parametres);
         barre.add(menuAide);
         return barre;
+    }
+
+    // un menu de la barre, avec sa lettre : Alt+J ouvre « Jeu » en français, Alt+G « Game » en anglais (la lettre est
+    // soulignée quand on appuie sur Alt). Elle est dans le fichier de textes, puisqu'elle dépend du mot
+    private JMenu menu(String cle) {
+        JMenu menu = new JMenu(textes.texte(cle));
+        menu.setMnemonic(KeyEvent.getExtendedKeyCodeForChar(textes.texte(cle + ".lettre").charAt(0)));
+        return menu;
     }
 
     private JPanel bas() {
@@ -304,7 +340,6 @@ class Fenetre {
 
         indices.setEditable(false);
         indices.setFocusable(false);
-        indices.setBorder(BorderFactory.createTitledBorder("Indices"));
 
         JPanel bas = new JPanel(new BorderLayout(0, 10));
         bas.add(haut, BorderLayout.NORTH);
@@ -314,7 +349,6 @@ class Fenetre {
     }
 
     private JScrollPane tableEssais() {
-        JTable table = new JTable(tableau);
         table.setFocusable(false);
         table.setRowSelectionAllowed(false);
         table.getTableHeader().setReorderingAllowed(false);
@@ -371,7 +405,7 @@ class Fenetre {
     // c'est ce qui permet de reprendre la partie du jour sans rien avoir mémorisé d'autre
     private void montrerPartie(Partie aMontrer) {
         partie = aMontrer;
-        frame.setTitle(partie == duJour ? Textes.titreDuJour(dateDuJour) : Textes.TITRE_LIBRE);
+        afficherTitre();
         tableau.setPartie(partie);
         afficherIndices();
         liste.setEnabled(reglages.isAvecListe());
@@ -381,7 +415,7 @@ class Fenetre {
             return;
         }
         montrer(Representation.silhouette(partie.getCible(), reglages.isAvecImages()), angleSilhouette());
-        message.setText(partie.getEssais().isEmpty() ? "Quelle est cette région française ?" : Textes.apresEssai(partie));
+        message.setText(textes.apresEssai(partie));
         activerSaisie(true);
         saisie.requestFocusInWindow();
     }
@@ -390,8 +424,8 @@ class Fenetre {
         // un switch sur les trois réponses possibles : Reponse est « sealed », le compilateur vérifie qu'aucune
         // n'est oubliée. « case Reponse.DejaProposee(RegionFr region) » teste le type ET sort le champ du record
         switch (partie.proposer(saisie.getText())) {
-            case Reponse.Inconnue() -> refuser(Textes.nonReconnue(saisie.getText()));
-            case Reponse.DejaProposee(RegionFr region) -> refuser(Textes.dejaProposee(region));
+            case Reponse.Inconnue() -> refuser(textes.nonReconnue(saisie.getText()));
+            case Reponse.DejaProposee(RegionFr region) -> refuser(textes.dejaProposee(region));
             case Reponse.Jouee jouee -> essaiJoue();
         }
     }
@@ -408,19 +442,20 @@ class Fenetre {
         afficherIndices();
         retenirDuJour();
         if (partie.enCours()) {
-            message.setText(Textes.apresEssai(partie));
+            message.setText(textes.apresEssai(partie));
         } else {
             terminer();
             statistiquesEnFinDuJour();
         }
     }
 
-    // les noms à suggérer pour ce début de saisie, parmi les régions acceptées dans le mode de la partie
+    // les noms à suggérer pour ce début de saisie, parmi les régions acceptées dans le mode de la partie, dans la
+    // langue du joueur
     private List<String> suggestions(String debut) {
         if (!reglages.isAvecSuggestions()) {
             return List.of();
         }
-        return RegionFr.suggestions(debut, partie.getMode()).stream().map(RegionFr::getNom).toList();
+        return RegionFr.suggestions(debut, partie.getMode(), textes.getLangue()).stream().map(textes::nom).toList();
     }
 
     private void abandonner() {
@@ -442,10 +477,9 @@ class Fenetre {
         } catch (IOException e) {
             if (!enregistrementSignale) {
                 enregistrementSignale = true;
-                JOptionPane.showMessageDialog(frame, "Impossible d'enregistrer l'historique dans "
-                        + sauvegardeHistorique.getFichier() + " :\n" + e.getMessage()
-                        + "\nVous pouvez continuer à jouer, mais cette partie ne sera pas retenue.",
-                        "Historique", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(frame,
+                        textes.texte("historique.erreur", sauvegardeHistorique.getFichier(), e.getMessage()),
+                        textes.texte("historique.titre"), JOptionPane.WARNING_MESSAGE);
             }
         }
     }
@@ -457,10 +491,9 @@ class Fenetre {
         } catch (IOException e) {
             if (!reglagesSignales) {
                 reglagesSignales = true;
-                JOptionPane.showMessageDialog(frame, "Impossible d'enregistrer les réglages dans "
-                        + sauvegardeReglages.getFichier() + " :\n" + e.getMessage()
-                        + "\nIls comptent pour cette fois, mais ne seront pas retrouvés au prochain lancement.",
-                        "Réglages", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(frame,
+                        textes.texte("reglages.erreur", sauvegardeReglages.getFichier(), e.getMessage()),
+                        textes.texte("reglages.titre"), JOptionPane.WARNING_MESSAGE);
             }
         }
     }
@@ -481,12 +514,12 @@ class Fenetre {
                 .filter(resultat -> resultat.date().equals(aujourdhui) && resultat.victoire())
                 .mapToInt(resultat -> resultat.propositions().size())
                 .findFirst().orElse(0);
-        JOptionPane.showMessageDialog(frame, FenetreStatistiques.panneau(stats, essaisDuJour), "Statistiques",
-                JOptionPane.PLAIN_MESSAGE);
+        JOptionPane.showMessageDialog(frame, FenetreStatistiques.panneau(stats, essaisDuJour, textes),
+                textes.texte("action.statistiques"), JOptionPane.PLAIN_MESSAGE);
     }
 
     private void terminer() {
-        message.setText(Textes.fin(partie));
+        message.setText(textes.fin(partie));
         activerSaisie(false);
         // la réponse sur la carte de France (métropole) ; pour l'outre-mer, on garde l'image affichée
         Representation.carte(partie.getCible(), partie.getMode()).ifPresent(this::montrer);
@@ -497,17 +530,50 @@ class Fenetre {
     // pour les parties libres : la partie du jour se joue toujours avec les nouvelles régions)
     private void prevenirProchainePartie() {
         if (partie.enCours()) {
-            message.setText("Les nouveaux réglages s'appliqueront à la prochaine partie.");
+            message.setText(textes.texte("prochainePartie"));
         }
     }
 
     private void montrerListe() {
-        JOptionPane.showMessageDialog(frame, "Voici les régions possibles :\n" + Textes.listeDesRegions(partie.getMode()),
-                "Liste des régions", JOptionPane.PLAIN_MESSAGE);
+        JOptionPane.showMessageDialog(frame, textes.listeDesRegions(partie.getMode()),
+                textes.texte("action.liste"), JOptionPane.PLAIN_MESSAGE);
     }
 
     private void montrerAide() {
-        JOptionPane.showMessageDialog(frame, Textes.REGLES, "Comment jouer", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(frame, textes.aide(), textes.texte("action.aide"), JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    // le joueur choisit une langue dans le menu : tout change tout de suite, même au milieu d'une partie (rien dans
+    // la partie ne dépend de la langue : seulement la façon de l'écrire)
+    private void changerLangue(Langue langue) {
+        reglages.setLangue(langue);
+        retenirReglages();
+        appliquerLangue();
+        // les unités suivent la langue, tant que le joueur ne les a pas choisies lui-même
+        tableau.setUnitesAnglaises(reglages.unitesAnglaises());
+        afficherTitre();
+        message.setText(partie.enCours() ? textes.apresEssai(partie) : textes.fin(partie));
+        afficherIndices();
+    }
+
+    // tous les textes qui ne dépendent pas de la partie : noms des actions, menus, bouton, titres du tableau
+    private void appliquerLangue() {
+        textes = new Textes(reglages.langue());
+        nomsDesActions.forEach((action, cle) -> action.putValue(Action.NAME, textes.texte(cle)));
+        frame.setJMenuBar(menus());
+        frame.getRootPane().revalidate();
+        valider.setText(textes.texte("valider"));
+        indices.setBorder(BorderFactory.createTitledBorder(textes.texte("indices")));
+        tableau.setTextes(textes);
+        // la JTable a copié les titres des colonnes à sa création : on les lui redonne, puis on redessine l'en-tête
+        for (int colonne = 0; colonne < tableau.getColumnCount(); colonne++) {
+            table.getColumnModel().getColumn(colonne).setHeaderValue(tableau.getColumnName(colonne));
+        }
+        table.getTableHeader().repaint();
+    }
+
+    private void afficherTitre() {
+        frame.setTitle(partie == duJour ? textes.titreDuJour(dateDuJour) : textes.texte("titre.libre"));
     }
 
     // comme un clic sur la croix de la fenêtre : un seul chemin pour quitter
@@ -549,7 +615,7 @@ class Fenetre {
     private void afficherIndices() {
         List<String> lignes = new ArrayList<>();
         for (Indice indice : partie.indicesReveles()) {
-            lignes.add(Textes.indice(indice, partie.getCible(), reglages.isUnitesAnglaises()));
+            lignes.add(textes.indice(indice, partie.getCible(), reglages.unitesAnglaises()));
         }
         indices.setText(String.join("\n", lignes));
     }

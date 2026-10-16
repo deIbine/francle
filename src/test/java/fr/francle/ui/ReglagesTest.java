@@ -1,5 +1,6 @@
 package fr.francle.ui;
 
+import fr.francle.donnees.Langue;
 import fr.francle.donnees.ModeRegions;
 import fr.francle.stats.Sauvegarde;
 import fr.francle.stats.SauvegardeIllisible;
@@ -30,7 +31,8 @@ class ReglagesTest {
         assertTrue(reglages.isAvecListe());
         assertTrue(reglages.isAvecSuggestions());
         assertFalse(reglages.isThemeSombre());
-        assertFalse(reglages.isUnitesAnglaises());
+        assertNull(reglages.getUnitesAnglaises());     // pas encore choisi : suit la langue
+        assertNull(reglages.getLangue());              // pas encore choisie : celle du système
         assertFalse(reglages.isSilhouetteTournee());
     }
 
@@ -74,7 +76,7 @@ class ReglagesTest {
         assertTrue(relus.isAvecImages());
         assertFalse(relus.isAvecSuggestions());
         assertTrue(relus.isThemeSombre());
-        assertTrue(relus.isUnitesAnglaises());
+        assertTrue(relus.getUnitesAnglaises());
         assertTrue(relus.isSilhouetteTournee());
         assertTrue(Files.readString(sauvegarde.getFichier()).contains("\"themeSombre\" : true"));
     }
@@ -90,6 +92,36 @@ class ReglagesTest {
         assertEquals(ModeRegions.ANCIENNES, reglages.getMode());
         assertTrue(reglages.isAvecImages());
         assertFalse(reglages.isThemeSombre());
+    }
+
+    @Test
+    @DisplayName("Les unités suivent la langue tant que le joueur ne les a pas choisies")
+    void unitesSelonLaLangue() {
+        Reglages reglages = new Reglages();
+
+        reglages.setLangue(Langue.EN);
+        assertTrue(reglages.unitesAnglaises());
+        reglages.setLangue(Langue.FR);
+        assertFalse(reglages.unitesAnglaises());
+
+        // le joueur coche « miles » en français : son choix l'emporte, même s'il repasse en anglais puis en français
+        reglages.setUnitesAnglaises(true);
+        reglages.setLangue(Langue.EN);
+        reglages.setLangue(Langue.FR);
+        assertTrue(reglages.unitesAnglaises());
+    }
+
+    @Test
+    @DisplayName("La langue choisie est enregistrée ; sans choix, rien n'est imposé dans le fichier")
+    void langueEnregistree() throws IOException {
+        Sauvegarde<Reglages> sauvegarde = Reglages.sauvegarde(dossier.resolve("reglages.json"));
+        Reglages reglages = new Reglages();
+        reglages.setLangue(Langue.EN);
+
+        sauvegarde.enregistrer(reglages);
+
+        assertEquals(Langue.EN, sauvegarde.charger().getLangue());
+        assertTrue(Files.readString(sauvegarde.getFichier()).contains("\"langue\" : \"EN\""));
     }
 
     @Test

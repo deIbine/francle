@@ -1,0 +1,24 @@
+Guess the hidden French region in 6 guesses or fewer.
+
+Daily game: the same region for everyone, one game per day,
+always among the current regions. Free game: as many as you like,
+with the regions chosen in the Settings menu (former or current).
+Only daily games count in the statistics (Game menu).
+
+After each guess, the table shows:
+  • the distance between the capital of your guess and that of the hidden region;
+  • the direction to follow to reach the hidden region (↑ north, → east…);
+  • the proximity percentage (100%: you are there).
+
+Each wrong guess reveals a clue: the area, a food specialty,
+a famous person, the regional capital, then a landmark.
+Guessing the same region twice does not cost a guess.
+
+Accents, capitals, spaces and hyphens are ignored: “ile de france” is accepted,
+and so are the French names (“Bretagne”).
+While you type, suggestions appear: ↓ and ↑ to pick one, Enter to take it,
+then Enter again to guess (they can be turned off in the Settings menu).
+
+The Settings menu also offers a dark theme, distances in miles,
+a randomly rotated silhouette to make the game harder, and the language (French or English).
+They are remembered from one launch to the next.

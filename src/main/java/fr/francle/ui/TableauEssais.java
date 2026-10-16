@@ -1,5 +1,6 @@
 package fr.francle.ui;
 
+import fr.francle.donnees.Langue;
 import fr.francle.jeu.Essai;
 import fr.francle.jeu.Partie;
 
@@ -12,11 +13,21 @@ Aucune fenêtre ici : le modèle se teste sans écran.
  */
 class TableauEssais extends AbstractTableModel {
 
-    static final String[] COLONNES = {"#", "Région", "Distance", "Direction", "Proximité"};
+    // les clés des titres de colonnes dans les fichiers de textes
+    static final String[] COLONNES = {"colonne.numero", "colonne.region", "colonne.distance", "colonne.direction",
+            "colonne.proximite"};
     static final String TROUVE = "✓";
 
     private Partie partie;
     private boolean unitesAnglaises;
+    private Textes textes = new Textes(Langue.FR);
+
+    // le joueur change de langue : les noms des régions se réaffichent. Les titres des colonnes, eux, sont gardés par
+    // la JTable une fois créée : c'est la fenêtre qui les met à jour (Fenetre.appliquerLangue)
+    void setTextes(Textes textes) {
+        this.textes = textes;
+        fireTableDataChanged();
+    }
 
     // le joueur change d'unité : les essais déjà joués se réaffichent tout de suite dans la nouvelle. Rien n'est
     // recalculé ni stocké en miles : getValueAt convertit à chaque fois les kilomètres de l'Essai
@@ -44,7 +55,7 @@ class TableauEssais extends AbstractTableModel {
     public int getColumnCount() { return COLONNES.length; }
 
     @Override
-    public String getColumnName(int colonne) { return COLONNES[colonne]; }
+    public String getColumnName(int colonne) { return textes.texte(COLONNES[colonne]); }
 
     @Override
     public Object getValueAt(int ligne, int colonne) {
@@ -58,10 +69,10 @@ class TableauEssais extends AbstractTableModel {
         Essai essai = partie.getEssais().get(ligne);
         boolean trouve = essai.proposition() == partie.getCible();
         switch (colonne) {
-            case 1 : return essai.proposition().getNom();
-            case 2 : return Textes.distance(essai.distance(), unitesAnglaises);
+            case 1 : return textes.nom(essai.proposition());
+            case 2 : return textes.distance(essai.distance(), unitesAnglaises);
             case 3 : return trouve ? TROUVE : essai.direction().getSymbole();
-            default : return essai.pourcentage() + " %";
+            default : return textes.pourcentage(essai.pourcentage());
         }
     }
 }

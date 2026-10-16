@@ -1,0 +1,24 @@
+Devinez la région française cachée en 6 essais au plus.
+
+Partie du jour : la même région pour tout le monde, une seule partie par jour,
+toujours parmi les nouvelles régions. Partie libre : autant que vous voulez,
+avec les régions choisies dans le menu Paramètres (anciennes ou nouvelles).
+Seules les parties du jour comptent dans les statistiques (menu Jeu).
+
+Après chaque essai, le tableau indique :
+  • la distance entre la capitale de votre proposition et celle de la région cachée ;
+  • la direction à suivre pour aller vers la région cachée (↑ nord, → est…) ;
+  • le pourcentage de proximité (100 % : vous y êtes).
+
+Chaque essai raté révèle un indice : la superficie, la spécialité culinaire,
+une personnalité, la capitale régionale, puis un monument.
+Proposer deux fois la même région ne coûte pas d'essai.
+
+Les accents, majuscules, espaces et tirets sont ignorés : « ile de france » est accepté,
+tout comme les noms anglais (« Brittany »).
+Pendant la frappe, des suggestions s'affichent : ↓ et ↑ pour en choisir une, Entrée pour la reprendre,
+puis Entrée encore pour valider (désactivables dans le menu Paramètres).
+
+Le menu Paramètres propose aussi un thème sombre, les distances en miles,
+une silhouette tournée au hasard pour corser le jeu, et la langue (français ou anglais).
+Ils sont retenus d'un lancement à l'autre.
