@@ -1,17 +1,22 @@
 package fr.francle.ui;
 
+import fr.francle.donnees.Departement;
 import fr.francle.donnees.Langue;
 import fr.francle.donnees.ModeRegions;
 import fr.francle.donnees.RegionFr;
+import fr.francle.jeu.Bonus;
 import fr.francle.jeu.Indice;
 import fr.francle.jeu.Partie;
 import fr.francle.jeu.Reponse;
+import fr.francle.jeu.ReponseBonus;
 import fr.francle.jeu.RegionDuJour;
+import fr.francle.jeu.Tentative;
 import fr.francle.stats.Historique;
 import fr.francle.stats.Sauvegarde;
 import fr.francle.stats.Statistiques;
 
 import java.awt.BorderLayout;
+import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -49,14 +54,16 @@ import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.table.DefaultTableCellRenderer;
 
 /*
-La fenêtre du jeu. Elle ne contient aucune règle : elle transmet les actions du joueur à la Partie,
-puis affiche ce que la Partie répond. Tout ici s'exécute sur l'Event Dispatch Thread (voir Francle.main).
+La fenêtre du jeu. Elle ne contient aucune règle : elle transmet les actions du joueur à la Partie (ou au Bonus),
+puis affiche ce qu'ils répondent. Tout ici s'exécute sur l'Event Dispatch Thread (voir Francle.main).
 
 Disposition : la barre de menus (Jeu, Paramètres, Aide), puis le contenu en BorderLayout imbriqués :
-    CENTER  l'image
+    CENTER  l'image, ou la carte des départements pendant le bonus (un CardLayout : deux « cartes » empilées au
+            même endroit, dont une seule est visible)
     SOUTH   la saisie et le message, le tableau des essais, les indices
  */
 class Fenetre {
@@ -89,14 +96,25 @@ class Fenetre {
     private final Action statistiques = action("action.statistiques", KeyStroke.getKeyStroke(KeyEvent.VK_T, RACCOURCI), this::montrerStatistiques);
     private final Action quitter = action("action.quitter", KeyStroke.getKeyStroke(KeyEvent.VK_Q, RACCOURCI), this::quitter);
     private final Action aide = action("action.aide", KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), this::montrerAide);
+    private final Action bonusDuJour = action("action.bonus", KeyStroke.getKeyStroke(KeyEvent.VK_B, RACCOURCI), this::jouerBonus);
+    private final Action passer = action("action.passer", null, this::passerBonus);
 
     private final JFrame frame = new JFrame("Francle");
+    // les deux « cartes » du CardLayout, et leurs noms
+    private static final String IMAGE = "image";
+    private static final String DEPARTEMENTS = "departements";
+    private final CardLayout cartes = new CardLayout();
+    private final JPanel cadre = new JPanel(cartes);
     private final JLabel image = new JLabel();
+    private final CarteDepartements carte = new CarteDepartements(this::cliquer);
     private final JTextField saisie = new JTextField(20);
     private final JButton valider = new JButton();
     private final JButton boutonAbandonner = new JButton(abandonner);
     // à la fin de la partie, « Partie libre » prend la place d'« Abandonner »
     private final JButton boutonRejouer = new JButton(partieLibre);
+    // « Passer » pendant le bonus (à la place d'« Abandonner ») ; « Bonus » à la fin d'une partie du jour gagnée
+    private final JButton boutonPasser = new JButton(passer);
+    private final JButton boutonBonus = new JButton(bonusDuJour);
     private final JLabel message = new JLabel(" ", SwingConstants.CENTER);
     private final JTextArea indices = new JTextArea(Indice.values().length, 30);
 
@@ -114,6 +132,16 @@ class Fenetre {
     // (celui de la partie du jour se recalcule à partir de la date : RegionDuJour.angle)
     private int angleLibre;
     private static final Random HASARD = new Random();
+
+    // le bonus de la partie du jour : null tant qu'il n'a pas commencé
+    private Bonus bonus;
+    // vrai quand la fenêtre montre le bonus (la carte des départements) plutôt que la partie
+    private boolean dansLeBonus;
+    // après chaque réponse du bonus, le temps de voir si c'était juste, avant la question suivante. Un Timer de
+    // Swing, et non un Thread.sleep : sleep bloquerait l'Event Dispatch Thread, et la fenêtre ne se redessinerait
+    // plus (la réponse ne s'afficherait même pas). Le Timer, lui, rappelle apresReponse sur l'EDT, une seule fois
+    private static final int DUREE_REPONSE = 1200;
+    private final Timer pause = new Timer(DUREE_REPONSE, e -> apresReponse());
 
     // l'historique des parties du jour, les réglages, et les fichiers où ils sont enregistrés. Les sauvegardes sont
     // des paramètres, comme l'horloge : la vérification utilise un dossier temporaire, jamais les vrais fichiers du joueur
@@ -150,6 +178,7 @@ class Fenetre {
         if (reglages.isThemeSombre()) {
             Theme.changer(true);
         }
+        pause.setRepeats(false);
         valider.addActionListener(e -> jouer());
         // la touche Entrée dans le champ : l'autocomplétion choisit la suggestion surlignée, ou appelle jouer()
         new Autocompletion(saisie, this::suggestions, this::jouer);
@@ -207,8 +236,10 @@ class Fenetre {
         JPanel contenu = new JPanel(new BorderLayout(0, 10));
         contenu.setBorder(BorderFactory.createEmptyBorder(10, 16, 16, 16));
         image.setHorizontalAlignment(SwingConstants.CENTER);
-        image.setPreferredSize(new Dimension(LARGEUR_IMAGE, HAUTEUR_IMAGE));
-        contenu.add(image, BorderLayout.CENTER);
+        cadre.setPreferredSize(new Dimension(LARGEUR_IMAGE, HAUTEUR_IMAGE));
+        cadre.add(image, IMAGE);
+        cadre.add(carte, DEPARTEMENTS);
+        contenu.add(cadre, BorderLayout.CENTER);
         contenu.add(bas(), BorderLayout.SOUTH);
         frame.setContentPane(contenu);
     }
@@ -220,6 +251,7 @@ class Fenetre {
         jeu.add(partieDuJour);
         jeu.add(partieLibre);
         jeu.add(abandonner);
+        jeu.add(bonusDuJour);
         jeu.addSeparator();
         jeu.add(statistiques);
         jeu.add(liste);
@@ -329,6 +361,8 @@ class Fenetre {
         boutons.add(valider);
         boutons.add(boutonAbandonner);
         boutons.add(boutonRejouer);
+        boutons.add(boutonPasser);
+        boutons.add(boutonBonus);
         JPanel ligneSaisie = new JPanel(new BorderLayout());
         ligneSaisie.add(saisie, BorderLayout.CENTER);
         ligneSaisie.add(boutons, BorderLayout.EAST);
@@ -390,6 +424,7 @@ class Fenetre {
             dateDuJour = aujourdhui;
             // neuve, en cours ou terminée selon l'historique : relancer le jeu ne donne pas d'essais en plus
             duJour = historique.partieDuJour(aujourdhui);
+            bonus = null;
         }
         montrerPartie(duJour);
     }
@@ -404,6 +439,7 @@ class Fenetre {
     // affiche une partie dans l'état où elle est (neuve, en cours ou terminée), uniquement à partir de cet état :
     // c'est ce qui permet de reprendre la partie du jour sans rien avoir mémorisé d'autre
     private void montrerPartie(Partie aMontrer) {
+        quitterBonus();
         partie = aMontrer;
         afficherTitre();
         tableau.setPartie(partie);
@@ -420,7 +456,15 @@ class Fenetre {
         saisie.requestFocusInWindow();
     }
 
+    // Valider, ou Entrée dans le champ de saisie : une proposition de région, ou une réponse du bonus
     private void jouer() {
+        if (dansLeBonus) {
+            // pendant que la réponse précédente s'affiche, ou une fois le bonus fini, il n'y a rien à valider
+            if (bonus.enCours() && !pause.isRunning()) {
+                repondre(bonus.repondre(saisie.getText()));
+            }
+            return;
+        }
         // un switch sur les trois réponses possibles : Reponse est « sealed », le compilateur vérifie qu'aucune
         // n'est oubliée. « case Reponse.DejaProposee(RegionFr region) » teste le type ET sort le champ du record
         switch (partie.proposer(saisie.getText())) {
@@ -454,6 +498,14 @@ class Fenetre {
     private List<String> suggestions(String debut) {
         if (!reglages.isAvecSuggestions()) {
             return List.of();
+        }
+        if (dansLeBonus) {
+            // mode B : les départements de la région ; pour un numéro, rien à suggérer
+            if (bonus.getQuestion() != Bonus.Question.NOM) {
+                return List.of();
+            }
+            return Departement.suggestions(debut, bonus.getRegion().getDepartements(), textes.getLangue()).stream()
+                    .map(Departement::nom).toList();
         }
         return RegionFr.suggestions(debut, partie.getMode(), textes.getLangue()).stream().map(textes::nom).toList();
     }
@@ -499,10 +551,16 @@ class Fenetre {
     }
 
     // la partie du jour vient de se terminer : les statistiques s'affichent d'elles-mêmes, comme dans Wordle.
-    // invokeLater : d'abord la fin de partie dessinée (carte, message), ensuite la boîte de dialogue
+    // invokeLater : d'abord la fin de partie dessinée (carte, message), ensuite la boîte de dialogue. Après une
+    // victoire, le bonus commence dès qu'on la ferme (showMessageDialog ne rend la main qu'une fois fermée)
     private void statistiquesEnFinDuJour() {
         if (partie == duJour && !partie.enCours()) {
-            SwingUtilities.invokeLater(this::montrerStatistiques);
+            SwingUtilities.invokeLater(() -> {
+                montrerStatistiques();
+                if (partie == duJour && bonusAJouer()) {
+                    jouerBonus();
+                }
+            });
         }
     }
 
@@ -519,7 +577,7 @@ class Fenetre {
     }
 
     private void terminer() {
-        message.setText(textes.fin(partie));
+        message.setText(messageDeFin());
         activerSaisie(false);
         // la réponse sur la carte de France (métropole) ; pour l'outre-mer, on garde l'image affichée
         Representation.carte(partie.getCible(), partie.getMode()).ifPresent(this::montrer);
@@ -552,7 +610,14 @@ class Fenetre {
         // les unités suivent la langue, tant que le joueur ne les a pas choisies lui-même
         tableau.setUnitesAnglaises(reglages.unitesAnglaises());
         afficherTitre();
-        message.setText(partie.enCours() ? textes.apresEssai(partie) : textes.fin(partie));
+        if (dansLeBonus) {
+            // (pendant l'affichage d'une réponse, le message garde sa langue le temps de passer à la question suivante)
+            if (!pause.isRunning()) {
+                afficherBonus();
+            }
+        } else {
+            message.setText(partie.enCours() ? textes.apresEssai(partie) : messageDeFin());
+        }
         afficherIndices();
     }
 
@@ -563,6 +628,9 @@ class Fenetre {
         frame.setJMenuBar(menus());
         frame.getRootPane().revalidate();
         valider.setText(textes.texte("valider"));
+        // le bouton du bonus a un nom court, à lui : celui de l'action (« Bonus des départements ») élargirait la fenêtre
+        boutonBonus.setHideActionText(true);
+        boutonBonus.setText(textes.texte("bouton.bonus"));
         indices.setBorder(BorderFactory.createTitledBorder(textes.texte("indices")));
         tableau.setTextes(textes);
         // la JTable a copié les titres des colonnes à sa création : on les lui redonne, puis on redessine l'en-tête
@@ -581,15 +649,139 @@ class Fenetre {
         frame.dispatchEvent(new WindowEvent(frame, WindowEvent.WINDOW_CLOSING));
     }
 
+    // ---- le bonus des départements ----
+
+    // le bonus existe dès que la partie du jour est gagnée (il se revoit une fois fini, depuis le menu Jeu)
+    private boolean bonusGagne() {
+        return duJour != null && duJour.getEtat() == Partie.Etat.GAGNEE;
+    }
+
+    // il reste un bonus à jouer : pas commencé, ou en cours
+    private boolean bonusAJouer() {
+        return bonusGagne() && (bonus == null || bonus.enCours());
+    }
+
+    // montre le bonus du jour dans l'état où il est : nouveau, en cours, ou fini (pour revoir la carte)
+    private void jouerBonus() {
+        // déjà dans le bonus (Ctrl+B en plein bonus) : rien à faire, et surtout pas le quitter, ce qui le passerait
+        if (dansLeBonus) {
+            return;
+        }
+        // d'abord la partie du jour (si l'on était en partie libre, ou si la date a changé)
+        jouerDuJour();
+        if (!bonusGagne()) {
+            return;
+        }
+        if (bonus == null) {
+            bonus = Bonus.duJour(duJour.getCible(), dateDuJour);
+        }
+        dansLeBonus = true;
+        carte.montrer(bonus);
+        cartes.show(cadre, DEPARTEMENTS);
+        saisie.setText("");
+        afficherBonus();
+    }
+
+    // un clic sur un département de la carte (la carte ne le transmet que quand on peut cliquer)
+    private void cliquer(Departement departement) {
+        repondre(bonus.repondre(departement));
+    }
+
+    private void repondre(ReponseBonus reponse) {
+        switch (reponse) {
+            case ReponseBonus.Inconnue() -> refuser(textes.bonusInconnu(bonus, saisie.getText()));
+            case ReponseBonus.Jouee(Tentative tentative) -> {
+                saisie.setText("");
+                carte.montrerReponse(tentative.juste() ? null : tentative.donne());
+                message.setText(textes.reponseBonus(bonus, tentative));
+                // rien à faire pendant que la réponse s'affiche : la carte est bloquée, la saisie et Passer grisés
+                saisie.setEnabled(false);
+                valider.setEnabled(false);
+                passer.setEnabled(false);
+                pause.restart();
+            }
+        }
+    }
+
+    // la réponse a été vue : la question suivante, ou la fin du bonus
+    private void apresReponse() {
+        carte.reprendre();
+        afficherBonus();
+    }
+
+    // le bouton « Passer » : le bonus s'arrête là. S'il n'a pas commencé, il reste à jouer (bouton « Bonus »)
+    private void passerBonus() {
+        pause.stop();
+        if (bonus.getTentatives().isEmpty()) {
+            dansLeBonus = false;
+            montrerPartie(duJour);
+            return;
+        }
+        bonus.passer();
+        carte.reprendre();
+        afficherBonus();
+    }
+
+    // le joueur va voir ailleurs (partie libre, partie du jour…) en plein bonus : un bonus commencé compte comme
+    // passé, avec les réponses déjà données
+    private void quitterBonus() {
+        pause.stop();
+        if (dansLeBonus && bonus.enCours() && !bonus.getTentatives().isEmpty()) {
+            bonus.passer();
+        }
+        dansLeBonus = false;
+        cartes.show(cadre, IMAGE);
+    }
+
+    // les boutons et le message du bonus, d'après son état
+    private void afficherBonus() {
+        boolean enCours = bonus.enCours();
+        // en mode CARTE, on répond en cliquant : la saisie ne sert pas
+        boolean ecrire = enCours && bonus.getQuestion() != Bonus.Question.CARTE;
+        saisie.setEnabled(ecrire);
+        valider.setEnabled(ecrire);
+        valider.setVisible(ecrire);
+        abandonner.setEnabled(false);
+        boutonAbandonner.setVisible(false);
+        passer.setEnabled(enCours);
+        boutonPasser.setVisible(enCours);
+        boutonRejouer.setVisible(!enCours);
+        boutonBonus.setVisible(false);
+        bonusDuJour.setEnabled(true);
+        message.setText(enCours ? textes.questionBonus(bonus) : textes.finBonus(bonus));
+        frame.getRootPane().setDefaultButton(ecrire ? valider : enCours ? null : boutonRejouer);
+        if (ecrire) {
+            saisie.requestFocusInWindow();
+        } else if (!enCours) {
+            boutonRejouer.requestFocusInWindow();
+        }
+    }
+
+    // le message de fin de partie ; pour la partie du jour dont le bonus est fini, suivi du score du bonus
+    private String messageDeFin() {
+        String fin = textes.fin(partie);
+        if (partie == duJour && bonus != null && !bonus.enCours()) {
+            return fin + " " + textes.resumeBonus(bonus);
+        }
+        return fin;
+    }
+
     // ---- petits utilitaires d'affichage ----
 
     private void activerSaisie(boolean active) {
         saisie.setEnabled(active);
         valider.setEnabled(active);
+        // caché plutôt que grisé quand il ne sert pas : la place va aux boutons de la fin (Partie libre, Bonus), et
+        // la fenêtre garde sa largeur
+        valider.setVisible(active);
         // grise à la fois le bouton et l'article du menu Jeu
         abandonner.setEnabled(active);
         boutonAbandonner.setVisible(active);
         boutonRejouer.setVisible(!active);
+        boutonPasser.setVisible(false);
+        // à la fin d'une partie du jour gagnée, tant que le bonus n'est pas fini
+        boutonBonus.setVisible(!active && partie == duJour && bonusAJouer());
+        bonusDuJour.setEnabled(bonusGagne());
         // la touche Entrée déclenche « Valider » pendant la partie, « Nouvelle partie » à la fin
         frame.getRootPane().setDefaultButton(active ? valider : boutonRejouer);
     }

@@ -1,11 +1,14 @@
 package fr.francle.ui;
 
+import fr.francle.donnees.Departement;
 import fr.francle.donnees.Langue;
 import fr.francle.donnees.ModeRegions;
 import fr.francle.donnees.RegionFr;
+import fr.francle.jeu.Bonus;
 import fr.francle.jeu.Indice;
 import fr.francle.jeu.Partie;
 import fr.francle.jeu.RegionDuJour;
+import fr.francle.jeu.Tentative;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -149,6 +152,53 @@ final class Textes {
             case PERDUE -> texte("perdue", reponse);
             case EN_COURS -> throw new IllegalStateException("La partie n'est pas terminée");
         };
+    }
+
+    // ---- le bonus des départements ----
+
+    // la question en cours : « Bonus 2/4 · Cliquez sur : Finistère ». Les noms des départements n'ont pas d'article
+    // (« le Finistère », « la Somme », « l'Ain », « les Landes »…) : la phrase est tournée pour s'en passer
+    String questionBonus(Bonus bonus) {
+        String nom = bonus.demande().nom();
+        return switch (bonus.getQuestion()) {
+            case CARTE -> texte("bonus.carte", bonus.rang(), bonus.total(), nom);
+            case NOM -> texte("bonus.nom", bonus.rang(), bonus.total());
+            case NUMERO -> texte("bonus.numero", nom);
+        };
+    }
+
+    // ce que la réponse donnée valait. Ratée en mode CARTE, le bon département est colorié en rouge sur la carte ;
+    // dans les autres modes, on écrit la bonne réponse
+    String reponseBonus(Bonus bonus, Tentative tentative) {
+        Departement demande = tentative.demande();
+        if (tentative.juste()) {
+            return texte("bonus.juste", demande.nom());
+        }
+        return bonus.getQuestion() == Bonus.Question.CARTE
+                ? texte("bonus.rate.carte", demande.nom())
+                : texte("bonus.rate", demande.code(), demande.nom());
+    }
+
+    String bonusInconnu(Bonus bonus, String saisie) {
+        return texte(bonus.getQuestion() == Bonus.Question.NUMERO ? "bonus.inconnuNumero" : "bonus.inconnu",
+                saisie.strip());
+    }
+
+    // le bonus est fini : terminé ou passé, avec le score. Pour un seul département, on dit simplement juste ou faux
+    String finBonus(Bonus bonus) {
+        if (bonus.total() == 1 && !bonus.getTentatives().isEmpty()) {
+            Departement departement = bonus.getOrdre().get(0);
+            return bonus.score() == 1
+                    ? texte("bonus.fin.un.trouve", departement.code())
+                    : texte("bonus.fin.un.rate", departement.code());
+        }
+        String cle = bonus.getEtat() == Bonus.Etat.PASSE ? "bonus.passe" : "bonus.fin";
+        return texte(cle, bonus.score(), bonus.total());
+    }
+
+    // le score du bonus en quelques caractères, après le message de fin de la partie : « Bonus : 3/4. »
+    String resumeBonus(Bonus bonus) {
+        return texte("bonus.resume", bonus.score(), bonus.total());
     }
 
     // les noms des régions jouables, dans l'ordre alphabétique de la langue (Île-de-France rangée à la lettre I)
