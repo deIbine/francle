@@ -3,6 +3,7 @@ package fr.francle.stats;
 import fr.francle.donnees.RegionFr;
 import fr.francle.jeu.Bonus;
 import fr.francle.jeu.Essai;
+import fr.francle.jeu.ModesDifficiles;
 import fr.francle.jeu.Partie;
 import fr.francle.jeu.RegionDuJour;
 
@@ -50,13 +51,27 @@ public record Historique(int version, List<Resultat> resultats, PartieEnCours en
     // l'historique après une action sur la partie du jour de cette date : en cours, elle est retenue telle quelle ;
     // terminée, elle devient un résultat (un seul par date) et il n'y a plus de partie en cours
     public Historique avec(LocalDate date, Partie partie) {
+        return avec(date, partie, modesDuJour(date).orElse(null));
+    }
+
+    // la même, avec les modes difficiles de la partie (fixés au premier essai), retenus pour le partage
+    public Historique avec(LocalDate date, Partie partie, ModesDifficiles modes) {
         List<RegionFr> propositions = partie.getEssais().stream().map(Essai::proposition).toList();
         if (partie.enCours()) {
-            return new Historique(VERSION, resultats, new PartieEnCours(date, propositions));
+            return new Historique(VERSION, resultats, new PartieEnCours(date, propositions, modes));
         }
         // le bonus déjà enregistré pour cette date, s'il y en a un, est gardé
         List<String> bonus = resultat(date).map(Resultat::bonus).orElse(null);
-        return remplacer(new Resultat(date, partie.getCible(), propositions, partie.getEtat(), bonus), null);
+        return remplacer(new Resultat(date, partie.getCible(), propositions, partie.getEtat(), bonus, modes), null);
+    }
+
+    // les modes difficiles de la partie du jour de cette date, terminée ou en cours, s'ils sont connus
+    public Optional<ModesDifficiles> modesDuJour(LocalDate date) {
+        Optional<ModesDifficiles> termine = resultat(date).map(Resultat::modes);
+        if (termine.isPresent()) {
+            return termine;
+        }
+        return Optional.ofNullable(enCours).filter(partie -> partie.date().equals(date)).map(PartieEnCours::modes);
     }
 
     // l'historique après une réponse au bonus de la partie du jour gagnée à cette date (ou après l'avoir passé).
@@ -68,7 +83,8 @@ public record Historique(int version, List<Resultat> resultats, PartieEnCours en
             return this;
         }
         List<String> reponses = bonus.getTentatives().stream().map(tentative -> tentative.donne().code()).toList();
-        Resultat avecBonus = new Resultat(date, resultat.region(), resultat.propositions(), resultat.etat(), reponses);
+        Resultat avecBonus = new Resultat(date, resultat.region(), resultat.propositions(), resultat.etat(), reponses,
+                resultat.modes());
         return remplacer(avecBonus, enCours);
     }
 

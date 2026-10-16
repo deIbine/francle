@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.Collator;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -94,6 +95,12 @@ final class Textes {
         return unitesAnglaises
                 ? milliers(Math.round(kilometresCarres / (KM_PAR_MILE * KM_PAR_MILE))) + " mi²"
                 : milliers(kilometresCarres) + " km²";
+    }
+
+    // « 03:07:09 » : une durée en heures, minutes, secondes, jamais négative (le compte à rebours)
+    String duree(Duration duree) {
+        long secondes = Math.max(0, duree.toSeconds());
+        return String.format("%02d:%02d:%02d", secondes / 3600, secondes / 60 % 60, secondes % 60);
     }
 
     // « 76 % » en français, « 76% » en anglais

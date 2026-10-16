@@ -3,6 +3,7 @@ package fr.francle.stats;
 import fr.francle.donnees.Departement;
 import fr.francle.donnees.RegionFr;
 import fr.francle.jeu.Bonus;
+import fr.francle.jeu.ModesDifficiles;
 import fr.francle.jeu.Partie;
 
 import java.time.LocalDate;
@@ -18,9 +19,12 @@ rejouant (rejouerBonus). Un fichier écrit avant la Phase 9 n'a pas ce champ : J
 bonus », ce qui est exactement vrai. Et une version plus ancienne du jeu qui lirait un fichier récent ignorerait ce
 champ inconnu (FAIL_ON_UNKNOWN_PROPERTIES est désactivé dans Sauvegarde) : le format reste lisible dans les deux
 sens, sans changer de numéro de version.
+
+modes (depuis la Phase 9 aussi, repris de la version web) : les modes difficiles fixés au premier essai, pour le
+partage. Même principe : null dans un ancien fichier, ce qui se lit « sans mode difficile connu ».
  */
 public record Resultat(LocalDate date, RegionFr region, List<RegionFr> propositions, Partie.Etat etat,
-                       List<String> bonus) {
+                       List<String> bonus, ModesDifficiles modes) {
 
     // constructeur compact : il s'exécute avant de remplir les champs. List.copyOf fait une copie non modifiable,
     // pour que personne ne puisse changer un résultat après coup (et refuse une liste absente ou avec des trous)
@@ -29,9 +33,14 @@ public record Resultat(LocalDate date, RegionFr region, List<RegionFr> propositi
         bonus = bonus == null ? null : List.copyOf(bonus);
     }
 
-    // une partie sans bonus (perdue, abandonnée, ou gagnée sans avoir joué le bonus)
+    // une partie sans bonus ni mode connu (perdue, abandonnée, ou gagnée sans avoir joué le bonus)
     public Resultat(LocalDate date, RegionFr region, List<RegionFr> propositions, Partie.Etat etat) {
-        this(date, region, propositions, etat, null);
+        this(date, region, propositions, etat, null, null);
+    }
+
+    public Resultat(LocalDate date, RegionFr region, List<RegionFr> propositions, Partie.Etat etat,
+                    List<String> bonus) {
+        this(date, region, propositions, etat, bonus, null);
     }
 
     public boolean victoire() {

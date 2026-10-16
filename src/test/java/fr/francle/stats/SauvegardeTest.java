@@ -84,7 +84,8 @@ class SauvegardeTest {
     void bonus() throws IOException {
         Sauvegarde<Historique> sauvegarde = Sauvegarde.historique(dossier.resolve("historique.json"));
         Historique historique = new Historique(Historique.VERSION, List.of(new Resultat(JOUR, RegionFr.BRETAGNE,
-                List.of(RegionFr.BRETAGNE), Partie.Etat.GAGNEE, List.of("29", "22"))), null);
+                List.of(RegionFr.BRETAGNE), Partie.Etat.GAGNEE, List.of("29", "22"),
+                new fr.francle.jeu.ModesDifficiles(false, true))), null);
 
         sauvegarde.enregistrer(historique);
 

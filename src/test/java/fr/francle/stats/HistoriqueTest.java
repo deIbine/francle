@@ -4,6 +4,7 @@ import fr.francle.donnees.Departement;
 import fr.francle.donnees.RegionFr;
 import fr.francle.jeu.Bonus;
 import fr.francle.jeu.Essai;
+import fr.francle.jeu.ModesDifficiles;
 import fr.francle.jeu.Partie;
 import fr.francle.jeu.RegionDuJour;
 
@@ -211,6 +212,27 @@ class HistoriqueTest {
         Historique historique = Historique.vide().avec(JOUR, partie).avecBonus(JOUR, bonus).avec(JOUR, partie);
 
         assertTrue(historique.bonusDuJour(JOUR).isPresent());
+    }
+
+    @Test
+    @DisplayName("Les modes difficiles sont retenus avec la partie, en cours puis terminée, et le bonus les garde")
+    void modes() {
+        ModesDifficiles tournee = new ModesDifficiles(true, false);
+        Partie partie = Historique.vide().partieDuJour(JOUR);
+        partie.proposer(autre(0).getNom());
+
+        Historique enCours = Historique.vide().avec(JOUR, partie, tournee);
+        assertEquals(Optional.of(tournee), enCours.modesDuJour(JOUR));
+
+        partie.proposer(CIBLE.getNom());
+        // sans les redonner, avec(...) reprend ceux déjà retenus
+        Historique gagnee = enCours.avec(JOUR, partie);
+        assertEquals(Optional.of(tournee), gagnee.modesDuJour(JOUR));
+
+        Bonus bonus = Bonus.duJour(CIBLE, JOUR);
+        bonus.repondre(bonus.demande());
+        assertEquals(Optional.of(tournee), gagnee.avecBonus(JOUR, bonus).modesDuJour(JOUR));
+        assertEquals(Optional.empty(), Historique.vide().modesDuJour(JOUR));
     }
 
     @Test

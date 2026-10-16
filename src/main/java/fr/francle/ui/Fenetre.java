@@ -6,6 +6,7 @@ import fr.francle.donnees.ModeRegions;
 import fr.francle.donnees.RegionFr;
 import fr.francle.jeu.Bonus;
 import fr.francle.jeu.Indice;
+import fr.francle.jeu.ModesDifficiles;
 import fr.francle.jeu.Partie;
 import fr.francle.jeu.Reponse;
 import fr.francle.jeu.ReponseBonus;
@@ -22,12 +23,15 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -98,6 +102,9 @@ class Fenetre {
     private final Action aide = action("action.aide", KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), this::montrerAide);
     private final Action actionBonus = action("action.bonus", KeyStroke.getKeyStroke(KeyEvent.VK_B, RACCOURCI), this::jouerBonus);
     private final Action passer = action("action.passer", null, this::passerBonus);
+    // Ctrl+Maj+C : Ctrl+C seul copie le texte sélectionné dans le champ de saisie
+    private final Action partager = action("action.partager",
+            KeyStroke.getKeyStroke(KeyEvent.VK_C, RACCOURCI | KeyEvent.SHIFT_DOWN_MASK), this::partager);
 
     private final JFrame frame = new JFrame("Francle");
     // les deux « cartes » du CardLayout, et leurs noms
@@ -138,6 +145,10 @@ class Fenetre {
     // revenir après une partie libre. Les deux désignent le même objet quand la partie affichée est celle du jour
     private Bonus bonus;
     private Bonus bonusDuJour;
+    // les modes difficiles de la partie affichée, fixés à son premier essai (null avant : ce sont alors ceux des
+    // réglages), et ceux de la partie du jour, enregistrés avec elle pour le partage
+    private ModesDifficiles modes;
+    private ModesDifficiles modesDuJour;
     // vrai quand la fenêtre montre le bonus (la carte des départements) plutôt que la partie
     private boolean dansLeBonus;
     // après chaque réponse du bonus, le temps de voir si c'était juste, avant la question suivante. Un Timer de
@@ -257,6 +268,7 @@ class Fenetre {
         jeu.add(actionBonus);
         jeu.addSeparator();
         jeu.add(statistiques);
+        jeu.add(partager);
         jeu.add(liste);
         jeu.addSeparator();
         jeu.add(quitter);
@@ -284,12 +296,12 @@ class Fenetre {
             reglages.setAvecImages(images.isSelected());
             retenirReglages();
             tournee.setEnabled(reglages.isAvecImages());
-            prevenirProchainePartie();
+            silhouetteChangee();
         });
         tournee.addActionListener(e -> {
             reglages.setSilhouetteTournee(tournee.isSelected());
             retenirReglages();
-            prevenirProchainePartie();
+            silhouetteChangee();
         });
         JCheckBoxMenuItem avecListe = new JCheckBoxMenuItem(textes.texte("parametre.liste"), reglages.isAvecListe());
         avecListe.addActionListener(e -> {
@@ -429,6 +441,7 @@ class Fenetre {
             duJour = historique.partieDuJour(aujourdhui);
             // le bonus déjà joué ce jour-là (fini), ou null s'il reste à jouer
             bonusDuJour = historique.bonusDuJour(aujourdhui).orElse(null);
+            modesDuJour = historique.modesDuJour(aujourdhui).orElse(null);
         }
         montrerPartie(duJour);
     }
@@ -447,6 +460,7 @@ class Fenetre {
         // une autre partie : son bonus (celui du jour, ou aucun pour une nouvelle partie libre)
         if (aMontrer != partie) {
             bonus = aMontrer == duJour ? bonusDuJour : null;
+            modes = aMontrer == duJour ? modesDuJour : null;
         }
         partie = aMontrer;
         afficherTitre();
@@ -458,7 +472,7 @@ class Fenetre {
             terminer();
             return;
         }
-        montrer(Representation.silhouette(partie.getCible(), reglages.isAvecImages()), angleSilhouette());
+        montrerSilhouette();
         message.setText(textes.apresEssai(partie));
         activerSaisie(true);
         saisie.requestFocusInWindow();
@@ -490,6 +504,13 @@ class Fenetre {
     }
 
     private void essaiJoue() {
+        // le premier essai fixe les modes difficiles de la partie (comme dans la version web)
+        if (modes == null) {
+            modes = modesChoisis();
+            if (partie == duJour) {
+                modesDuJour = modes;
+            }
+        }
         tableau.essaiJoue();
         saisie.setText("");
         afficherIndices();
@@ -541,7 +562,7 @@ class Fenetre {
         if (partie != duJour) {
             return;
         }
-        historique = historique.avec(dateDuJour, duJour);
+        historique = historique.avec(dateDuJour, duJour, modesDuJour);
         enregistrerHistorique();
     }
 
@@ -605,8 +626,47 @@ class Fenetre {
                 .filter(resultat -> resultat.date().equals(aujourdhui) && resultat.victoire())
                 .mapToInt(resultat -> resultat.propositions().size())
                 .findFirst().orElse(0);
-        JOptionPane.showMessageDialog(frame, FenetreStatistiques.panneau(stats, essaisDuJour, textes),
-                textes.texte("action.statistiques"), JOptionPane.PLAIN_MESSAGE);
+        // la partie du jour finie : le compte à rebours jusqu'à la suivante, et un bouton pour partager le résultat
+        boolean fini = duJourFini();
+        JPanel panneau = FenetreStatistiques.panneau(stats, essaisDuJour, textes, fini ? this::jusqueMinuit : null);
+        if (!fini) {
+            JOptionPane.showMessageDialog(frame, panneau, textes.texte("action.statistiques"), JOptionPane.PLAIN_MESSAGE);
+            return;
+        }
+        String partagerTexte = textes.texte("statistiques.partager");
+        String fermer = textes.texte("fermer");
+        int choix = JOptionPane.showOptionDialog(frame, panneau, textes.texte("action.statistiques"),
+                JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, new Object[]{partagerTexte, fermer}, fermer);
+        if (choix == 0) {
+            partager();
+        }
+    }
+
+    // la partie du jour d'aujourd'hui est finie (gagnée, perdue ou abandonnée) : il y a un résultat à partager
+    private boolean duJourFini() {
+        return duJour != null && !duJour.enCours() && LocalDate.now(horloge).equals(dateDuJour);
+    }
+
+    // le temps qu'il reste jusqu'à minuit, l'heure de la région suivante
+    private Duration jusqueMinuit() {
+        LocalDateTime maintenant = LocalDateTime.now(horloge);
+        return Duration.between(maintenant, maintenant.toLocalDate().plusDays(1).atStartOfDay());
+    }
+
+    // copie le résultat de la partie du jour dans le presse-papiers, prêt à être collé dans une messagerie. Le
+    // presse-papiers est celui du système : une autre application peut le tenir un instant, d'où l'erreur possible
+    private void partager() {
+        if (!duJourFini()) {
+            return;
+        }
+        String texte = Partage.texte(duJour, RegionDuJour.numero(dateDuJour),
+                modesDuJour != null ? modesDuJour : ModesDifficiles.AUCUN, bonusDuJour, textes);
+        try {
+            Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(texte), null);
+            message.setText(textes.texte("partage.copie"));
+        } catch (IllegalStateException e) {
+            message.setText(textes.texte("partage.erreur"));
+        }
     }
 
     private void terminer() {
@@ -788,6 +848,7 @@ class Fenetre {
         boutonRejouer.setVisible(!enCours);
         boutonBonus.setVisible(false);
         actionBonus.setEnabled(true);
+        partager.setEnabled(duJourFini());
         message.setText(enCours ? textes.questionBonus(bonus) : textes.finBonus(bonus));
         frame.getRootPane().setDefaultButton(ecrire ? valider : enCours ? null : boutonRejouer);
         if (ecrire) {
@@ -833,6 +894,7 @@ class Fenetre {
         // à la fin d'une partie gagnée, tant que le bonus n'est pas fini
         boutonBonus.setVisible(!active && bonusAJouer());
         actionBonus.setEnabled(bonusGagne());
+        partager.setEnabled(duJourFini());
         // la touche Entrée déclenche « Valider » pendant la partie, « Nouvelle partie » à la fin
         frame.getRootPane().setDefaultButton(active ? valider : boutonRejouer);
     }
@@ -846,10 +908,35 @@ class Fenetre {
         image.setIcon(icone);
     }
 
-    // de combien tourner la silhouette : 0 si l'option est décochée ou s'il n'y a pas de silhouette ; sinon l'angle de
+    // la silhouette de la partie en cours (ou la France et un point d'interrogation, en mode caché), tournée ou non
+    private void montrerSilhouette() {
+        montrer(Representation.silhouette(partie.getCible(), !modesAffiches().cachee()), angleSilhouette());
+    }
+
+    // les modes que donneraient les réglages actuels
+    private ModesDifficiles modesChoisis() {
+        return new ModesDifficiles(reglages.isSilhouetteTournee(), !reglages.isAvecImages());
+    }
+
+    // les modes de la partie : fixés si elle a commencé, sinon ceux des réglages (qui comptent donc tout de suite)
+    private ModesDifficiles modesAffiches() {
+        return modes != null ? modes : modesChoisis();
+    }
+
+    // la silhouette cachée ou tournée a été changée dans les Paramètres. Avant le premier essai, cela compte tout de
+    // suite ; ensuite, pour la prochaine partie seulement (les modes sont fixés)
+    private void silhouetteChangee() {
+        if (partie.enCours() && modes == null && !dansLeBonus) {
+            montrerSilhouette();
+        } else {
+            prevenirProchainePartie();
+        }
+    }
+
+    // de combien tourner la silhouette : 0 hors du mode tourné (ou s'il n'y a pas de silhouette) ; sinon l'angle de
     // la partie du jour (le même pour tous) ou celui tiré pour la partie libre
     private int angleSilhouette() {
-        if (!reglages.isAvecImages() || !reglages.isSilhouetteTournee()) {
+        if (!modesAffiches().tournee()) {
             return 0;
         }
         return partie == duJour ? RegionDuJour.angle(dateDuJour) : angleLibre;
