@@ -50,6 +50,17 @@ class BonusTest {
     }
 
     @Test
+    @DisplayName("Partie libre : un ordre au hasard, avec tous les départements (anciennes régions comprises)")
+    void auHasard() {
+        Bonus bonus = Bonus.auHasard(RegionFr.LANGUEDOC_ROUSSILLON, new java.util.Random(1));
+
+        assertEquals(new HashSet<>(RegionFr.LANGUEDOC_ROUSSILLON.getDepartements()), new HashSet<>(bonus.getOrdre()));
+        assertEquals(Bonus.MODE, bonus.getQuestion());
+        // la même graine donne le même ordre : le hasard est reproductible quand on le veut (ici, pour le test)
+        assertEquals(bonus.getOrdre(), Bonus.auHasard(RegionFr.LANGUEDOC_ROUSSILLON, new java.util.Random(1)).getOrdre());
+    }
+
+    @Test
     @DisplayName("Un ordre qui n'est pas celui des départements de la région est refusé")
     void ordreInvalide() {
         assertThrows(IllegalArgumentException.class,

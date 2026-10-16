@@ -12,8 +12,8 @@ import java.util.Optional;
 import java.util.Random;
 
 /*
-Le bonus des départements, après une victoire en partie du jour : retrouver tous les départements de la région, un par
-un, dans un ordre tiré de la date. Une seule réponse par département : juste ou fausse, on passe au suivant.
+Le bonus des départements, après chaque victoire (partie du jour ou partie libre) : retrouver tous les départements de
+la région, un par un, dans un ordre tiré de la date pour la partie du jour (le même pour tous), au hasard sinon. Une seule réponse par département : juste ou fausse, on passe au suivant.
 Comme Partie, sans aucun affichage : la fenêtre transmet les réponses du joueur et affiche ce que le bonus répond.
 
 Trois sortes de questions :
@@ -57,6 +57,13 @@ public class Bonus {
     // le bonus de la partie du jour : le même ordre pour tout le monde, et le même après une relance du jeu
     public static Bonus duJour(RegionFr region, LocalDate date) {
         return new Bonus(region, ordre(region, date), MODE);
+    }
+
+    // le bonus d'une partie libre : un ordre au hasard, à chaque fois différent (rien n'est enregistré)
+    public static Bonus auHasard(RegionFr region, Random hasard) {
+        List<Departement> ordre = new ArrayList<>(region.getDepartements());
+        Collections.shuffle(ordre, hasard);
+        return new Bonus(region, ordre, MODE);
     }
 
     // les départements mélangés avec une graine tirée de la date, comme l'angle de la silhouette (RegionDuJour.angle).

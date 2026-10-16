@@ -96,7 +96,7 @@ class Fenetre {
     private final Action statistiques = action("action.statistiques", KeyStroke.getKeyStroke(KeyEvent.VK_T, RACCOURCI), this::montrerStatistiques);
     private final Action quitter = action("action.quitter", KeyStroke.getKeyStroke(KeyEvent.VK_Q, RACCOURCI), this::quitter);
     private final Action aide = action("action.aide", KeyStroke.getKeyStroke(KeyEvent.VK_F1, 0), this::montrerAide);
-    private final Action bonusDuJour = action("action.bonus", KeyStroke.getKeyStroke(KeyEvent.VK_B, RACCOURCI), this::jouerBonus);
+    private final Action actionBonus = action("action.bonus", KeyStroke.getKeyStroke(KeyEvent.VK_B, RACCOURCI), this::jouerBonus);
     private final Action passer = action("action.passer", null, this::passerBonus);
 
     private final JFrame frame = new JFrame("Francle");
@@ -112,9 +112,10 @@ class Fenetre {
     private final JButton boutonAbandonner = new JButton(abandonner);
     // à la fin de la partie, « Partie libre » prend la place d'« Abandonner »
     private final JButton boutonRejouer = new JButton(partieLibre);
-    // « Passer » pendant le bonus (à la place d'« Abandonner ») ; « Bonus » à la fin d'une partie du jour gagnée
+    // « Passer » pendant le bonus (à la place d'« Abandonner ») ; « Bonus » à la fin d'une partie gagnée dont le
+    // bonus a été passé avant toute réponse
     private final JButton boutonPasser = new JButton(passer);
-    private final JButton boutonBonus = new JButton(bonusDuJour);
+    private final JButton boutonBonus = new JButton(actionBonus);
     private final JLabel message = new JLabel(" ", SwingConstants.CENTER);
     private final JTextArea indices = new JTextArea(Indice.values().length, 30);
 
@@ -133,8 +134,10 @@ class Fenetre {
     private int angleLibre;
     private static final Random HASARD = new Random();
 
-    // le bonus de la partie du jour : null tant qu'il n'a pas commencé
+    // le bonus de la partie affichée (null tant qu'il n'a pas commencé), et celui de la partie du jour, gardé pour y
+    // revenir après une partie libre. Les deux désignent le même objet quand la partie affichée est celle du jour
     private Bonus bonus;
+    private Bonus bonusDuJour;
     // vrai quand la fenêtre montre le bonus (la carte des départements) plutôt que la partie
     private boolean dansLeBonus;
     // après chaque réponse du bonus, le temps de voir si c'était juste, avant la question suivante. Un Timer de
@@ -251,7 +254,7 @@ class Fenetre {
         jeu.add(partieDuJour);
         jeu.add(partieLibre);
         jeu.add(abandonner);
-        jeu.add(bonusDuJour);
+        jeu.add(actionBonus);
         jeu.addSeparator();
         jeu.add(statistiques);
         jeu.add(liste);
@@ -425,7 +428,7 @@ class Fenetre {
             // neuve, en cours ou terminée selon l'historique : relancer le jeu ne donne pas d'essais en plus
             duJour = historique.partieDuJour(aujourdhui);
             // le bonus déjà joué ce jour-là (fini), ou null s'il reste à jouer
-            bonus = historique.bonusDuJour(aujourdhui).orElse(null);
+            bonusDuJour = historique.bonusDuJour(aujourdhui).orElse(null);
         }
         montrerPartie(duJour);
     }
@@ -441,6 +444,10 @@ class Fenetre {
     // c'est ce qui permet de reprendre la partie du jour sans rien avoir mémorisé d'autre
     private void montrerPartie(Partie aMontrer) {
         quitterBonus();
+        // une autre partie : son bonus (celui du jour, ou aucun pour une nouvelle partie libre)
+        if (aMontrer != partie) {
+            bonus = aMontrer == duJour ? bonusDuJour : null;
+        }
         partie = aMontrer;
         afficherTitre();
         tableau.setPartie(partie);
@@ -490,7 +497,12 @@ class Fenetre {
             message.setText(textes.apresEssai(partie));
         } else {
             terminer();
-            statistiquesEnFinDuJour();
+            if (partie == duJour) {
+                statistiquesEnFinDuJour();
+            } else if (bonusAJouer()) {
+                // une partie libre gagnée : le bonus tout de suite (pas de statistiques pour elle)
+                jouerBonus();
+            }
         }
     }
 
@@ -531,6 +543,10 @@ class Fenetre {
     // après chaque réponse au bonus, et quand on le passe : comme pour la partie, tout de suite. Fermer le jeu en plein
     // bonus ne fait donc rien perdre : au lancement suivant, il compte comme passé, avec les réponses déjà données
     private void retenirBonus() {
+        // le bonus d'une partie libre n'est pas enregistré, comme la partie elle-même
+        if (partie != duJour) {
+            return;
+        }
         historique = historique.avecBonus(dateDuJour, bonus);
         enregistrerHistorique();
     }
@@ -663,9 +679,10 @@ class Fenetre {
 
     // ---- le bonus des départements ----
 
-    // le bonus existe dès que la partie du jour est gagnée (il se revoit une fois fini, depuis le menu Jeu)
+    // le bonus existe dès que la partie affichée est gagnée, partie du jour ou partie libre (il se revoit une fois
+    // fini, depuis le menu Jeu)
     private boolean bonusGagne() {
-        return duJour != null && duJour.getEtat() == Partie.Etat.GAGNEE;
+        return partie != null && partie.getEtat() == Partie.Etat.GAGNEE;
     }
 
     // il reste un bonus à jouer : pas commencé, ou en cours
@@ -673,19 +690,22 @@ class Fenetre {
         return bonusGagne() && (bonus == null || bonus.enCours());
     }
 
-    // montre le bonus du jour dans l'état où il est : nouveau, en cours, ou fini (pour revoir la carte)
+    // montre le bonus de la partie affichée dans l'état où il est : nouveau, en cours, ou fini (pour revoir la carte).
+    // Il commence de lui-même après chaque victoire : à la fermeture des statistiques pour la partie du jour, tout de
+    // suite pour une partie libre
     private void jouerBonus() {
         // déjà dans le bonus (Ctrl+B en plein bonus) : rien à faire, et surtout pas le quitter, ce qui le passerait
-        if (dansLeBonus) {
-            return;
-        }
-        // d'abord la partie du jour (si l'on était en partie libre, ou si la date a changé)
-        jouerDuJour();
-        if (!bonusGagne()) {
+        if (dansLeBonus || !bonusGagne()) {
             return;
         }
         if (bonus == null) {
-            bonus = Bonus.duJour(duJour.getCible(), dateDuJour);
+            // la partie du jour : le même ordre pour tous, retrouvé après une relance ; une partie libre : au hasard
+            if (partie == duJour) {
+                bonus = Bonus.duJour(duJour.getCible(), dateDuJour);
+                bonusDuJour = bonus;
+            } else {
+                bonus = Bonus.auHasard(partie.getCible(), HASARD);
+            }
         }
         dansLeBonus = true;
         carte.montrer(bonus);
@@ -727,7 +747,7 @@ class Fenetre {
         pause.stop();
         if (bonus.getTentatives().isEmpty()) {
             dansLeBonus = false;
-            montrerPartie(duJour);
+            montrerPartie(partie);
             return;
         }
         bonus.passer();
@@ -762,7 +782,7 @@ class Fenetre {
         boutonPasser.setVisible(enCours);
         boutonRejouer.setVisible(!enCours);
         boutonBonus.setVisible(false);
-        bonusDuJour.setEnabled(true);
+        actionBonus.setEnabled(true);
         message.setText(enCours ? textes.questionBonus(bonus) : textes.finBonus(bonus));
         frame.getRootPane().setDefaultButton(ecrire ? valider : enCours ? null : boutonRejouer);
         if (ecrire) {
@@ -775,7 +795,7 @@ class Fenetre {
     // le message de fin de partie ; pour la partie du jour dont le bonus est fini, suivi du score du bonus
     private String messageDeFin() {
         String fin = textes.fin(partie);
-        if (partie == duJour && bonus != null && !bonus.enCours()) {
+        if (bonus != null && !bonus.enCours()) {
             return fin + " " + textes.resumeBonus(bonus);
         }
         return fin;
@@ -794,9 +814,9 @@ class Fenetre {
         boutonAbandonner.setVisible(active);
         boutonRejouer.setVisible(!active);
         boutonPasser.setVisible(false);
-        // à la fin d'une partie du jour gagnée, tant que le bonus n'est pas fini
-        boutonBonus.setVisible(!active && partie == duJour && bonusAJouer());
-        bonusDuJour.setEnabled(bonusGagne());
+        // à la fin d'une partie gagnée, tant que le bonus n'est pas fini
+        boutonBonus.setVisible(!active && bonusAJouer());
+        actionBonus.setEnabled(bonusGagne());
         // la touche Entrée déclenche « Valider » pendant la partie, « Nouvelle partie » à la fin
         frame.getRootPane().setDefaultButton(active ? valider : boutonRejouer);
     }
