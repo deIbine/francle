@@ -643,8 +643,14 @@ questions ouvertes ; ses réponses (plus bas) s'appliqueront au web.
   en emoji dans le tableau (elles le sont dans le partage).
 - Un test vérifie maintenant que chaque clé de texte écrite dans le code existe dans les fichiers de textes.
 
-**Reste à faire, côté web** : reporter ces réponses dans le plan de [deIbine/francle-web](https://github.com/deIbine/francle-web)
-(étape web.7), y compris le bonus après **chaque** victoire, puis y faire le bonus.
+**Côté web** : ces réponses sont reportées dans le plan de [deIbine/francle-web](https://github.com/deIbine/francle-web)
+(étape web.7.0.1, le 17 octobre 2026), y compris le bonus après **chaque** victoire ; reste à y faire le bonus.
+
+**Un écart voulu entre les deux versions : la reprise** (décidé le 17 octobre 2026). Ici, un bonus commencé puis
+quitté compte comme joué avec son score partiel, **sans reprise**. Dans la version web, un bonus du jour commencé
+puis quitté (page fermée, onglet rechargé) **reprend là où il en était** au retour : dans un navigateur, fermer un
+onglet par erreur arrive souvent. « Passer » un bonus commencé le termine dans les deux versions. Le Java reste tel
+quel.
 
 **Ce que tu as appris :** dessiner soi-même en Swing (`paintComponent`, `Graphics2D`, `Path2D`), les clics de
 souris (`MouseListener`) et le test « ce point est-il dans cette forme ? » (`Shape.contains`), le zoom avec
