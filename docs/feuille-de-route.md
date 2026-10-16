@@ -18,7 +18,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 6 | Anciennes régions complètes, réglages enregistrés, options | ✅ Fait (PR #31) |
 | 7 | Version web | ✅ Devenue un projet à part : [deIbine/francle-web](https://github.com/deIbine/francle-web) |
 | 8 | Reprendre les nouveautés de la version web | ✅ Fait (PR #32) |
-| 9 | Le bonus des départements | 📝 Prévue (plan validé le 16 octobre 2026, rien de commencé) |
+| 9 | Le bonus des départements | ✅ Fait (PR #34) |
 
 ---
 
@@ -570,68 +570,61 @@ lieu d'onglets. Les messages d'erreur de fichier illisible (`SauvegardeIllisible
 
 ---
 
-## Phase 9 : le bonus des départements 📝
+## Phase 9 : le bonus des départements ✅
 
 **Pourquoi.** Idée du 16 octobre 2026 : après une victoire, en bonus, faire deviner **tous les départements** de la
-région trouvée. Le bonus sera fait **en entier dans les deux projets**, **d'abord ici**, puis dans la version web
-(son étape web.7, plan dans `docs/plan.md` de [deIbine/francle-web](https://github.com/deIbine/francle-web)). Le
-Java sert à **trancher en jouant** les questions encore ouvertes (plus bas) ; ses réponses s'appliqueront au web.
-
-**Ce qui existe déjà.** `outils/generer_images.py` lit déjà `departements-avec-outre-mer.geojson` et sait quels
-départements forment chaque région, pour les deux époques. La réforme de 2016 a regroupé les régions **sans toucher
-aux départements** : une seule liste de 101 départements, groupée de deux façons. Noms et numéros sont dans le
-GeoJSON (`code`, `nom`). En anglais, on garde les noms français des départements.
+région trouvée. Le bonus est fait **d'abord ici**, puis le sera dans la version web (son étape web.7, plan dans
+`docs/plan.md` de [deIbine/francle-web](https://github.com/deIbine/francle-web)). Le Java a servi à trancher les
+questions ouvertes ; ses réponses (plus bas) s'appliqueront au web.
 
 **Décisions** (le 16 octobre 2026, communes aux deux projets) :
 
 - **Seulement après une victoire**, en **partie du jour** seulement.
-- **Tous les départements** de la région : ce n'est pas censé être simple. Une région à un seul département
-  (outre-mer) a un bonus d'**une seule question**.
-- Deux modes programmés : **A. cliquer sur la carte** (« Où est le Finistère ? ») et **B. nommer le département
-  coloré** (saisie avec autocomplétion). **A est le mode par défaut** ; B est une option qu'on active de notre côté,
-  sans la montrer aux joueurs.
-- **Île-de-France** : un **zoom** sur Paris et la petite couronne (75, 92, 93, 94).
+- **Tous les départements** de la région, dans un ordre tiré de la date (le même pour tous).
+- Deux modes programmés : **A. cliquer sur la carte** (« Cliquez sur : Finistère ») et **B. nommer le département
+  colorié** (saisie avec suggestions). **A est le mode des joueurs** ; B se choisit dans le code
+  (`Bonus.MODE = Question.NOM`), sans le montrer aux joueurs.
+- **Île-de-France** : un **encart zoomé** sur Paris et la petite couronne (75, 92, 93, 94).
 - Le bonus est **enregistré** et compte dans les **statistiques** (pas de partage dans le Java).
-- **Contours** : le script écrit **un fichier de contours par région**, chaque département étant un tracé à part,
-  avec son numéro. Il faut des coordonnées, pas des PNG, pour savoir quel département a été cliqué.
-- **Phase complète** (et non un essai jetable) : Claude code et explique ; une PR, un commit par étape, comme la
-  phase 8 ; leçons dans [lecons.md](lecons.md).
+- **Contours** : le script écrit **un fichier de contours par région** (`resources/departements/<région>.json`),
+  chaque département étant un tracé à part, avec son numéro.
 
-**Découpage proposé** (à présenter de nouveau avant de commencer) :
+**Réponses aux questions ouvertes** (le 16 octobre 2026, avant de commencer) :
 
-1. **Les données** : les départements (numéro, nom) et `RegionFr` qui connaît ses départements pour chaque époque.
-   Une seule source pour la liste région -> départements, aujourd'hui dans le script Python. Tests : 101
-   départements, chacun dans une seule région par époque, aucun oubli.
-2. **Les contours** : `outils/generer_images.py` écrit `src/main/resources/departements/<région>.json` (tracés
-   simplifiés) et le cadre du zoom de l'Île-de-France.
-3. **Les règles** : une classe `Bonus` aux valeurs non modifiables, comme `Partie` (questions, ordre tiré de la date,
-   réponse, score, fin). Tests.
-4. **L'affichage** : un `JComponent` qui dessine la carte (chaque département est un `Path2D`), trouve le
-   département cliqué (`Shape.contains`), montre la réponse juste ou fausse, puis la question suivante ; le zoom de
-   l'Île-de-France ; lancé après une victoire en partie du jour. Le mode B, caché, reprend `Autocompletion`.
-5. **Enregistrement et statistiques** : le bonus enregistré avec la partie (`Resultat`, `PartieEnCours`), les
-   anciens fichiers restent lisibles ; de nouvelles statistiques dans la fenêtre.
-6. **Les finitions** : textes FR et EN (`textes_*.properties`, `aide_*.txt`), leçons, cette feuille de route, et
-   les réponses aux questions ouvertes reportées dans le plan du web.
+1. **Essais par département** : **un seul** ; juste ou faux, on montre la réponse (vert ou rouge) et on passe au
+   suivant.
+2. **Régions à un seul département** (outre-mer) : on demande **le numéro** (« Quel est le numéro de : Guadeloupe ? »).
+3. **Où se joue le bonus** : dans la **fenêtre principale**, à la place de la silhouette.
+4. **Passer le bonus** : un bouton **« Passer »**. Un bonus **commencé** (au moins une réponse) puis passé ou quitté,
+   même en fermant le jeu, **compte comme joué** avec son score partiel, **sans reprise**. Passé avant toute réponse,
+   il n'a pas commencé : il reste à jouer.
+5. **Les statistiques** : le **score moyen** (moyenne des pourcentages de départements trouvés) et le nombre de bonus.
+6. **Choisir A ou B de notre côté** : une **constante dans le code** (`Bonus.MODE`).
+7. **Mode B** : le **nom ou le numéro** sont acceptés (« 29 »).
+8. **Anciennes régions** : leurs contours sont **générés dès maintenant** (même script).
+9. (Propre au web) **Le partage** : un **score** (« 🗺️ 9/12 »).
 
-**Questions encore ouvertes** (à trancher en jouant ; proposé pour commencer : un clic par département, le numéro en
-outre-mer) :
+**Ce qui a été fait** (PR [#34](https://github.com/deIbine/francle/pull/34), un commit par étape) :
 
-1. **Essais par département** : un seul clic (juste ou faux, puis on montre la réponse), ou plusieurs (par exemple
-   3, un point seulement au premier) ?
-2. **Régions à un seul département** : en mode A, cliquer le seul département de la carte est gratuit. Proposé :
-   demander **le numéro** (« Quel est le numéro de la Guadeloupe ? ») ou **le nom**.
-3. **Où se joue le bonus** : dans une fenêtre à part, ou dans la fenêtre principale, à la place de la silhouette ?
-4. **Passer le bonus** : peut-on le passer ? Un bonus commencé puis abandonné compte-t-il ?
-5. **Les statistiques** : lesquelles ? Score moyen, nombre de bonus parfaits, pourcentage de départements trouvés ?
-6. **Choisir A ou B de notre côté** : une constante dans le code, ou une option cachée (par exemple
-   `-Dfrancle.bonus=nom` au lancement) ?
-7. **Mode B** : accepter aussi les numéros (« 29 ») ?
-8. **Anciennes régions** : le bonus n'existe qu'en partie du jour, qui ne joue que les nouvelles régions. Générer
-   quand même les contours des anciennes (même script, presque gratuit), ou attendre d'en avoir besoin ?
-9. (Propre au web) **Le partage** : un score (« 🗺️ 9/12 ») ou une ligne de carrés ?
+1. **Les données** : `resources/departements/departements.json` (101 départements, ceux de chaque région), lu par le
+   Java (`Departement`, `Decoupage`, `RegionFr.getDepartements()`) **et** par le script Python, qui n'a plus sa propre
+   liste.
+2. **Les contours** : `outils/generer_images.py` écrit un fichier par région (35), simplifié par Douglas-Peucker,
+   trous compris, et le cadre du zoom de l'Île-de-France.
+3. **Les règles** : `jeu.Bonus` (ordre tiré de la date, une réponse par département, passer, score ; questions
+   `CARTE`, `NOM`, `NUMERO`), `ReponseBonus`, `Tentative`.
+4. **L'affichage** : `ui.CarteDepartements` (dessin des `Path2D`, `AffineTransform`, clic par `contains`, survol,
+   encart de Paris, bulles d'aide une fois fini), `ui.Contours` ; dans `Fenetre`, un `CardLayout`, les boutons
+   « Passer » et « Bonus », Ctrl+B, un `Timer` après chaque réponse. Le bonus commence à la fermeture de la fenêtre
+   des statistiques d'une victoire du jour.
+5. **Enregistrement et statistiques** : `Resultat.bonus` (numéros donnés, `null` si pas joué), enregistré à chaque
+   réponse ; les anciens fichiers restent lisibles ; score moyen dans la fenêtre des statistiques.
+6. **Les finitions** : textes FR et EN, aide, README, [leçons](lecons.md#phase-9--le-bonus-des-départements).
 
-**Ce que tu apprendras :** dessiner soi-même en Swing (`paintComponent`, `Graphics2D`, `Path2D`), les clics de
+**Reste à faire, côté web** : reporter ces réponses dans le plan de [deIbine/francle-web](https://github.com/deIbine/francle-web)
+(étape web.7), puis y faire le bonus.
+
+**Ce que tu as appris :** dessiner soi-même en Swing (`paintComponent`, `Graphics2D`, `Path2D`), les clics de
 souris (`MouseListener`) et le test « ce point est-il dans cette forme ? » (`Shape.contains`), le zoom avec
 `AffineTransform`, lire des contours en JSON avec Jackson, et faire évoluer un fichier enregistré sans casser les
 anciens.

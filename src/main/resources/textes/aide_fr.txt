@@ -5,6 +5,11 @@ toujours parmi les nouvelles régions. Partie libre : autant que vous voulez,
 avec les régions choisies dans le menu Paramètres (anciennes ou nouvelles).
 Seules les parties du jour comptent dans les statistiques (menu Jeu).
 
+Bonus des départements : après une victoire en partie du jour, retrouvez sur la carte
+chaque département de la région (un seul clic par département ; vert : trouvé, rouge : raté).
+Pour une région d'un seul département, donnez son numéro. Le bonus compte dès la première
+réponse, même passé ou interrompu, et son score moyen apparaît dans les statistiques.
+
 Après chaque essai, le tableau indique :
   • la distance entre la capitale de votre proposition et celle de la région cachée ;
   • la direction à suivre pour aller vers la région cachée (↑ nord, → est…) ;

@@ -5,6 +5,11 @@ always among the current regions. Free game: as many as you like,
 with the regions chosen in the Settings menu (former or current).
 Only daily games count in the statistics (Game menu).
 
+Département bonus: after winning the daily game, find each département of the region
+on the map (one click per département; green: found, red: missed).
+For a region with a single département, give its number. The bonus counts from the first
+answer, even if skipped or interrupted, and its average score appears in the statistics.
+
 After each guess, the table shows:
   • the distance between the capital of your guess and that of the hidden region;
   • the direction to follow to reach the hidden region (↑ north, → east…);

@@ -1,10 +1,13 @@
 package fr.francle.ui;
 
+import fr.francle.donnees.Departement;
 import fr.francle.donnees.Langue;
 import fr.francle.donnees.ModeRegions;
 import fr.francle.donnees.RegionFr;
+import fr.francle.jeu.Bonus;
 import fr.francle.jeu.Indice;
 import fr.francle.jeu.Partie;
+import fr.francle.jeu.Tentative;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,6 +23,32 @@ class TextesTest {
 
     private static final Textes FR = new Textes(Langue.FR);
     private static final Textes EN = new Textes(Langue.EN);
+
+    @Test
+    @DisplayName("Bonus : la question, la réponse et la fin, selon la sorte de question")
+    void bonus() {
+        Bonus bretagne = new Bonus(RegionFr.BRETAGNE, RegionFr.BRETAGNE.getDepartements(), Bonus.Question.CARTE);
+        assertEquals("Bonus 1/4 · Cliquez sur : Côtes-d'Armor", FR.questionBonus(bretagne));
+        assertEquals("Bonus 1/4 · Click on: Côtes-d'Armor", EN.questionBonus(bretagne));
+        Departement finistere = Departement.parCode("29").orElseThrow();
+        bretagne.repondre(finistere);
+        Tentative ratee = bretagne.getTentatives().get(0);
+        assertEquals("Raté : Côtes-d'Armor est en rouge.", FR.reponseBonus(bretagne, ratee));
+        bretagne.passer();
+        assertEquals("Bonus passé : 0/4 départements trouvés.", FR.finBonus(bretagne));
+        assertEquals("Bonus : 0/4.", FR.resumeBonus(bretagne));
+
+        Bonus nom = new Bonus(RegionFr.CORSE, RegionFr.CORSE.getDepartements(), Bonus.Question.NOM);
+        assertEquals("Bonus 1/2 · Quel est ce département ?", FR.questionBonus(nom));
+        nom.repondre(Departement.parCode("2B").orElseThrow());
+        assertEquals("Raté : c'était 2A · Corse-du-Sud.", FR.reponseBonus(nom, nom.getTentatives().get(0)));
+        assertEquals("« Bretagne » n'est pas un département : réessayez.", FR.bonusInconnu(nom, " Bretagne "));
+
+        Bonus guyane = Bonus.duJour(RegionFr.GUYANE, LocalDate.of(2030, 3, 10));
+        assertEquals("Bonus · Quel est le numéro de : Guyane ?", FR.questionBonus(guyane));
+        guyane.repondre("973");
+        assertEquals("Bonus : bravo, c'est bien le 973 !", FR.finBonus(guyane));
+    }
 
     @Test
     @DisplayName("Séparateur de milliers : espace insécable U+00A0")
