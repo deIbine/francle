@@ -1,5 +1,6 @@
 package fr.francle.stats;
 
+import fr.francle.jeu.Bonus;
 import fr.francle.jeu.Partie;
 
 import java.time.LocalDate;
@@ -14,8 +15,12 @@ on les recalcule à chaque fois, elles ne peuvent donc pas se désynchroniser de
 
   repartition : le nombre de victoires en 1, 2, 3, 4, 5 et 6 essais (repartition.get(0) = victoires en 1 essai)
   série       : des victoires sur des jours CONSÉCUTIFS. Une défaite, un abandon ou un jour sans partie l'interrompt.
+  bonus       : le nombre de bonus des départements joués, et le score moyen, en pourcentage des départements
+                trouvés. Une moyenne des pourcentages, et non le total des départements trouvés sur le total demandé :
+                sinon un bonus de 13 départements (Occitanie) pèserait 13 fois plus qu'un bonus d'un seul (Mayotte)
  */
-public record Statistiques(int jouees, int victoires, int serieActuelle, int meilleureSerie, List<Integer> repartition) {
+public record Statistiques(int jouees, int victoires, int serieActuelle, int meilleureSerie, List<Integer> repartition,
+                           int bonusJoues, int scoreMoyenBonus) {
 
     public Statistiques {
         repartition = List.copyOf(repartition);
@@ -52,6 +57,10 @@ public record Statistiques(int jouees, int victoires, int serieActuelle, int mei
         // la série n'est « en cours » que si la dernière partie date d'aujourd'hui ou d'hier : sinon, un jour a été sauté
         boolean recente = veille != null && !veille.isBefore(aujourdhui.minusDays(1));
         int serieActuelle = recente ? serie : 0;
-        return new Statistiques(parDate.size(), victoires, serieActuelle, meilleureSerie, repartition);
+        // le bonus : chaque bonus joué est rejoué, pour savoir quelles réponses étaient justes
+        List<Bonus> bonus = parDate.stream().flatMap(resultat -> resultat.rejouerBonus().stream()).toList();
+        double moyenne = bonus.stream().mapToDouble(b -> b.score() * 100.0 / b.total()).average().orElse(0);
+        return new Statistiques(parDate.size(), victoires, serieActuelle, meilleureSerie, repartition,
+                bonus.size(), (int) Math.round(moyenne));
     }
 }

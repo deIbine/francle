@@ -23,7 +23,7 @@ import javax.swing.UIManager;
 
 /*
 Le contenu de la fenêtre des statistiques, à la Wordle : quatre chiffres, puis la répartition des victoires par nombre
-d'essais en barres horizontales. Un simple panneau : Fenetre le montre dans une boîte de dialogue, et la vérification
+d'essais en barres horizontales, et enfin le score moyen du bonus des départements. Un simple panneau : Fenetre le montre dans une boîte de dialogue, et la vérification
 peut le dessiner en mémoire sans ouvrir de fenêtre.
  */
 final class FenetreStatistiques {
@@ -41,13 +41,20 @@ final class FenetreStatistiques {
         JComponent barres = new Repartition(stats.repartition(), essaisDuJour - 1);
         barres.setBorder(BorderFactory.createTitledBorder(textes.texte("statistiques.repartition")));
 
+        // sous les barres : le bonus des départements, puis, sans aucune partie, de quoi commencer
+        JPanel bas = new JPanel(new GridLayout(0, 1, 0, 6));
+        String bonus = stats.bonusJoues() == 0
+                ? textes.texte("statistiques.bonus.vide")
+                : textes.texte("statistiques.bonus", textes.pourcentage(stats.scoreMoyenBonus()), stats.bonusJoues());
+        bas.add(new JLabel(bonus, SwingConstants.CENTER));
+        if (stats.jouees() == 0) {
+            bas.add(new JLabel(textes.texte("statistiques.vide"), SwingConstants.CENTER));
+        }
+
         JPanel panneau = new JPanel(new BorderLayout(0, 12));
         panneau.add(chiffres, BorderLayout.NORTH);
         panneau.add(barres, BorderLayout.CENTER);
-        if (stats.jouees() == 0) {
-            panneau.add(new JLabel(textes.texte("statistiques.vide"), SwingConstants.CENTER),
-                    BorderLayout.SOUTH);
-        }
+        panneau.add(bas, BorderLayout.SOUTH);
         return panneau;
     }
 

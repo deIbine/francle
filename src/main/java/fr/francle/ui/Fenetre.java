@@ -424,7 +424,8 @@ class Fenetre {
             dateDuJour = aujourdhui;
             // neuve, en cours ou terminée selon l'historique : relancer le jeu ne donne pas d'essais en plus
             duJour = historique.partieDuJour(aujourdhui);
-            bonus = null;
+            // le bonus déjà joué ce jour-là (fini), ou null s'il reste à jouer
+            bonus = historique.bonusDuJour(aujourdhui).orElse(null);
         }
         montrerPartie(duJour);
     }
@@ -524,6 +525,17 @@ class Fenetre {
             return;
         }
         historique = historique.avec(dateDuJour, duJour);
+        enregistrerHistorique();
+    }
+
+    // après chaque réponse au bonus, et quand on le passe : comme pour la partie, tout de suite. Fermer le jeu en plein
+    // bonus ne fait donc rien perdre : au lancement suivant, il compte comme passé, avec les réponses déjà données
+    private void retenirBonus() {
+        historique = historique.avecBonus(dateDuJour, bonus);
+        enregistrerHistorique();
+    }
+
+    private void enregistrerHistorique() {
         try {
             sauvegardeHistorique.enregistrer(historique);
         } catch (IOException e) {
@@ -691,6 +703,7 @@ class Fenetre {
         switch (reponse) {
             case ReponseBonus.Inconnue() -> refuser(textes.bonusInconnu(bonus, saisie.getText()));
             case ReponseBonus.Jouee(Tentative tentative) -> {
+                retenirBonus();
                 saisie.setText("");
                 carte.montrerReponse(tentative.juste() ? null : tentative.donne());
                 message.setText(textes.reponseBonus(bonus, tentative));
@@ -718,6 +731,7 @@ class Fenetre {
             return;
         }
         bonus.passer();
+        retenirBonus();
         carte.reprendre();
         afficherBonus();
     }
@@ -728,6 +742,7 @@ class Fenetre {
         pause.stop();
         if (dansLeBonus && bonus.enCours() && !bonus.getTentatives().isEmpty()) {
             bonus.passer();
+            // (rien de nouveau à enregistrer : les réponses le sont déjà, et un bonus relu est toujours fini)
         }
         dansLeBonus = false;
         cartes.show(cadre, IMAGE);
