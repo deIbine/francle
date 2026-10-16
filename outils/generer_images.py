@@ -1,4 +1,4 @@
-"""Génère toutes les images du jeu à partir des contours officiels des départements et des régions.
+"""Génère toutes les images du jeu, et les contours des départements, à partir des contours officiels.
 
 Les images sont sur fond transparent : elles s'affichent aussi bien en thème clair qu'en thème sombre.
 
@@ -6,6 +6,10 @@ Les images sont sur fond transparent : elles s'affichent aussi bien en thème cl
     regions/defaut.png          la France métropolitaine et un point d'interrogation, quand la silhouette est désactivée
     cartes/nouvelles/<image>    la France des régions de 2016, la réponse en bleu (fin de partie, mode « nouvelles »)
     cartes/anciennes/<image>    la France d'avant 2016, la réponse en bleu (fin de partie, mode « anciennes »)
+    departements/<région>.json  les contours de chaque département de la région, pour le bonus des départements
+
+Les départements de chaque région ne sont pas écrits ici : ils sont lus dans departements/departements.json, le
+fichier dont se sert aussi le jeu.
 
 Les contours viennent du dépôt https://github.com/gregoiredavid/france-geojson (données IGN et INSEE, licence ouverte
 Etalab). Ils ne sont pas dans le dépôt de Francle (près de 6 Mo) : les télécharger dans un dossier à part.
@@ -27,47 +31,8 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 from PIL import Image, ImageFilter
 
-# le nom de l'image (celui de RegionFr) -> les départements de la région
-DEPARTEMENTS = {
-    # nouvelles régions (2016)
-    "hauts-de-france.png": ["02", "59", "60", "62", "80"],
-    "normandie.png": ["14", "27", "50", "61", "76"],
-    "grand-est.png": ["08", "10", "51", "52", "54", "55", "57", "67", "68", "88"],
-    "bourgogne-franche-comte.png": ["21", "25", "39", "58", "70", "71", "89", "90"],
-    "auvergne-rhone-alpes.png": ["01", "03", "07", "15", "26", "38", "42", "43", "63", "69", "73", "74"],
-    "nouvelle-aquitaine.png": ["16", "17", "19", "23", "24", "33", "40", "47", "64", "79", "86", "87"],
-    "occitanie.png": ["09", "11", "12", "30", "31", "32", "34", "46", "48", "65", "66", "81", "82"],
-    "centre-val-de-loire.png": ["18", "28", "36", "37", "41", "45"],
-    # régions qui n'ont pas changé en 2016
-    "bretagne.png": ["22", "29", "35", "56"],
-    "pays-de-la-loire.png": ["44", "49", "53", "72", "85"],
-    "ile-de-france.png": ["75", "77", "78", "91", "92", "93", "94", "95"],
-    "provence-alpes-cote-dazur.png": ["04", "05", "06", "13", "83", "84"],
-    "corse.png": ["2A", "2B"],
-    "guadeloupe.png": ["971"],
-    "martinique.png": ["972"],
-    "guyane.png": ["973"],
-    "la-reunion.png": ["974"],
-    "mayotte.png": ["976"],
-    # anciennes régions (avant 2016)
-    "nord-pas-de-calais.png": ["59", "62"],
-    "picardie.png": ["02", "60", "80"],
-    "haute-normandie.png": ["27", "76"],
-    "basse-normandie.png": ["14", "50", "61"],
-    "poitou-charentes.png": ["16", "17", "79", "86"],
-    "centre.png": ["18", "28", "36", "37", "41", "45"],
-    "champagne-ardenne.png": ["08", "10", "51", "52"],
-    "lorraine.png": ["54", "55", "57", "88"],
-    "alsace.png": ["67", "68"],
-    "bourgogne.png": ["21", "58", "71", "89"],
-    "franche-comte.png": ["25", "39", "70", "90"],
-    "rhone-alpes.png": ["01", "07", "26", "38", "42", "69", "73", "74"],
-    "auvergne.png": ["03", "15", "43", "63"],
-    "limousin.png": ["19", "23", "87"],
-    "aquitaine.png": ["24", "33", "40", "47", "64"],
-    "midi-pyrenees.png": ["09", "12", "31", "32", "46", "65", "81", "82"],
-    "languedoc-roussillon.png": ["11", "30", "34", "48", "66"],
-}
+# la liste des départements et ceux de chaque région : le même fichier que celui du jeu (Decoupage.java)
+LISTE = Path(__file__).parent.parent / "src" / "main" / "resources" / "departements" / "departements.json"
 
 # le nom de l'image -> le nom de la région dans les fichiers de contours, pour les cartes de fin de partie
 CARTES_NOUVELLES = {
@@ -172,6 +137,93 @@ def enregistrer(fig, chemin, flou):
     image.quantize(256, method=Image.Quantize.FASTOCTREE).save(chemin, optimize=True)
 
 
+# les contours des départements : dans un carré de 2000 unités sur le plus grand côté, y vers le bas (comme à
+# l'écran), en nombres entiers. Simplifiés : un point qui s'écarte de moins d'une unité de la ligne droite entre ses
+# voisins n'apporte rien (une unité fait un cinquième de pixel quand la région est dessinée sur 400 pixels)
+COTE_CONTOURS = 2000
+TOLERANCE = 1.0
+# l'Île-de-France est vue en entier, plus un zoom sur Paris et la petite couronne
+ZOOM = {"ile-de-france": ["75", "92", "93", "94"]}
+
+
+def tous_les_anneaux(geometrie):
+    """Tous les contours d'un Polygon ou d'un MultiPolygon, trous compris (l'enclave des Papes, du Vaucluse, est un
+    trou dans la Drôme : sans lui, un clic dans l'enclave tomberait dans les deux départements)."""
+    polygones = [geometrie["coordinates"]] if geometrie["type"] == "Polygon" else geometrie["coordinates"]
+    return [anneau for polygone in polygones for anneau in polygone]
+
+
+def simplifier(points, tolerance):
+    """L'algorithme de Douglas-Peucker : on garde les deux extrémités, puis le point le plus éloigné de la ligne qui
+    les joint s'il s'en écarte de plus de la tolérance, et l'on recommence de chaque côté. Avec une pile plutôt
+    qu'une fonction récursive : un contour de plusieurs milliers de points dépasserait la limite de Python."""
+    garder = [False] * len(points)
+    garder[0] = garder[-1] = True
+    pile = [(0, len(points) - 1)]
+    while pile:
+        a, b = pile.pop()
+        (xa, ya), (xb, yb) = points[a], points[b]
+        longueur = math.hypot(xb - xa, yb - ya)
+        loin, ecart = None, tolerance
+        for i in range(a + 1, b):
+            x, y = points[i]
+            # distance du point à la droite (a, b) ; à a lui-même si a et b sont confondus (anneau fermé)
+            d = (abs((xb - xa) * (ya - y) - (xa - x) * (yb - ya)) / longueur if longueur
+                 else math.hypot(x - xa, y - ya))
+            if d > ecart:
+                loin, ecart = i, d
+        if loin is not None:
+            garder[loin] = True
+            pile += [(a, loin), (loin, b)]
+    return [point for point, garde in zip(points, garder) if garde]
+
+
+def aire(points):
+    """L'aire d'un polygone (formule du lacet), pour écarter les îlots trop petits pour être vus."""
+    return abs(sum(x1 * y2 - x2 * y1 for (x1, y1), (x2, y2) in zip(points, points[1:] + points[:1]))) / 2
+
+
+def contours(chemin, departements, codes_zoom):
+    anneaux_par_code = {d["properties"]["code"]: tous_les_anneaux(d["geometry"]) for d in departements}
+    tous = [anneau for liste in anneaux_par_code.values() for anneau in liste]
+    latitude = sum(lat for anneau in tous for _, lat in anneau) / sum(len(anneau) for anneau in tous)
+    projetes = {code: [projeter(anneau, latitude) for anneau in liste] for code, liste in anneaux_par_code.items()}
+    xs = [x for liste in projetes.values() for anneau in liste for x, _ in anneau]
+    ys = [y for liste in projetes.values() for anneau in liste for _, y in anneau]
+    echelle = COTE_CONTOURS / max(max(xs) - min(xs), max(ys) - min(ys))
+
+    def ecran(x, y):
+        # la latitude monte vers le nord, l'écran descend : on retourne l'axe des y
+        return (x - min(xs)) * echelle, (max(ys) - y) * echelle
+
+    lignes = []
+    points_ecrits = 0
+    for d in departements:
+        code = d["properties"]["code"]
+        traces = []
+        for anneau in projetes[code]:
+            points = simplifier([ecran(x, y) for x, y in anneau], TOLERANCE)
+            points = [(round(x), round(y)) for x, y in points[:-1]]   # le dernier point répète le premier
+            if len(points) >= 3 and aire(points) >= 4:
+                traces.append([valeur for point in points for valeur in point])
+                points_ecrits += len(points)
+        lignes.append(json.dumps({"code": code, "contours": traces}, separators=(",", ":")))
+
+    entete = {"largeur": round((max(xs) - min(xs)) * echelle), "hauteur": round((max(ys) - min(ys)) * echelle)}
+    if codes_zoom:
+        # le cadre qui entoure ces départements, avec une marge
+        points = [ecran(x, y) for code in codes_zoom for anneau in projetes[code] for x, y in anneau]
+        x0, x1 = min(x for x, _ in points), max(x for x, _ in points)
+        y0, y1 = min(y for _, y in points), max(y for _, y in points)
+        marge = 0.06 * max(x1 - x0, y1 - y0)
+        entete["zoom"] = [round(x0 - marge), round(y0 - marge), round(x1 - x0 + 2 * marge), round(y1 - y0 + 2 * marge)]
+    # un département par ligne : un fichier lisible, et un diff qui montre quel département a changé
+    texte = json.dumps(entete)[:-1] + ',\n"departements":[\n' + ",\n".join(lignes) + "\n]}\n"
+    chemin.parent.mkdir(parents=True, exist_ok=True)
+    chemin.write_text(texte, encoding="utf8", newline="\n")
+    return points_ecrits
+
+
 def silhouette(chemin, departements):
     contours = [anneau for d in departements for anneau in anneaux(d["geometry"])]
     # la projection se fait à la latitude de la région : la Guyane est près de l'équateur, le Nord bien plus haut
@@ -220,22 +272,32 @@ def defaut(chemin, regions):
 
 
 def main():
-    contours, ressources = Path(sys.argv[1]), Path(sys.argv[2])
-    departements = charger(contours, "departements-avec-outre-mer.geojson")
-    nouvelles = charger(contours, "regions.geojson")
-    anciennes = charger(contours, "regions-avant-redecoupage-2015.geojson")
+    dossier, ressources = Path(sys.argv[1]), Path(sys.argv[2])
+    departements = charger(dossier, "departements-avec-outre-mer.geojson")
+    nouvelles = charger(dossier, "regions.geojson")
+    anciennes = charger(dossier, "regions-avant-redecoupage-2015.geojson")
+    with open(LISTE, encoding="utf8") as f:
+        liste = json.load(f)
+    par_code = {d["properties"]["code"]: d for d in departements}
 
-    for image, codes in DEPARTEMENTS.items():
-        choisis = [d for d in departements if d["properties"]["code"] in codes]
+    points = 0
+    for region, codes in liste["regions"].items():
+        # dans l'ordre de la liste, celui des numéros
+        choisis = [par_code[code] for code in codes if code in par_code]
         if len(choisis) != len(codes):
-            raise ValueError(f"{image} : département introuvable parmi {codes}")
-        silhouette(ressources / "regions" / image, choisis)
+            raise ValueError(f"{region} : département introuvable parmi {codes}")
+        for d in choisis:
+            if d["properties"]["nom"] != liste["departements"][d["properties"]["code"]]:
+                raise ValueError(f"{d['properties']['code']} : le nom diffère de celui de {LISTE.name}")
+        silhouette(ressources / "regions" / f"{region}.png", choisis)
+        points += contours(ressources / "departements" / f"{region}.json", choisis, ZOOM.get(region))
     defaut(ressources / "regions" / "defaut.png", nouvelles)
     for image, nom in CARTES_NOUVELLES.items():
         carte(ressources / "cartes" / "nouvelles" / image, nouvelles, nom)
     for image, nom in CARTES_ANCIENNES.items():
         carte(ressources / "cartes" / "anciennes" / image, anciennes, nom)
-    print(f"{len(DEPARTEMENTS) + 1} silhouettes, {len(CARTES_NOUVELLES) + len(CARTES_ANCIENNES)} cartes")
+    print(f"{len(liste['regions']) + 1} silhouettes, {len(CARTES_NOUVELLES) + len(CARTES_ANCIENNES)} cartes, "
+          f"{len(liste['regions'])} fichiers de contours ({points} points)")
 
 
 main()

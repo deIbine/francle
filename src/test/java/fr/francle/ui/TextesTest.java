@@ -1,10 +1,13 @@
 package fr.francle.ui;
 
+import fr.francle.donnees.Departement;
 import fr.francle.donnees.Langue;
 import fr.francle.donnees.ModeRegions;
 import fr.francle.donnees.RegionFr;
+import fr.francle.jeu.Bonus;
 import fr.francle.jeu.Indice;
 import fr.francle.jeu.Partie;
+import fr.francle.jeu.Tentative;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,6 +23,48 @@ class TextesTest {
 
     private static final Textes FR = new Textes(Langue.FR);
     private static final Textes EN = new Textes(Langue.EN);
+
+    @Test
+    @DisplayName("Chaque clé de texte écrite dans le code existe dans le fichier de textes")
+    void clesUtilisees() throws java.io.IOException {
+        // les clés écrites en toutes lettres : texte("cle"…) et action("cle"…). Une clé oubliée dans le fichier ne
+        // se verrait qu'en jeu, au moment d'afficher la phrase (MissingResourceException)
+        var motif = java.util.regex.Pattern.compile("(?:texte|action)\\(\"([a-zA-Z.]+)\"");
+        try (var fichiers = java.nio.file.Files.walk(java.nio.file.Path.of("src/main/java"))) {
+            for (var fichier : fichiers.filter(f -> f.toString().endsWith(".java")).toList()) {
+                var cles = motif.matcher(java.nio.file.Files.readString(fichier)).results().map(r -> r.group(1));
+                // une clé qui finit par un point est un début, complété par le code (« indice. » + le nom de l'indice)
+                cles.filter(cle -> !cle.endsWith("."))
+                        .forEach(cle -> assertTrue(FR.cles().contains(cle), cle + " (" + fichier.getFileName() + ")"));
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Bonus : la question, la réponse et la fin, selon la sorte de question")
+    void bonus() {
+        Bonus bretagne = new Bonus(RegionFr.BRETAGNE, RegionFr.BRETAGNE.getDepartements(), Bonus.Question.CARTE);
+        assertEquals("Bonus 1/4 · Cliquez sur : Côtes-d'Armor", FR.questionBonus(bretagne));
+        assertEquals("Bonus 1/4 · Click on: Côtes-d'Armor", EN.questionBonus(bretagne));
+        Departement finistere = Departement.parCode("29").orElseThrow();
+        bretagne.repondre(finistere);
+        Tentative ratee = bretagne.getTentatives().get(0);
+        assertEquals("Raté : Côtes-d'Armor est en rouge.", FR.reponseBonus(bretagne, ratee));
+        bretagne.passer();
+        assertEquals("Bonus passé : 0/4 départements trouvés.", FR.finBonus(bretagne));
+        assertEquals("Bonus : 0/4.", FR.resumeBonus(bretagne));
+
+        Bonus nom = new Bonus(RegionFr.CORSE, RegionFr.CORSE.getDepartements(), Bonus.Question.NOM);
+        assertEquals("Bonus 1/2 · Quel est ce département ?", FR.questionBonus(nom));
+        nom.repondre(Departement.parCode("2B").orElseThrow());
+        assertEquals("Raté : c'était 2A · Corse-du-Sud.", FR.reponseBonus(nom, nom.getTentatives().get(0)));
+        assertEquals("« Bretagne » n'est pas un département : réessayez.", FR.bonusInconnu(nom, " Bretagne "));
+
+        Bonus guyane = Bonus.duJour(RegionFr.GUYANE, LocalDate.of(2030, 3, 10));
+        assertEquals("Bonus · Quel est le numéro de : Guyane ?", FR.questionBonus(guyane));
+        guyane.repondre("973");
+        assertEquals("Bonus : bravo, c'est bien le 973 !", FR.finBonus(guyane));
+    }
 
     @Test
     @DisplayName("Séparateur de milliers : espace insécable U+00A0")
@@ -145,8 +190,7 @@ class TextesTest {
     @Test
     @DisplayName("La liste des régions est triée à la française (Île-de-France à la lettre I)")
     void listeTriee() {
-        List<String> lignes = List.of(FR.listeDesRegions(ModeRegions.NOUVELLES).split("\n"));
-        List<String> noms = lignes.subList(1, lignes.size());     // sans la phrase d'introduction
+        List<String> noms = FR.regionsTriees(ModeRegions.NOUVELLES).stream().map(FR::nom).toList();
 
         assertEquals(18, noms.size());
         assertEquals("Auvergne-Rhône-Alpes", noms.get(0));
@@ -200,9 +244,8 @@ class TextesTest {
     @Test
     @DisplayName("La liste en anglais est triée selon les noms anglais")
     void listeEnAnglais() {
-        List<String> lignes = List.of(EN.listeDesRegions(ModeRegions.NOUVELLES).split("\n"));
+        List<String> lignes = EN.regionsTriees(ModeRegions.NOUVELLES).stream().map(EN::nom).toList();
 
-        assertEquals("The possible regions:", lignes.get(0));
         assertTrue(lignes.indexOf("Brittany") < lignes.indexOf("Burgundy-Franche-Comté"));
         assertTrue(lignes.indexOf("Corsica") < lignes.indexOf("French Guiana"));
     }
@@ -212,5 +255,9 @@ class TextesTest {
     void aide() {
         assertTrue(FR.aide().startsWith("Devinez la région française cachée en 6 essais"));
         assertTrue(EN.aide().startsWith("Guess the hidden French region in 6 guesses"));
+        // l'exemple, calculé par les règles, a remplacé sa marque
+        assertFalse(FR.aide().contains("{exemple}"));
+        assertTrue(FR.aide().contains("Par exemple, « Normandie · 251 km · ↙ · 76 % » : Bretagne"), FR.exemple());
+        assertTrue(EN.aide().contains("For example, “Normandy · 251 km · ↙ · 76%”: Brittany"), EN.exemple());
     }
 }

@@ -12,26 +12,31 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.RenderingHints;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.Timer;
 import javax.swing.UIManager;
 
 /*
 Le contenu de la fenêtre des statistiques, à la Wordle : quatre chiffres, puis la répartition des victoires par nombre
-d'essais en barres horizontales. Un simple panneau : Fenetre le montre dans une boîte de dialogue, et la vérification
+d'essais en barres horizontales, et enfin le score moyen du bonus des départements. Un simple panneau : Fenetre le montre dans une boîte de dialogue, et la vérification
 peut le dessiner en mémoire sans ouvrir de fenêtre.
  */
 final class FenetreStatistiques {
 
     private FenetreStatistiques() {}
 
-    // essaisDuJour : le nombre d'essais de la victoire du jour, pour mettre sa barre en valeur (0 si pas de victoire)
-    static JPanel panneau(Statistiques stats, int essaisDuJour, Textes textes) {
+    // essaisDuJour : le nombre d'essais de la victoire du jour, pour mettre sa barre en valeur (0 si pas de victoire).
+    // restant : le temps jusqu'à la région suivante, pour le compte à rebours ; null si la partie du jour n'est pas
+    // finie (on ne l'affiche alors pas)
+    static JPanel panneau(Statistiques stats, int essaisDuJour, Textes textes, Supplier<Duration> restant) {
         JPanel chiffres = new JPanel(new GridLayout(1, 4, 12, 0));
         chiffres.add(chiffre(String.valueOf(stats.jouees()), textes.texte("statistiques.jouees")));
         chiffres.add(chiffre(textes.pourcentage(stats.pourcentageVictoires()), textes.texte("statistiques.victoires")));
@@ -41,14 +46,60 @@ final class FenetreStatistiques {
         JComponent barres = new Repartition(stats.repartition(), essaisDuJour - 1);
         barres.setBorder(BorderFactory.createTitledBorder(textes.texte("statistiques.repartition")));
 
+        // sous les barres : le bonus des départements, puis, sans aucune partie, de quoi commencer
+        JPanel bas = new JPanel(new GridLayout(0, 1, 0, 6));
+        String bonus = stats.bonusJoues() == 0
+                ? textes.texte("statistiques.bonus.vide")
+                : textes.texte("statistiques.bonus", textes.pourcentage(stats.scoreMoyenBonus()), stats.bonusJoues());
+        bas.add(new JLabel(bonus, SwingConstants.CENTER));
+        if (stats.jouees() == 0) {
+            bas.add(new JLabel(textes.texte("statistiques.vide"), SwingConstants.CENTER));
+        }
+        if (restant != null) {
+            bas.add(new CompteARebours(textes, restant));
+        }
+
         JPanel panneau = new JPanel(new BorderLayout(0, 12));
         panneau.add(chiffres, BorderLayout.NORTH);
         panneau.add(barres, BorderLayout.CENTER);
-        if (stats.jouees() == 0) {
-            panneau.add(new JLabel(textes.texte("statistiques.vide"), SwingConstants.CENTER),
-                    BorderLayout.SOUTH);
-        }
+        panneau.add(bas, BorderLayout.SOUTH);
         return panneau;
+    }
+
+    /*
+    « Prochaine région dans 03:07:09 », repris de la version web, mis à jour chaque seconde par un Timer de Swing.
+    Le Timer ne tourne que pendant que l'étiquette est à l'écran : addNotify est appelé quand le composant entre dans
+    une fenêtre affichée, removeNotify quand il en sort (la boîte de dialogue se ferme). Sans cet arrêt, le Timer
+    continuerait de tourner pour rien après la fermeture, et garderait l'étiquette en mémoire.
+     */
+    private static final class CompteARebours extends JLabel {
+
+        private final Textes textes;
+        private final Supplier<Duration> restant;
+        private final Timer chaqueSeconde = new Timer(1000, e -> mettreAJour());
+
+        CompteARebours(Textes textes, Supplier<Duration> restant) {
+            super(" ", SwingConstants.CENTER);
+            this.textes = textes;
+            this.restant = restant;
+            mettreAJour();
+        }
+
+        private void mettreAJour() {
+            setText(textes.texte("statistiques.prochaine", textes.duree(restant.get())));
+        }
+
+        @Override
+        public void addNotify() {
+            super.addNotify();
+            chaqueSeconde.start();
+        }
+
+        @Override
+        public void removeNotify() {
+            chaqueSeconde.stop();
+            super.removeNotify();
+        }
     }
 
     // un grand chiffre, et sa légende en dessous

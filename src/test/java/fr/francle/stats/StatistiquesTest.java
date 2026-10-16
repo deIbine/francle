@@ -1,12 +1,15 @@
 package fr.francle.stats;
 
+import fr.francle.donnees.Departement;
 import fr.francle.donnees.RegionFr;
+import fr.francle.jeu.Bonus;
 import fr.francle.jeu.Partie;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,6 +39,40 @@ class StatistiquesTest {
         assertEquals(0, stats.serieActuelle());
         assertEquals(0, stats.meilleureSerie());
         assertEquals(List.of(0, 0, 0, 0, 0, 0), stats.repartition());
+    }
+
+    // une victoire en Bretagne « il y a n jours », dont le bonus a reçu ces réponses justes et fausses
+    private static Resultat avecBonus(int ilYA, boolean... justes) {
+        LocalDate date = JOUR.minusDays(ilYA);
+        List<Departement> ordre = Bonus.duJour(RegionFr.BRETAGNE, date).getOrdre();
+        List<String> reponses = new ArrayList<>();
+        for (int i = 0; i < justes.length; i++) {
+            // une réponse fausse : le département suivant dans l'ordre
+            reponses.add(ordre.get(justes[i] ? i : (i + 1) % ordre.size()).code());
+        }
+        return new Resultat(date, RegionFr.BRETAGNE, List.of(RegionFr.BRETAGNE), Partie.Etat.GAGNEE, reponses);
+    }
+
+    @Test
+    @DisplayName("Bonus : le nombre joué et la moyenne des pourcentages trouvés ; un bonus passé compte")
+    void bonus() {
+        Statistiques stats = Statistiques.de(List.of(
+                avecBonus(3, true, true, true, true),        // 100 %
+                avecBonus(2, true, false, true, false),      // 50 %
+                avecBonus(1, true),                          // passé après une réponse : 1 sur 4, 25 %
+                victoire(0, 2)), JOUR);                      // pas de bonus joué : ne compte pas
+
+        assertEquals(3, stats.bonusJoues());
+        assertEquals(58, stats.scoreMoyenBonus());           // (100 + 50 + 25) / 3 = 58,3
+    }
+
+    @Test
+    @DisplayName("Aucun bonus joué : 0, sans division par zéro")
+    void aucunBonus() {
+        Statistiques stats = Statistiques.de(List.of(victoire(0, 2)), JOUR);
+
+        assertEquals(0, stats.bonusJoues());
+        assertEquals(0, stats.scoreMoyenBonus());
     }
 
     @Test

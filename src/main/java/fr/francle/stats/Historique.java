@@ -1,7 +1,9 @@
 package fr.francle.stats;
 
 import fr.francle.donnees.RegionFr;
+import fr.francle.jeu.Bonus;
 import fr.francle.jeu.Essai;
+import fr.francle.jeu.ModesDifficiles;
 import fr.francle.jeu.Partie;
 import fr.francle.jeu.RegionDuJour;
 
@@ -9,9 +11,11 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 /*
-Tout ce qui est enregistré sur le disque : les parties du jour terminées, et celle du jour en cours (ou null).
+Tout ce qui est enregistré sur le disque : les parties du jour terminées (avec leur bonus), et celle du jour en cours
+(ou null).
 Un record, donc non modifiable : chaque changement donne un nouvel Historique (avec(...)).
 
 Les parties ne sont pas enregistrées « telles quelles » : on garde seulement les régions proposées, et on les REJOUE
@@ -47,15 +51,59 @@ public record Historique(int version, List<Resultat> resultats, PartieEnCours en
     // l'historique après une action sur la partie du jour de cette date : en cours, elle est retenue telle quelle ;
     // terminée, elle devient un résultat (un seul par date) et il n'y a plus de partie en cours
     public Historique avec(LocalDate date, Partie partie) {
+        return avec(date, partie, modesDuJour(date).orElse(null));
+    }
+
+    // la même, avec les modes difficiles de la partie (fixés au premier essai), retenus pour le partage
+    public Historique avec(LocalDate date, Partie partie, ModesDifficiles modes) {
         List<RegionFr> propositions = partie.getEssais().stream().map(Essai::proposition).toList();
         if (partie.enCours()) {
-            return new Historique(VERSION, resultats, new PartieEnCours(date, propositions));
+            return new Historique(VERSION, resultats, new PartieEnCours(date, propositions, modes));
         }
+        // le bonus déjà enregistré pour cette date, s'il y en a un, est gardé
+        List<String> bonus = resultat(date).map(Resultat::bonus).orElse(null);
+        return remplacer(new Resultat(date, partie.getCible(), propositions, partie.getEtat(), bonus, modes), null);
+    }
+
+    // les modes difficiles de la partie du jour de cette date, terminée ou en cours, s'ils sont connus
+    public Optional<ModesDifficiles> modesDuJour(LocalDate date) {
+        Optional<ModesDifficiles> termine = resultat(date).map(Resultat::modes);
+        if (termine.isPresent()) {
+            return termine;
+        }
+        return Optional.ofNullable(enCours).filter(partie -> partie.date().equals(date)).map(PartieEnCours::modes);
+    }
+
+    // l'historique après une réponse au bonus de la partie du jour gagnée à cette date (ou après l'avoir passé).
+    // Un bonus sans aucune réponse n'a pas commencé : il n'est pas enregistré, et reste à jouer
+    public Historique avecBonus(LocalDate date, Bonus bonus) {
+        Resultat resultat = resultat(date).filter(Resultat::victoire)
+                .orElseThrow(() -> new IllegalStateException("Pas de partie du jour gagnée le " + date));
+        if (bonus.getTentatives().isEmpty()) {
+            return this;
+        }
+        List<String> reponses = bonus.getTentatives().stream().map(tentative -> tentative.donne().code()).toList();
+        Resultat avecBonus = new Resultat(date, resultat.region(), resultat.propositions(), resultat.etat(), reponses,
+                resultat.modes());
+        return remplacer(avecBonus, enCours);
+    }
+
+    // le bonus de la partie du jour de cette date, s'il a été joué (toujours fini : voir Resultat.rejouerBonus)
+    public Optional<Bonus> bonusDuJour(LocalDate date) {
+        return resultat(date).flatMap(Resultat::rejouerBonus);
+    }
+
+    private Optional<Resultat> resultat(LocalDate date) {
+        return resultats.stream().filter(resultat -> resultat.date().equals(date)).findFirst();
+    }
+
+    // les résultats où celui de la même date est remplacé par le nouveau (un seul résultat par date), triés par date
+    private Historique remplacer(Resultat nouveau, PartieEnCours partieEnCours) {
         List<Resultat> nouveaux = new ArrayList<>(resultats);
-        nouveaux.removeIf(resultat -> resultat.date().equals(date));
-        nouveaux.add(new Resultat(date, partie.getCible(), propositions, partie.getEtat()));
+        nouveaux.removeIf(resultat -> resultat.date().equals(nouveau.date()));
+        nouveaux.add(nouveau);
         nouveaux.sort(Comparator.comparing(Resultat::date));
-        return new Historique(VERSION, nouveaux, null);
+        return new Historique(VERSION, nouveaux, partieEnCours);
     }
 
     // terminee : la partie était finie quand elle a été enregistrée. Si elle ne l'est pas après les avoir rejouées,

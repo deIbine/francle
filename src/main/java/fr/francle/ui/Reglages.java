@@ -29,6 +29,9 @@ class Reglages {
     private Boolean unitesAnglaises = null;     // Boolean, pas boolean : il peut valoir null
     private Langue langue = null;
     private boolean silhouetteTournee = false;
+    // « Comment jouer » a déjà été montré au lancement. Absent d'un ancien fichier, il vaut false : un joueur qui a déjà
+    // joué verra l'aide une fois, ce qui lui présente les nouveautés
+    private boolean aideVue = false;
 
     // ~/.francle/reglages.json, à côté de l'historique
     static Sauvegarde<Reglages> sauvegarde() {
@@ -73,4 +76,7 @@ class Reglages {
 
     public boolean isSilhouetteTournee() { return silhouetteTournee; }
     public void setSilhouetteTournee(boolean silhouetteTournee) { this.silhouetteTournee = silhouetteTournee; }
+
+    public boolean isAideVue() { return aideVue; }
+    public void setAideVue(boolean aideVue) { this.aideVue = aideVue; }
 }

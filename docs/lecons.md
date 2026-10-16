@@ -1613,6 +1613,196 @@ transparentes, sinon la silhouette paraîtrait plus petite qu'à l'endroit une f
 - **La fenêtre a été vérifiée en image**, en français, en anglais et après un changement de langue en pleine partie :
   633 points de haut, toujours sous la limite d'un écran portable.
 
+## Phase 9 : le bonus des départements
+
+### Une seule liste pour deux langages
+
+- **Pourquoi** : la liste « région -> départements » était écrite dans le script Python des images. Le Java en a besoin
+  aussi (les questions du bonus, les tests). La recopier dans un `enum` Java ferait deux listes, qui finiraient par se
+  contredire (un département oublié d'un côté seulement).
+- **Comment le faire** : la liste est sortie dans un fichier de **données**, `resources/departements/departements.json`,
+  que les deux lisent : Python avec `json.load`, Java avec Jackson (`Decoupage`). Le script vérifie en plus que les
+  noms du fichier sont ceux des contours officiels, et les tests Java que chaque département est dans **une région et
+  une seule** à chaque époque (101 départements, ni trou ni doublon).
+- **Comment le penser** : quand deux programmes ont besoin de la même information, ni l'un ni l'autre ne doit la
+  posséder : on la met **entre les deux**, dans un format que les deux savent lire (JSON, CSV), et chacun la vérifie.
+
+### Charger une seule fois, au premier besoin : l'idiome du *holder*
+
+- **Pourquoi** : lire le fichier des départements à chaque appel de `getDepartements()` serait lent ; le lire au
+  démarrage du jeu ralentirait le lancement pour un bonus qu'on ne jouera peut-être pas.
+- **Comment le faire** : une petite classe imbriquée `Charge` contient les données dans des champs `static`, remplis
+  par un bloc `static`. Java ne charge une classe qu'au moment où l'on s'en sert pour la première fois, et garantit que
+  son bloc `static` ne s'exécute qu'**une seule fois**, même si deux fils d'exécution arrivaient en même temps. Pour
+  les contours, un `ConcurrentHashMap` et `computeIfAbsent` gardent chaque fichier déjà lu.
+- **Comment le penser** : « paresseux » (*lazy*) et « une seule fois » sont deux besoins classiques ; la machine Java
+  sait déjà faire les deux pour les classes : autant s'en servir plutôt que d'écrire ses propres `if (deja == null)`.
+
+### Simplifier un tracé : Douglas-Peucker
+
+- **Pourquoi** : les contours officiels ont 193 000 points. À 400 pixels de large, la plupart ne se voient pas : ils
+  alourdissent le `.jar` et ralentissent chaque dessin.
+- **Comment le faire** : on garde les deux bouts d'un tracé, puis le point le plus éloigné de la ligne droite qui les
+  joint, s'il s'en écarte de plus d'une tolérance, et l'on recommence de chaque côté. Les points restants sont arrondis
+  à des entiers dans un carré de 2000 unités. Écrit avec une **pile** plutôt que par récursion : un tracé de plusieurs
+  milliers de points dépasserait la profondeur d'appels permise par Python. Résultat : 112 000 points, 1,1 Mo.
+- **Comment le penser** : la précision utile dépend de **l'usage** (ici, un cinquième de pixel). Garder plus, c'est
+  payer pour rien ; garder moins, c'est voir des escaliers.
+
+### Dessiner soi-même : `Path2D` et la règle pair-impair
+
+- **Pourquoi** : une image PNG ne dit pas sur quel département on a cliqué. Il faut les formes elles-mêmes.
+- **Comment le faire** : chaque département devient un `Path2D` : `moveTo` le premier point d'un tracé, `lineTo` les
+  suivants, `closePath`. Un département a parfois plusieurs tracés : ses îles, et ses **trous** (l'enclave des Papes,
+  du Vaucluse, est un trou dans la Drôme). Avec `WIND_EVEN_ODD`, un point est dans la forme s'il est entouré par un
+  nombre **impair** de tracés : dans l'enclave, on est entouré deux fois (le tour de la Drôme et le trou), donc dehors.
+  `fill` (dessiner) et `contains` (le test du clic) appliquent la même règle.
+- **Comment le penser** : dessiner et tester un clic sont deux usages d'**une même forme**. Si l'on dessinait d'un
+  côté et testait de l'autre (une image et des rectangles), ils finiraient par ne plus correspondre.
+
+### Du fichier à l'écran, et retour : `AffineTransform`
+
+- **Pourquoi** : les contours sont en unités du fichier ; la carte doit tenir dans le composant, quelle que soit sa
+  taille, sans être déformée. Et un clic arrive en pixels : il faut savoir à quel point du fichier il correspond.
+- **Comment le faire** : `ajuster` construit une transformation (déplacer, agrandir, déplacer) avec le même rapport
+  sur les deux axes. `createTransformedShape` donne la forme à dessiner, le trait restant à 1 pixel ; pour un clic,
+  `inverseTransform` fait le chemin inverse, puis `contains` dit dans quel département on est. L'encart de Paris est
+  la même carte avec **une autre transformation**, et `clip` empêche le dessin de déborder du cadre de l'encart.
+- **Comment le penser** : séparer les **coordonnées du monde** (le fichier) de celles de l'**écran**, avec une seule
+  transformation entre les deux, et son inverse. C'est le principe de tout logiciel de dessin, de carte ou de jeu.
+
+### La souris, les bulles d'aide et le `CardLayout`
+
+- **Pourquoi** : la carte doit réagir au survol (couleur plus foncée), au clic, et, une fois le bonus fini, dire le nom
+  du département survolé. Et elle doit prendre la place de la silhouette sans changer la taille de la fenêtre.
+- **Comment le faire** : un seul `MouseAdapter` sert d'écouteur de clics (`addMouseListener`) et de mouvements
+  (`addMouseMotionListener`). `mousePressed` plutôt que `mouseClicked`, qui n'arrive pas si la souris a bougé d'un
+  pixel entre l'appui et le relâchement. `setToolTipText("")` inscrit le composant auprès des bulles d'aide, puis
+  `getToolTipText(MouseEvent)` donne le texte selon la position. Le `CardLayout` empile l'image et la carte au même
+  endroit et n'en montre qu'une (`show`).
+- **Comment le penser** : un composant fait maison (`JComponent` + `paintComponent`) se comporte comme les autres si
+  l'on passe par les mêmes mécanismes de Swing (écouteurs, bulles, mises en page), au lieu de les réinventer.
+
+### Attendre sans bloquer : `javax.swing.Timer`
+
+- **Pourquoi** : après une réponse, le joueur doit voir si elle était juste avant la question suivante. Un
+  `Thread.sleep` sur l'Event Dispatch Thread bloquerait tout : la fenêtre ne se redessinerait même pas, la réponse ne
+  s'afficherait jamais.
+- **Comment le faire** : un `Timer` de Swing, `setRepeats(false)`, rappelle `apresReponse` sur l'EDT au bout de
+  1,2 seconde. Pendant ce temps, la carte est « bloquée » et les boutons grisés. Changer de partie arrête le `Timer`.
+- **Comment le penser** : sur l'EDT, on ne fait jamais attendre : on **programme** la suite. Même idée que
+  `SwingUtilities.invokeLater`, avec un délai.
+
+### Faire évoluer un fichier enregistré sans casser les anciens
+
+- **Pourquoi** : l'historique de chaque joueur a été écrit sans bonus. Le nouveau jeu doit le lire, et, si possible,
+  un ancien jeu doit encore lire un fichier récent.
+- **Comment le faire** : un **champ ajouté, facultatif** : `Resultat.bonus`, les numéros donnés, `null` pour « pas
+  joué ». Un ancien fichier n'a pas ce champ : Jackson le laisse à `null`, ce qui est exactement vrai. Un ancien jeu
+  ignore ce champ inconnu (`FAIL_ON_UNKNOWN_PROPERTIES` désactivé depuis la Phase 5). Un second constructeur à quatre
+  valeurs évite de toucher à tous les endroits qui créent un résultat sans bonus. Comme la partie, le bonus n'est pas
+  enregistré « tel quel » : on garde les réponses et on le **rejoue** ; relu en cours (jeu fermé au milieu), il est
+  terminé comme « passé ». Un test lit un fichier écrit à la main au format de la Phase 8.
+- **Comment le penser** : ajouter est sans risque, renommer ou supprimer ne l'est pas. Un champ absent doit avoir un
+  sens naturel (`null` = « pas joué »), sinon il faut une conversion et un numéro de version.
+
+### Une moyenne de pourcentages
+
+- **Pourquoi** : « 40 départements trouvés sur 60 » donnerait 13 fois plus de poids à un bonus en Occitanie
+  (13 départements) qu'à un bonus à Mayotte (un seul).
+- **Comment le faire** : le pourcentage de chaque bonus, puis leur moyenne (`mapToDouble(…).average()`), arrondie à la
+  fin seulement.
+- **Comment le penser** : avant de faire une moyenne, se demander **ce qui doit peser autant** : chaque bonus, ou
+  chaque département ? Les deux calculs sont justes, ils ne répondent pas à la même question.
+
+### Les notions Java rencontrées
+
+- **Java2D** : `Path2D` (`WIND_EVEN_ODD`), `Shape.contains`, `AffineTransform` (`translate`, `scale`,
+  `inverseTransform`, `createTransformedShape`), `Graphics2D.clip`, `BasicStroke` (trait pointillé).
+- **Souris** : `MouseAdapter`, `mousePressed`, `mouseMoved`, `mouseExited` ; bulles d'aide par `getToolTipText`.
+- **Swing** : `CardLayout`, `javax.swing.Timer`, `setHideActionText` (un bouton qui garde son action mais pas son nom).
+- **Chargement paresseux** : classe imbriquée *holder*, `ConcurrentHashMap.computeIfAbsent`.
+- **Jackson** sur des ressources du `.jar`, vers des **records** privés qui décrivent la forme du fichier.
+- **Records** à deux constructeurs (le canonique et un raccourci qui appelle `this(…)`).
+
+### Quand le joueur change une règle
+
+- **Pourquoi** : en jouant, l'utilisateur a voulu le bonus après **chaque** victoire, pas seulement celle du jour.
+  Une décision prise « sur le papier » se corrige souvent une fois le jeu en main : c'est le but du test avant fusion.
+- **Comment le faire** : la règle tenait à une seule question, « la partie affichée est-elle gagnée ? » au lieu de
+  « la partie du jour est-elle gagnée ? ». La fenêtre garde maintenant le bonus **de la partie affichée** (`bonus`)
+  et, à part, celui du jour (`bonusDuJour`), qu'elle retrouve en revenant à la partie du jour. L'ordre du bonus
+  libre est tiré au hasard (`Bonus.auHasard(region, Random)`) ; le `Random` est un paramètre, si bien qu'un test peut
+  donner une graine fixe et retrouver le même ordre.
+- **Comment le penser** : quand une règle dépend de « laquelle », se demander si l'état appartient à **la chose
+  affichée** ou à **une chose précise** ; les mélanger donne des bugs du type « le bonus du jour apparaît en partie
+  libre ».
+
+### Comparer encore les deux versions
+
+- **Pourquoi** : la version web a continué d'avancer après la Phase 8 (web.6, web.6.2, la liste cliquable). Sans
+  comparaison régulière, les deux jeux redivergent.
+- **Comment le faire** : lire l'historique du web depuis la dernière comparaison (`git log`, les messages de PR
+  détaillent chaque correction), puis classer chaque nouveauté : **utile sur le bureau** (partage, confirmation,
+  minuit, liste cliquable, aide au premier lancement), ou **propre au navigateur** (synchroniser les onglets, thème
+  « automatique »). Les mêmes valeurs de test que le web (les carrés du partage) vérifient qu'on calcule pareil.
+- **Comment le penser** : reprendre une idée, pas un code : `navigator.clipboard` devient `Toolkit.getSystemClipboard`,
+  `<dialog>` devient `JDialog`, `setTimeout` devient `javax.swing.Timer`.
+
+### Un quatrième cas dans une interface scellée
+
+- **Pourquoi** : « bret » + Entrée doit jouer la Bretagne, et « nor » (trois régions possibles) doit demander de
+  choisir. C'est une réponse **nouvelle** de `Partie.proposer`.
+- **Comment le faire** : ajouter `record Plusieurs()` à `Reponse`, puis compiler : le compilateur a refusé le `switch`
+  de `Fenetre.jouer` (« does not cover all possible input values »), exactement à l'endroit à compléter.
+- **Comment le penser** : c'est la promesse de `sealed` faite en Phase 8, tenue ici : ajouter un cas ne peut pas être
+  oublié.
+
+### Fixer une valeur au premier essai
+
+- **Pourquoi** : le partage affiche 🌀 ou 🙈 si la partie a été jouée avec la silhouette tournée ou cachée. Si l'on
+  regardait les réglages au moment de partager, on pourrait cacher la silhouette juste avant de partager une partie
+  jouée sans. Il faut savoir avec quels modes la partie **a été jouée**.
+- **Comment le faire** : un record `ModesDifficiles`, `null` tant que la partie n'a pas d'essai (les réglages
+  comptent alors tout de suite), puis figé au premier essai et enregistré avec la partie du jour (champ `modes`,
+  `null` dans les anciens fichiers). Son constructeur compact garantit qu'une silhouette cachée n'est jamais tournée.
+- **Comment le penser** : distinguer **le réglage** (ce que le joueur veut maintenant) de **l'état de la partie** (ce
+  qui s'est passé). Le second ne doit dépendre du premier qu'à un moment précis, puis plus du tout.
+
+### Le presse-papiers, et un Timer qui s'arrête tout seul
+
+- **Pourquoi** : partager, c'est copier un texte pour le coller dans une messagerie ; et le compte à rebours doit
+  bouger chaque seconde, mais seulement pendant que la fenêtre des statistiques est ouverte.
+- **Comment le faire** : `Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(texte),
+  null)`, avec un `catch (IllegalStateException e)` : une autre application peut tenir le presse-papiers un instant.
+  Le texte lui-même est construit par `Partage.texte`, sans rien afficher, donc testé. Le compte à rebours est une
+  `JLabel` qui démarre son `Timer` dans `addNotify` (le composant entre dans une fenêtre affichée) et l'arrête dans
+  `removeNotify` (la fenêtre se ferme). Le passage à minuit est un autre `Timer`, réglé sur le temps qui reste.
+- **Comment le penser** : tout ce qui démarre (Timer, fil d'exécution, fichier ouvert) doit savoir **quand
+  s'arrêter** ; le rattacher à la vie d'un composant le fait sans y penser.
+
+### Un test qui lit le code
+
+- **Pourquoi** : une clé de texte écrite dans le code mais oubliée dans le fichier ne se voit qu'en jeu, au moment
+  d'afficher la phrase. C'est arrivé en écrivant la confirmation d'abandon (une modification de fichier ratée, sans
+  que rien ne le signale).
+- **Comment le faire** : `TextesTest.clesUtilisees` parcourt `src/main/java` (`Files.walk`), cherche `texte("…")` et
+  `action("…")` avec une expression régulière, et vérifie que chaque clé existe.
+- **Comment le penser** : quand une erreur est passée une fois, se demander quel test l'aurait attrapée, et l'écrire.
+
+## Bilan de la Phase 9
+
+- **Le bonus est complet** : carte cliquable, zoom sur Paris, question du numéro en outre-mer, mode B caché
+  (`Bonus.MODE = NOM`), enregistrement, score moyen, textes en français et en anglais, aide.
+- **Une seule liste de départements** pour Java et Python, et des contours générés (les anciennes régions comprises).
+- **Un commit par étape** dans une seule PR : données, contours, règles, affichage, enregistrement, finitions ;
+  puis, après le test du jeu, le bonus après chaque victoire et huit nouveautés reprises du web, une par commit.
+- **307 tests** (203 avant) : les règles du bonus, le découpage, les contours, le clic (y compris dans l'encart),
+  l'enregistrement et la lecture d'un ancien fichier.
+- **La fenêtre a été vérifiée en image** (sans l'ouvrir à l'écran) : clair et sombre, français et anglais, Bretagne,
+  Île-de-France, Occitanie, Guadeloupe, relance après un bonus interrompu, fenêtre des statistiques. Toujours
+  625 points de haut.
+
 ---
 
 ## Aide-mémoire
@@ -1676,6 +1866,6 @@ Sous Git Bash, macOS ou Linux : `./mvnw test`.
 | Commande | Usage |
 |---|---|
 | `pip install matplotlib pillow` | Installer ce dont le script a besoin (une fois) |
-| `python outils/generer_images.py <dossier des contours> src/main/resources` | Régénérer toutes les silhouettes et cartes |
+| `python outils/generer_images.py <dossier des contours> src/main/resources` | Régénérer silhouettes, cartes et contours des départements |
 
 Les contours (fichiers GeoJSON) se téléchargent depuis le dépôt indiqué en tête du script.

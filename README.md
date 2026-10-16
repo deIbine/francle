@@ -30,6 +30,12 @@ Une silhouette de région s'affiche : à toi de la reconnaître en 6 essais maxi
 
 - **Partie du jour** : la même région pour tout le monde, parmi les 18 régions actuelles, une seule partie par jour.
   Elle est retrouvée si l'on ferme le jeu, et alimente les **statistiques** (parties, victoires, séries).
+- **Bonus des départements** : après chaque victoire, il faut retrouver sur la carte chacun des
+  départements de la région (un clic par département ; un zoom sur Paris pour l'Île-de-France). Pour une région
+  d'un seul département (outre-mer), on donne son numéro. Le score moyen du bonus du jour s'ajoute aux
+  statistiques.
+- **Partager** (menu *Jeu* ou fenêtre des statistiques) : le résultat du jour en carrés 🟩🟨⬜, copié dans le
+  presse-papiers, sans dévoiler la réponse.
 - **Partie libre** : autant que tu veux, avec les régions actuelles ou les anciennes régions (avant 2016).
 
 ### Réglages (menu *Paramètres*, retenus d'un lancement à l'autre)
@@ -79,14 +85,14 @@ francle/
 ├── mvnw, mvnw.cmd, .mvn/      Maven Wrapper
 ├── src/
 │   ├── main/java/fr/francle/  Code source du jeu, en quatre packages :
-│   │   ├── donnees/           les régions et leurs informations, en deux langues (RegionFr, Texte, Langue…)
-│   │   ├── jeu/               les règles, sans affichage (Partie, Reponse, Indice, RegionDuJour…)
+│   │   ├── donnees/           les régions et leurs informations, en deux langues (RegionFr, Departement…)
+│   │   ├── jeu/               les règles, sans affichage (Partie, Bonus, Reponse, Indice, RegionDuJour…)
 │   │   ├── stats/             l'historique des parties du jour et les statistiques, enregistrés en JSON
 │   │   └── ui/                la fenêtre Swing (Francle, la classe à lancer)
 │   ├── main/resources/        Silhouettes (regions/), cartes de fin de partie (cartes/), textes en deux langues
-│   │                          (textes/)
+│   │                          (textes/), départements de chaque région et leurs contours (departements/)
 │   └── test/java/fr/francle/  Tests JUnit, rangés dans les mêmes packages que les classes testées
-├── outils/                    Le script Python qui produit les images à partir des contours officiels
+├── outils/                    Le script Python qui produit les images et les contours des départements
 ├── .github/workflows/         Intégration continue : compilation et tests à chaque PR
 ├── docs/
 │   ├── indices.md             Indices de chaque région
@@ -111,6 +117,7 @@ et ce qu'elle a permis d'apprendre dans [docs/lecons.md](docs/lecons.md).
 - [x] **Phase 6** : anciennes régions complètes, réglages enregistrés, thème sombre, miles, silhouette tournée
 - [x] **Phase 7** : la version web, devenue un projet à part ([francle-web](https://github.com/deIbine/francle-web))
 - [x] **Phase 8** : reprendre les nouveautés de la version web (6 essais, monument, doublons, anglais)
+- [x] **Phase 9** : le bonus des départements (carte cliquable, zoom sur Paris, score moyen)
 
 ## Historique
 

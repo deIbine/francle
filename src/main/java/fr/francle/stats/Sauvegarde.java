@@ -16,8 +16,9 @@ import tools.jackson.databind.json.JsonMapper;
 
 /*
 Un objet enregistré sur le disque, en JSON : l'historique des parties, et depuis la Phase 6 les réglages du joueur.
-Seule classe du jeu qui lit ou écrit un fichier, et seule à connaître Jackson : si on changeait un jour de format,
-rien d'autre ne bougerait.
+Seule classe du jeu qui écrit un fichier, et seule à lire les fichiers du joueur : si on changeait un jour de format,
+rien d'autre ne bougerait. (Depuis la Phase 9, Jackson lit aussi des données rangées dans le .jar, les départements
+et leurs contours : voir Decoupage et Contours. Ce sont des données du jeu, jamais modifiées.)
 
 Sauvegarde<T> est générique : le T est le type de l'objet enregistré (Historique, Reglages…). Le mécanisme est le
 même pour tous : lecture, écriture sans risque de fichier à moitié écrit, fichier abîmé mis de côté. On l'écrit

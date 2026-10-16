@@ -1,11 +1,16 @@
 package fr.francle.ui;
 
+import fr.francle.donnees.Departement;
 import fr.francle.donnees.Langue;
 import fr.francle.donnees.ModeRegions;
 import fr.francle.donnees.RegionFr;
+import fr.francle.jeu.Bonus;
+import fr.francle.jeu.Essai;
 import fr.francle.jeu.Indice;
 import fr.francle.jeu.Partie;
 import fr.francle.jeu.RegionDuJour;
+import fr.francle.jeu.Reponse;
+import fr.francle.jeu.Tentative;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -14,8 +19,10 @@ import java.nio.charset.StandardCharsets;
 import java.text.Collator;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -58,8 +65,19 @@ final class Textes {
         return phrases.keySet();
     }
 
+    // l'aide, avec son exemple. Comme dans la version web, l'exemple est un vrai essai, calculé par les règles du jeu
+    // plutôt qu'écrit à la main : il reste juste si une règle change (la Normandie proposée pour trouver la Bretagne)
     String aide() {
-        return aide;
+        return aide.replace("{exemple}", exemple());
+    }
+
+    String exemple() {
+        Partie partie = new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES);
+        Reponse.Jouee jouee = (Reponse.Jouee) partie.proposer(RegionFr.NORMANDIE.getNom());
+        Essai essai = jouee.essai();
+        // en km, quelle que soit l'unité choisie : c'est une explication, pas un essai
+        return texte("aide.exemple", nom(RegionFr.NORMANDIE), distance(essai.distance(), false),
+                essai.direction().getSymbole(), pourcentage(essai.pourcentage()), nom(RegionFr.BRETAGNE));
     }
 
     // « Francle n° 1 » ou « Francle #1 », comme « Wordle 1234 ». Des titres courts : avec FlatLaf sous Windows, la
@@ -91,6 +109,12 @@ final class Textes {
         return unitesAnglaises
                 ? milliers(Math.round(kilometresCarres / (KM_PAR_MILE * KM_PAR_MILE))) + " mi²"
                 : milliers(kilometresCarres) + " km²";
+    }
+
+    // « 03:07:09 » : une durée en heures, minutes, secondes, jamais négative (le compte à rebours)
+    String duree(Duration duree) {
+        long secondes = Math.max(0, duree.toSeconds());
+        return String.format("%02d:%02d:%02d", secondes / 3600, secondes / 60 % 60, secondes % 60);
     }
 
     // « 76 % » en français, « 76% » en anglais
@@ -151,11 +175,58 @@ final class Textes {
         };
     }
 
-    // les noms des régions jouables, dans l'ordre alphabétique de la langue (Île-de-France rangée à la lettre I)
-    String listeDesRegions(ModeRegions mode) {
-        List<String> noms = new ArrayList<>(RegionFr.tirables(mode).stream().map(this::nom).toList());
-        noms.sort(Collator.getInstance(langue.getLocale()));
-        return texte("liste.intro") + "\n" + String.join("\n", noms);
+    // ---- le bonus des départements ----
+
+    // la question en cours : « Bonus 2/4 · Cliquez sur : Finistère ». Les noms des départements n'ont pas d'article
+    // (« le Finistère », « la Somme », « l'Ain », « les Landes »…) : la phrase est tournée pour s'en passer
+    String questionBonus(Bonus bonus) {
+        String nom = bonus.demande().nom();
+        return switch (bonus.getQuestion()) {
+            case CARTE -> texte("bonus.carte", bonus.rang(), bonus.total(), nom);
+            case NOM -> texte("bonus.nom", bonus.rang(), bonus.total());
+            case NUMERO -> texte("bonus.numero", nom);
+        };
+    }
+
+    // ce que la réponse donnée valait. Ratée en mode CARTE, le bon département est colorié en rouge sur la carte ;
+    // dans les autres modes, on écrit la bonne réponse
+    String reponseBonus(Bonus bonus, Tentative tentative) {
+        Departement demande = tentative.demande();
+        if (tentative.juste()) {
+            return texte("bonus.juste", demande.nom());
+        }
+        return bonus.getQuestion() == Bonus.Question.CARTE
+                ? texte("bonus.rate.carte", demande.nom())
+                : texte("bonus.rate", demande.code(), demande.nom());
+    }
+
+    String bonusInconnu(Bonus bonus, String saisie) {
+        return texte(bonus.getQuestion() == Bonus.Question.NUMERO ? "bonus.inconnuNumero" : "bonus.inconnu",
+                saisie.strip());
+    }
+
+    // le bonus est fini : terminé ou passé, avec le score. Pour un seul département, on dit simplement juste ou faux
+    String finBonus(Bonus bonus) {
+        if (bonus.total() == 1 && !bonus.getTentatives().isEmpty()) {
+            Departement departement = bonus.getOrdre().get(0);
+            return bonus.score() == 1
+                    ? texte("bonus.fin.un.trouve", departement.code())
+                    : texte("bonus.fin.un.rate", departement.code());
+        }
+        String cle = bonus.getEtat() == Bonus.Etat.PASSE ? "bonus.passe" : "bonus.fin";
+        return texte(cle, bonus.score(), bonus.total());
+    }
+
+    // le score du bonus en quelques caractères, après le message de fin de la partie : « Bonus : 3/4. »
+    String resumeBonus(Bonus bonus) {
+        return texte("bonus.resume", bonus.score(), bonus.total());
+    }
+
+    // les régions jouables, dans l'ordre alphabétique de leur nom dans la langue (Île-de-France rangée à la lettre I)
+    List<RegionFr> regionsTriees(ModeRegions mode) {
+        List<RegionFr> regions = new ArrayList<>(RegionFr.tirables(mode));
+        regions.sort(Comparator.comparing(this::nom, Collator.getInstance(langue.getLocale())));
+        return regions;
     }
 
     // un fichier texte rangé dans le .jar, lu en entier

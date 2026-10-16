@@ -80,6 +80,35 @@ class SauvegardeTest {
     }
 
     @Test
+    @DisplayName("Le bonus est enregistré avec sa partie, et relu à l'identique")
+    void bonus() throws IOException {
+        Sauvegarde<Historique> sauvegarde = Sauvegarde.historique(dossier.resolve("historique.json"));
+        Historique historique = new Historique(Historique.VERSION, List.of(new Resultat(JOUR, RegionFr.BRETAGNE,
+                List.of(RegionFr.BRETAGNE), Partie.Etat.GAGNEE, List.of("29", "22"),
+                new fr.francle.jeu.ModesDifficiles(false, true))), null);
+
+        sauvegarde.enregistrer(historique);
+
+        assertTrue(Files.readString(sauvegarde.getFichier()).contains("\"bonus\" : [ \"29\", \"22\" ]"));
+        assertEquals(historique, sauvegarde.charger());
+    }
+
+    @Test
+    @DisplayName("Un fichier d'avant le bonus (Phase 8) se lit toujours : pas de bonus joué")
+    void avantLeBonus() throws IOException {
+        Path fichier = dossier.resolve("historique.json");
+        Files.writeString(fichier, """
+                { "version" : 1, "resultats" : [ { "date" : "2030-03-09", "region" : "BRETAGNE",
+                  "propositions" : [ "CORSE", "BRETAGNE" ], "etat" : "GAGNEE" } ], "enCours" : null }
+                """);
+
+        Historique historique = Sauvegarde.historique(fichier).charger();
+
+        assertNull(historique.resultats().get(0).bonus());
+        assertEquals(exemple().resultats(), historique.resultats());
+    }
+
+    @Test
     @DisplayName("Un champ inconnu (d'une version plus récente) est ignoré")
     void champInconnu() throws IOException {
         Path fichier = dossier.resolve("historique.json");
