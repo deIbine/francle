@@ -30,13 +30,22 @@ public class Partie {
         this.mode = mode;
     }
 
-    // joue la saisie du joueur et dit ce qui s'est passé : un essai joué, une saisie inconnue ou une région déjà
-    // proposée. Seul le premier cas coûte un essai
+    // joue la saisie du joueur et dit ce qui s'est passé : un essai joué, une saisie inconnue, ambiguë, ou une région
+    // déjà proposée. Seul le premier cas coûte un essai.
+    // La saisie est le nom d'une région, ou, comme dans la version web, le début d'un nom qui n'en évoque qu'une
+    // (« bret » + Entrée joue la Bretagne : c'est la seule suggestion)
     public Reponse proposer(String saisie) {
         verifierEnCours();
         Optional<RegionFr> trouvee = RegionFr.chercher(saisie, mode);
         if (trouvee.isEmpty()) {
-            return new Reponse.Inconnue();
+            List<RegionFr> evoquees = RegionFr.suggestions(saisie, mode);
+            if (evoquees.size() > 1) {
+                return new Reponse.Plusieurs();
+            }
+            if (evoquees.isEmpty()) {
+                return new Reponse.Inconnue();
+            }
+            trouvee = Optional.of(evoquees.get(0));
         }
         RegionFr proposition = trouvee.get();
         if (essais.stream().anyMatch(essai -> essai.proposition() == proposition)) {

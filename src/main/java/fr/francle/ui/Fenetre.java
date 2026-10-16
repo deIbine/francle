@@ -477,6 +477,7 @@ class Fenetre {
         // n'est oubliée. « case Reponse.DejaProposee(RegionFr region) » teste le type ET sort le champ du record
         switch (partie.proposer(saisie.getText())) {
             case Reponse.Inconnue() -> refuser(textes.nonReconnue(saisie.getText()));
+            case Reponse.Plusieurs() -> refuser(textes.texte("plusieurs", saisie.getText().strip()));
             case Reponse.DejaProposee(RegionFr region) -> refuser(textes.dejaProposee(region));
             case Reponse.Jouee jouee -> essaiJoue();
         }

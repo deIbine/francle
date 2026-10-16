@@ -47,6 +47,26 @@ class PartieTest {
     }
 
     @Test
+    @DisplayName("Le début d'un nom qui n'évoque qu'une région la joue (« bret » -> Bretagne), comme sur le web")
+    void seuleSuggestion() {
+        Partie partie = new Partie(RegionFr.CORSE, ModeRegions.NOUVELLES);
+
+        Essai essai = assertInstanceOf(Reponse.Jouee.class, partie.proposer("bret")).essai();
+
+        assertEquals(RegionFr.BRETAGNE, essai.proposition());
+    }
+
+    @Test
+    @DisplayName("Un début qui évoque plusieurs régions est refusé sans coûter d'essai")
+    void plusieurs() {
+        Partie partie = new Partie(RegionFr.CORSE, ModeRegions.ANCIENNES);
+
+        // Nord-Pas-de-Calais, Basse-Normandie et Haute-Normandie
+        assertEquals(new Reponse.Plusieurs(), partie.proposer("nor"));
+        assertTrue(partie.getEssais().isEmpty());
+    }
+
+    @Test
     @DisplayName("Une région déjà proposée est refusée sans coûter d'essai, même écrite autrement")
     void regionDejaProposee() {
         Partie partie = jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES, "Corse");
