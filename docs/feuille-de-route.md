@@ -16,7 +16,8 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 4 | Interface Swing en une seule fenêtre | ✅ Fait (PR #24 à #28) |
 | 5 | Région du jour et statistiques | ✅ Fait (PR #29 et #30) |
 | 6 | Anciennes régions complètes, réglages enregistrés, options | ✅ Fait (PR #31) |
-| 7 | Version web (Spring Boot) | ⬜ À faire |
+| 7 | Version web | ✅ Devenue un projet à part : [deIbine/francle-web](https://github.com/deIbine/francle-web) |
+| 8 | Reprendre les nouveautés de la version web | ✅ Fait (PR #32) |
 
 ---
 
@@ -513,13 +514,55 @@ réglages, et trois options changent l'expérience (thème sombre, miles, silhou
 
 ---
 
-## Phase 7 : la version web
+## Phase 7 : la version web ✅ (projet à part)
 
-Une **version web** avec Spring Boot : un serveur HTTP qui expose le jeu (API), et une page HTML qui le joue.
-Gros projet, réaliste grâce aux Phases 3 à 5 : `Partie`, `RegionFr`, la région du jour et les statistiques sont déjà
-indépendants de Swing, et le JSON de la Phase 5 est le format naturel d'une API web.
+Prévue d'abord avec Spring Boot (un serveur et une page HTML), elle a été **réorientée le 14 octobre 2026** : un
+**nouveau projet**, dans un **nouveau dépôt**, [deIbine/francle-web](https://github.com/deIbine/francle-web), en
+TypeScript (Vite + React), sans serveur, inspiré de Worldle, jouable par tous sur
+[deibine.github.io/francle-web](https://deibine.github.io/francle-web/). Son plan, ses décisions et ses leçons sont
+dans ce dépôt-là (`docs/plan.md`, `docs/lecons.md`).
 
-**Ce que tu apprends :** serveur HTTP, API REST, HTML et JavaScript côté navigateur, déploiement.
+Ce projet Java lui a servi de **référence** : le web donne la même région du jour, au bit près, et ses tests
+comparent distances, directions, pourcentages et suggestions à des valeurs produites par le Java
+(`outils/ReferenceJava.java` du dépôt web).
 
-**Comment le penser.** Une bonne architecture se mesure au coût d'une nouvelle interface : ici, la troisième
-(popups, fenêtre Swing, page web) ne devrait toucher ni aux règles ni aux données.
+**Comment le penser.** Une bonne architecture se mesure au coût d'une nouvelle interface. Ici, la troisième
+(après les popups et la fenêtre Swing) a même changé de langage : ce qui a été repris, ce sont les règles et les
+données, pas le code. C'est le signe qu'elles étaient bien séparées de l'affichage.
+
+---
+
+## Phase 8 : reprendre les nouveautés de la version web ✅
+
+**Pourquoi.** La version web a fait évoluer le jeu : un essai et un indice de plus, des indices corrigés, une région
+proposée deux fois qui ne coûte plus d'essai, l'anglais. Le jeu de bureau était resté en arrière : deux versions du
+même jeu qui ne suivent plus les mêmes règles, c'est un joueur qui s'y perd, et une référence qui n'en est plus une.
+
+**Décisions** (le 16 octobre 2026) : l'utilisateur a choisi de tout reprendre ; Claude code et explique ; une seule PR,
+un commit par nouveauté. Restent propres au web : le partage en carrés emoji, le compte à rebours, les crédits.
+
+- **Indices corrigés** : à Mayotte, « le mataba » et Zéna M'Déré ; en Nouvelle-Aquitaine, Montaigne. Les anciens
+  passent dans les personnalités alternatives d'[indices.md](indices.md).
+- **Une région déjà proposée** est refusée avec un message, **sans coûter d'essai**. `Partie.proposer` renvoie une
+  `Reponse` **scellée** (`sealed`) : `Jouee`, `Inconnue` ou `DejaProposee`, traitée par un `switch` sur les motifs de
+  records. Une partie du jour finie le reste quand on la rejoue, même si les règles ont changé depuis.
+- **Le monument**, cinquième indice, révélé après le cinquième essai raté ; donc **6 essais**, comme Worldle et le web.
+  La répartition des statistiques va de 1 à 6 ; la fenêtre gagne une ligne de tableau et une ligne d'indice
+  (633 points de haut : elle tient toujours sur un écran portable).
+- **L'anglais** : noms des régions et indices dans les deux langues (`Texte`, `Langue`), la saisie accepte les deux
+  noms (« Brittany ») ; les textes de la fenêtre dans deux fichiers `ResourceBundle` (`textes_fr.properties`,
+  `textes_en.properties`) et l'aide dans `aide_fr.txt`, `aide_en.txt`. Sous-menu **Langue** (celle du système par
+  défaut), changement immédiat, même en pleine partie ; **miles par défaut en anglais** tant que le joueur n'a pas
+  choisi lui-même son unité.
+- **203 tests** (189 avant la phase).
+
+**Ce que tu apprends :** les interfaces scellées et le *pattern matching* de Java 21, l'internationalisation
+(`ResourceBundle`, `Locale`, `Collator`, `String.format`), la compatibilité des données enregistrées quand les règles
+changent.
+
+**Pour la suite.** Le dépôt web compare ses suggestions à celles du Java. Le Java cherche désormais aussi les noms
+anglais : si l'on régénère un jour `reference-java.json` côté web, il faudra que le test web cherche lui aussi les
+deux noms (son paramètre `nomsCherches`).
+
+Écarts qui restent voulus avec le web : 8 directions en flèches (et non en emoji), pas de partage, des menus Swing au
+lieu d'onglets. Les messages d'erreur de fichier illisible (`SauvegardeIllisible`) restent en français.

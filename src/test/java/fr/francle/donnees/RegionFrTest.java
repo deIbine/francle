@@ -150,13 +150,17 @@ class RegionFrTest {
     }
 
     @Test
-    @DisplayName("Chaque région, ancienne comme nouvelle, a ses 4 indices et son image")
+    @DisplayName("Chaque région, ancienne comme nouvelle, a son nom et ses 5 indices dans les deux langues, et son image")
     void indicesRemplis() {
         for (RegionFr region : RegionFr.values()) {
             assertTrue(region.getSuperficie() > 0, region.getNom());
-            assertFalse(region.getSpecialite().isBlank(), region.getNom());
-            assertFalse(region.getPersonnalite().isBlank(), region.getNom());
             assertFalse(region.getCapitale().isBlank(), region.getNom());
+            for (Langue langue : Langue.values()) {
+                assertFalse(region.getNom(langue).isBlank(), region.getNom());
+                assertFalse(region.getSpecialite().dans(langue).isBlank(), region.getNom());
+                assertFalse(region.getPersonnalite().dans(langue).isBlank(), region.getNom());
+                assertFalse(region.getMonument().dans(langue).isBlank(), region.getNom());
+            }
             assertNotNull(region.getImage(), region.getNom());
         }
     }
@@ -183,5 +187,44 @@ class RegionFrTest {
     void superficiesCoherentes(RegionFr nouvelle, String anciennes) {
         int somme = Arrays.stream(anciennes.split(" ")).map(RegionFr::valueOf).mapToInt(RegionFr::getSuperficie).sum();
         assertEquals(nouvelle.getSuperficie(), somme, 2);
+    }
+
+    @Test
+    @DisplayName("Les noms anglais sont acceptés, quelle que soit la langue choisie")
+    void nomsAnglais() {
+        assertEquals(Optional.of(RegionFr.BRETAGNE), RegionFr.chercher("brittany", ModeRegions.NOUVELLES));
+        assertEquals(Optional.of(RegionFr.CORSE), RegionFr.chercher("Corsica", ModeRegions.ANCIENNES));
+        assertEquals(Optional.of(RegionFr.BASSE_NORMANDIE), RegionFr.chercher("Lower Normandy", ModeRegions.ANCIENNES));
+    }
+
+    @Test
+    @DisplayName("L'apostrophe typographique (’) est ignorée comme l'apostrophe droite")
+    void apostropheTypographique() {
+        assertEquals(Optional.of(RegionFr.PROVENCE_ALPES_COTE_D_AZUR),
+                RegionFr.chercher("Provence-Alpes-Côte d’Azur", ModeRegions.NOUVELLES));
+    }
+
+    @Test
+    @DisplayName("Deux régions différentes n'ont jamais le même nom simplifié, dans aucune langue")
+    void nomsDistincts() {
+        java.util.Map<String, RegionFr> vus = new java.util.HashMap<>();
+        for (RegionFr region : RegionFr.values()) {
+            for (Langue langue : Langue.values()) {
+                RegionFr deja = vus.putIfAbsent(RegionFr.simplifier(region.getNom(langue)), region);
+                assertTrue(deja == null || deja == region, region + " et " + deja);
+            }
+        }
+    }
+
+    @Test
+    @DisplayName("Suggestions : les deux noms sont cherchés, et chaque liste est triée dans la langue du joueur")
+    void suggestionsBilingues() {
+        // « bri » : Brittany (la Bretagne), même pour un joueur francophone
+        assertEquals(List.of(RegionFr.BRETAGNE), RegionFr.suggestions("bri", ModeRegions.NOUVELLES, Langue.FR));
+        // « bur » : Burgundy-Franche-Comté (la Bourgogne-Franche-Comté)
+        assertEquals(List.of(RegionFr.BOURGOGNE_FRANCHE_COMTE),
+                RegionFr.suggestions("bur", ModeRegions.NOUVELLES, Langue.EN));
+        // « co » : Corse / Corsica. En anglais, Corsica avant… rien d'autre ; en français, Corse seule aussi
+        assertTrue(RegionFr.suggestions("co", ModeRegions.NOUVELLES, Langue.EN).contains(RegionFr.CORSE));
     }
 }

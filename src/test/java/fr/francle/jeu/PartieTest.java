@@ -27,7 +27,7 @@ class PartieTest {
     void victoireAuPremierEssai() {
         Partie partie = new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES);
 
-        Essai essai = partie.proposer("  BRETAGNE ").orElseThrow();
+        Essai essai = assertInstanceOf(Reponse.Jouee.class, partie.proposer("  BRETAGNE ")).essai();
 
         assertEquals(Partie.Etat.GAGNEE, partie.getEtat());
         assertFalse(partie.enCours());
@@ -40,9 +40,19 @@ class PartieTest {
     void saisieInconnue() {
         Partie partie = new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES);
 
-        assertTrue(partie.proposer("Paris").isEmpty());
-        assertTrue(partie.proposer("").isEmpty());
+        assertEquals(new Reponse.Inconnue(), partie.proposer("Paris"));
+        assertEquals(new Reponse.Inconnue(), partie.proposer(""));
         assertTrue(partie.getEssais().isEmpty());
+        assertTrue(partie.enCours());
+    }
+
+    @Test
+    @DisplayName("Une région déjà proposée est refusée sans coûter d'essai, même écrite autrement")
+    void regionDejaProposee() {
+        Partie partie = jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES, "Corse");
+
+        assertEquals(new Reponse.DejaProposee(RegionFr.CORSE), partie.proposer("corse"));
+        assertEquals(1, partie.getEssais().size());
         assertTrue(partie.enCours());
     }
 
@@ -51,33 +61,33 @@ class PartieTest {
     void ancienneRegionRefusee() {
         Partie partie = new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES);
 
-        assertTrue(partie.proposer("Alsace").isEmpty());
+        assertEquals(new Reponse.Inconnue(), partie.proposer("Alsace"));
     }
 
     @Test
-    @DisplayName("Cinq essais ratés font perdre la partie")
+    @DisplayName("Six essais ratés font perdre la partie")
     void defaite() {
         Partie partie = jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES,
-                "Corse", "Normandie", "Occitanie", "Grand Est", "Guyane");
+                "Corse", "Normandie", "Occitanie", "Grand Est", "Guyane", "Mayotte");
 
         assertEquals(Partie.Etat.PERDUE, partie.getEtat());
         assertEquals(Partie.ESSAIS_MAX, partie.getEssais().size());
     }
 
     @Test
-    @DisplayName("Quatre essais ratés : la partie continue")
-    void quatreEchecs() {
+    @DisplayName("Cinq essais ratés : la partie continue")
+    void cinqEchecs() {
         Partie partie = jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES,
-                "Corse", "Normandie", "Occitanie", "Grand Est");
+                "Corse", "Normandie", "Occitanie", "Grand Est", "Guyane");
 
         assertTrue(partie.enCours());
     }
 
     @Test
-    @DisplayName("Trouver au 5e essai est une victoire, pas une défaite")
-    void victoireAuCinquiemeEssai() {
+    @DisplayName("Trouver au 6e essai est une victoire, pas une défaite")
+    void victoireAuSixiemeEssai() {
         Partie partie = jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES,
-                "Corse", "Normandie", "Occitanie", "Grand Est", "Bretagne");
+                "Corse", "Normandie", "Occitanie", "Grand Est", "Guyane", "Bretagne");
 
         assertEquals(Partie.Etat.GAGNEE, partie.getEtat());
     }
@@ -110,8 +120,8 @@ class PartieTest {
 
         // Grand Est et Alsace ont la même capitale : avant la Phase 6, le mode « toutes » permettait de proposer
         // l'une pour l'autre, à 0 km, sans gagner. Les deux époques ne se mélangent plus
-        assertTrue(anciennes.proposer("Grand Est").isEmpty());
-        assertTrue(nouvelles.proposer("Alsace").isEmpty());
+        assertEquals(new Reponse.Inconnue(), anciennes.proposer("Grand Est"));
+        assertEquals(new Reponse.Inconnue(), nouvelles.proposer("Alsace"));
         assertTrue(anciennes.getEssais().isEmpty());
         assertTrue(nouvelles.getEssais().isEmpty());
     }
@@ -129,13 +139,14 @@ class PartieTest {
     }
 
     @Test
-    @DisplayName("Indices : superficie, spécialité, personnalité, capitale, puis plus rien")
+    @DisplayName("Indices : superficie, spécialité, personnalité, capitale, monument, puis plus rien")
     void ordreDesIndices() {
         assertEquals(Indice.SUPERFICIE, Indice.apresEssai(0).orElseThrow());
         assertEquals(Indice.SPECIALITE, Indice.apresEssai(1).orElseThrow());
         assertEquals(Indice.PERSONNALITE, Indice.apresEssai(2).orElseThrow());
         assertEquals(Indice.CAPITALE, Indice.apresEssai(3).orElseThrow());
-        assertTrue(Indice.apresEssai(4).isEmpty());
+        assertEquals(Indice.MONUMENT, Indice.apresEssai(4).orElseThrow());
+        assertTrue(Indice.apresEssai(5).isEmpty());
         assertTrue(Indice.apresEssai(-1).isEmpty());
     }
 
@@ -147,10 +158,10 @@ class PartieTest {
                 jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES, "Corse", "Normandie").indicesReveles());
         assertEquals(List.of(Indice.SUPERFICIE),
                 jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES, "Corse", "Bretagne").indicesReveles());
-        // 5 essais ratés : 4 indices seulement, il n'y en a pas de cinquième
+        // 6 essais ratés : 5 indices seulement, il n'y en a pas de sixième
         assertEquals(List.of(Indice.values()),
                 jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES,
-                        "Corse", "Normandie", "Occitanie", "Grand Est", "Guyane").indicesReveles());
+                        "Corse", "Normandie", "Occitanie", "Grand Est", "Guyane", "Mayotte").indicesReveles());
     }
 
     @Test

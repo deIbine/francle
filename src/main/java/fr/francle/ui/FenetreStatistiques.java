@@ -31,21 +31,21 @@ final class FenetreStatistiques {
     private FenetreStatistiques() {}
 
     // essaisDuJour : le nombre d'essais de la victoire du jour, pour mettre sa barre en valeur (0 si pas de victoire)
-    static JPanel panneau(Statistiques stats, int essaisDuJour) {
+    static JPanel panneau(Statistiques stats, int essaisDuJour, Textes textes) {
         JPanel chiffres = new JPanel(new GridLayout(1, 4, 12, 0));
-        chiffres.add(chiffre(String.valueOf(stats.jouees()), "Jouées"));
-        chiffres.add(chiffre(stats.pourcentageVictoires() + " %", "Victoires"));
-        chiffres.add(chiffre(String.valueOf(stats.serieActuelle()), "Série en cours"));
-        chiffres.add(chiffre(String.valueOf(stats.meilleureSerie()), "Meilleure série"));
+        chiffres.add(chiffre(String.valueOf(stats.jouees()), textes.texte("statistiques.jouees")));
+        chiffres.add(chiffre(textes.pourcentage(stats.pourcentageVictoires()), textes.texte("statistiques.victoires")));
+        chiffres.add(chiffre(String.valueOf(stats.serieActuelle()), textes.texte("statistiques.serie")));
+        chiffres.add(chiffre(String.valueOf(stats.meilleureSerie()), textes.texte("statistiques.meilleureSerie")));
 
         JComponent barres = new Repartition(stats.repartition(), essaisDuJour - 1);
-        barres.setBorder(BorderFactory.createTitledBorder("Victoires par nombre d'essais"));
+        barres.setBorder(BorderFactory.createTitledBorder(textes.texte("statistiques.repartition")));
 
         JPanel panneau = new JPanel(new BorderLayout(0, 12));
         panneau.add(chiffres, BorderLayout.NORTH);
         panneau.add(barres, BorderLayout.CENTER);
         if (stats.jouees() == 0) {
-            panneau.add(new JLabel("Jouez la partie du jour pour commencer vos statistiques.", SwingConstants.CENTER),
+            panneau.add(new JLabel(textes.texte("statistiques.vide"), SwingConstants.CENTER),
                     BorderLayout.SOUTH);
         }
         return panneau;
@@ -95,7 +95,7 @@ final class FenetreStatistiques {
             int x0 = marges.left + 6;
             int largeurUtile = getWidth() - marges.left - marges.right - 12;
             int y0 = marges.top + 4;
-            int colonneChiffre = mesures.stringWidth("5") + 10;
+            int colonneChiffre = mesures.stringWidth(String.valueOf(Partie.ESSAIS_MAX)) + 10;
             // la plus longue barre prend toute la largeur ; Math.max(1, …) évite une division par zéro sans victoire
             int maximum = Math.max(1, Collections.max(valeurs));
             Color accent = UIManager.getColor("Component.accentColor");

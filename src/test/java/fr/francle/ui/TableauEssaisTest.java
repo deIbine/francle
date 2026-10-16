@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class TableauEssaisTest {
 
     @Test
-    @DisplayName("Toujours 5 lignes numérotées et 5 colonnes, même sans partie")
+    @DisplayName("Toujours 6 lignes numérotées et 5 colonnes, même sans partie")
     void dimensions() {
         TableauEssais tableau = new TableauEssais();
 

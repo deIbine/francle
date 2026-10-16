@@ -35,19 +35,19 @@ class StatistiquesTest {
         assertEquals(0, stats.pourcentageVictoires());
         assertEquals(0, stats.serieActuelle());
         assertEquals(0, stats.meilleureSerie());
-        assertEquals(List.of(0, 0, 0, 0, 0), stats.repartition());
+        assertEquals(List.of(0, 0, 0, 0, 0, 0), stats.repartition());
     }
 
     @Test
     @DisplayName("Jouées, victoires (arrondies), et répartition par nombre d'essais")
     void comptes() {
         Statistiques stats = Statistiques.de(List.of(victoire(5, 3), victoire(4, 1), defaite(3), victoire(2, 3), abandon(1),
-                victoire(0, 5)), JOUR);
+                victoire(0, 6)), JOUR);
 
         assertEquals(6, stats.jouees());
         assertEquals(4, stats.victoires());
         assertEquals(67, stats.pourcentageVictoires());   // 4 / 6 = 66,7 % : arrondi, pas tronqué
-        assertEquals(List.of(1, 0, 2, 0, 1), stats.repartition());
+        assertEquals(List.of(1, 0, 2, 0, 0, 1), stats.repartition());
     }
 
     @Test

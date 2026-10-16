@@ -2,7 +2,10 @@
 
 **Un jeu de devinettes des régions françaises, inspiré de [Worldle](https://worldle.teuteuf.fr/).**
 
-Une silhouette de région s'affiche : à toi de la reconnaître en 5 essais maximum.
+Une silhouette de région s'affiche : à toi de la reconnaître en 6 essais maximum.
+
+**Version web, jouable en ligne : [deibine.github.io/francle-web](https://deibine.github.io/francle-web/)**
+(dépôt [deIbine/francle-web](https://github.com/deIbine/francle-web)). Ce dépôt-ci est la version de bureau, en Java.
 
 <p align="center">
   <img src="src/main/resources/regions/bretagne.png" alt="Silhouette d'une région à deviner" width="300">
@@ -11,22 +14,35 @@ Une silhouette de région s'affiche : à toi de la reconnaître en 5 essais maxi
 
 ## Règles
 
-- Tu as **5 essais** pour trouver la région.
-- Après chaque essai raté, le jeu t'indique :
-  - la **distance** (en km) entre ta proposition et la région à trouver ;
-  - un **pourcentage de proximité** (100 % = trouvé) ;
-  - un **indice** qui se dévoile au fil des essais : superficie, spécialité culinaire,
-    personnalité, puis capitale régionale ([liste des indices](docs/indices.md)).
+- Tu as **6 essais** pour trouver la région.
+- Après chaque essai, le jeu t'indique :
+  - la **distance** (en km ou en miles) entre la capitale de ta proposition et celle de la région à trouver ;
+  - la **direction** à suivre (↑ nord, ↗ nord-est…) ;
+  - un **pourcentage de proximité** (100 % = trouvé).
+- Après chaque essai raté, un **indice** se dévoile : superficie, spécialité culinaire, personnalité,
+  capitale régionale, puis monument ([liste des indices](docs/indices.md)).
+- Proposer deux fois la même région ne coûte pas d'essai.
 - La saisie est tolérante : majuscules, accents, espaces et tirets sont ignorés
-  (`ile de france` = `Île-de-France`).
+  (`ile de france` = `Île-de-France`), et les noms anglais sont acceptés (`Brittany`).
+  Des suggestions s'affichent pendant la frappe.
 
-### Options (menu *Paramètres*)
+### Deux sortes de parties (menu *Jeu*)
 
-| Option | Choix |
+- **Partie du jour** : la même région pour tout le monde, parmi les 18 régions actuelles, une seule partie par jour.
+  Elle est retrouvée si l'on ferme le jeu, et alimente les **statistiques** (parties, victoires, séries).
+- **Partie libre** : autant que tu veux, avec les régions actuelles ou les anciennes régions (avant 2016).
+
+### Réglages (menu *Paramètres*, retenus d'un lancement à l'autre)
+
+| Réglage | Choix |
 |---|---|
-| Régions jouées | Nouvelles (depuis 2016), anciennes (avant 2016), ou toutes |
-| Images | Avec ou sans silhouette (sans = plus difficile) |
-| Liste des régions | Afficher ou non l'historique et la liste des régions possibles |
+| Régions de la partie libre | Nouvelles (depuis 2016) ou anciennes (avant 2016) |
+| Silhouette de la région | Affichée ou cachée (plus difficile) |
+| Silhouette tournée au hasard | Un angle au hasard, le même pour tous dans la partie du jour |
+| Liste des régions, suggestions | Activées ou non |
+| Thème sombre | Clair ou sombre |
+| Unités anglo-saxonnes | Kilomètres ou miles (miles par défaut en anglais) |
+| Langue | Français ou anglais (par défaut, celle du système) |
 
 ## Lancer le jeu
 
@@ -59,15 +75,18 @@ Le plus simple : fermer IntelliJ, supprimer le dossier `.idea`, puis rouvrir le 
 
 ```
 francle/
-├── pom.xml                    Description du projet pour Maven (Java 21, JUnit, .jar)
+├── pom.xml                    Description du projet pour Maven (Java 21, FlatLaf, Jackson, JUnit, .jar)
 ├── mvnw, mvnw.cmd, .mvn/      Maven Wrapper
 ├── src/
-│   ├── main/java/fr/francle/  Code source du jeu, en trois packages :
-│   │   ├── donnees/           les régions et leurs informations (RegionFr, ModeRegions…)
-│   │   ├── jeu/               les règles, sans affichage (Partie, Essai, Indice)
-│   │   └── ui/                les popups et les images (Francle, la classe à lancer)
-│   ├── main/resources/        Images : silhouettes (regions/) et cartes de localisation (indices/, pas encore utilisées)
+│   ├── main/java/fr/francle/  Code source du jeu, en quatre packages :
+│   │   ├── donnees/           les régions et leurs informations, en deux langues (RegionFr, Texte, Langue…)
+│   │   ├── jeu/               les règles, sans affichage (Partie, Reponse, Indice, RegionDuJour…)
+│   │   ├── stats/             l'historique des parties du jour et les statistiques, enregistrés en JSON
+│   │   └── ui/                la fenêtre Swing (Francle, la classe à lancer)
+│   ├── main/resources/        Silhouettes (regions/), cartes de fin de partie (cartes/), textes en deux langues
+│   │                          (textes/)
 │   └── test/java/fr/francle/  Tests JUnit, rangés dans les mêmes packages que les classes testées
+├── outils/                    Le script Python qui produit les images à partir des contours officiels
 ├── .github/workflows/         Intégration continue : compilation et tests à chaque PR
 ├── docs/
 │   ├── indices.md             Indices de chaque région
@@ -87,8 +106,11 @@ et ce qu'elle a permis d'apprendre dans [docs/lecons.md](docs/lecons.md).
 - [x] **Phase 1** : corriger les bugs (calcul de distance, réinitialisation des parties…)
 - [x] **Phase 2** : centraliser les données des régions (`enum`, collections)
 - [x] **Phase 3** : séparer la logique du jeu de l'affichage, Maven, tests JUnit, intégration continue, packages
-- [ ] **Phase 4** : interface Swing en une seule fenêtre, flèche de direction
-- [ ] **Phase 5** : statistiques, région du jour, indices des anciennes régions
+- [x] **Phase 4** : interface Swing en une seule fenêtre, flèche de direction, autocomplétion
+- [x] **Phase 5** : région du jour et statistiques
+- [x] **Phase 6** : anciennes régions complètes, réglages enregistrés, thème sombre, miles, silhouette tournée
+- [x] **Phase 7** : la version web, devenue un projet à part ([francle-web](https://github.com/deIbine/francle-web))
+- [x] **Phase 8** : reprendre les nouveautés de la version web (6 essais, monument, doublons, anglais)
 
 ## Historique
 

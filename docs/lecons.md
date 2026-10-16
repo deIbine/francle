@@ -1493,6 +1493,128 @@ transparentes, sinon la silhouette paraîtrait plus petite qu'à l'endroit une f
 
 ---
 
+## Phase 8 : reprendre les nouveautés de la version web
+
+### Comparer deux versions d'un même jeu
+
+- **Pourquoi** : la version web (TypeScript) a été écrite d'après le Java, puis a continué d'évoluer. Sans
+  comparaison, les deux jeux divergent en silence : un joueur du web perd en 6 essais, celui du bureau en 5.
+- **Comment le faire** : on compare **les règles et les données**, pas le code (les deux langages n'ont rien en
+  commun). Lire le plan et l'historique Git du web (`git log --stat`), y chercher le mot « Java » (chaque écart voulu
+  y est noté), puis comparer les données **par un programme** : le fichier des régions du web a été converti en JSON
+  (`node`), puis un script Python l'a comparé à `RegionFr.java` et a régénéré l'enum, avec des `assert` qui
+  s'arrêtent au premier nom qui ne correspond pas. Recopier 35 régions × 5 indices × 2 langues à la main, c'est
+  l'assurance d'une faute de frappe.
+- **Comment le penser** : une **source de vérité** par information. Ici, le web est devenu la source des indices et
+  des traductions ; le Java les reprend. Se demander à chaque fois : « si je corrige ceci d'un côté, comment
+  l'autre côté le saura-t-il ? »
+
+### Les interfaces scellées : une liste fermée de cas
+
+- **Pourquoi** : `proposer` renvoyait un `Optional<Essai>` : vide voulait dire « saisie inconnue ». Avec les doublons,
+  il y a **trois** réponses possibles, et un `Optional` n'en distingue que deux. Ajouter un booléen ou une méthode
+  `dejaProposee()` à appeler avant obligerait l'appelant à se souvenir de l'ordre des appels.
+- **Comment le faire** : `public sealed interface Reponse` avec trois `record` imbriqués (`Jouee(Essai essai)`,
+  `Inconnue()`, `DejaProposee(RegionFr region)`). La fenêtre fait un `switch` sur la réponse :
+  `case Reponse.DejaProposee(RegionFr region) -> …` teste le type **et** sort le champ du record (*record pattern*,
+  Java 21). Dans les tests, `assertInstanceOf(Reponse.Jouee.class, …)` vérifie le type et renvoie l'objet converti.
+- **Comment le penser** : `sealed` dit au compilateur « il n'y aura jamais d'autres cas ». En échange, il vérifie que
+  chaque `switch` les traite tous, sans `default`. Le jour où un quatrième cas apparaît, la compilation échoue à chaque
+  endroit à compléter : l'erreur est trouvée avant de lancer le jeu. Même idée pour le `switch` sur `Langue` dans
+  `Texte.dans` et sur `Partie.Etat` dans `Textes.fin`.
+
+> *Où ce réflexe s'applique ailleurs :* le résultat d'une opération qui peut réussir ou échouer de plusieurs façons
+> (un paiement accepté, refusé, en attente), les messages d'un protocole, les nœuds d'un arbre.
+
+### Un indice de plus : la valeur d'une constante bien placée
+
+- **Pourquoi** : passer de 5 à 6 essais aurait pu toucher partout : tableau, statistiques, messages, fenêtre.
+- **Comment le faire** : il a suffi de `ESSAIS_MAX = 6` et d'une constante `MONUMENT` dans l'enum `Indice` : le tableau
+  (`getRowCount`), la zone des indices (`Indice.values().length` lignes), la répartition des statistiques
+  (`nCopies(ESSAIS_MAX, 0)`) ont suivi seuls. Ce qui n'a pas suivi : les tests qui écrivaient « 5 » en dur, et les
+  phrases (« 5 essais » dans l'aide). Les tests en échec ont donné la liste exacte des endroits à revoir.
+- **Comment le penser** : un nombre écrit une seule fois, sous un nom, se change une seule fois. Les tests, eux,
+  doivent souvent garder des valeurs en dur (« Encore 5 essais ») : c'est leur rôle de vérifier le résultat attendu,
+  pas de recopier le calcul.
+
+### Quand les règles changent, les fichiers enregistrés restent
+
+- **Pourquoi** : l'historique ne garde que les régions proposées, et rejoue la partie pour la reconstruire. Une partie
+  perdue en 5 essais la veille de la mise à jour, rejouée avec 6 essais, serait **en cours** : le joueur aurait un
+  essai de plus sur une partie finie. Même chose pour une ancienne partie avec un doublon, qui ne compte plus.
+- **Comment le faire** : `Historique.rejouer` reçoit « la partie était terminée » ; si, après l'avoir rejouée, elle est
+  encore en cours, on la termine (`abandonner`). Le résultat enregistré, lui, garde son état d'origine pour les
+  statistiques. Un test construit exprès un vieil historique avec un doublon.
+- **Comment le penser** : un fichier enregistré est écrit par **une ancienne version** du programme. Avant de changer
+  une règle, se demander : « que devient ce qui a été enregistré avec l'ancienne ? »
+
+### Traduire une application : `ResourceBundle`
+
+- **Pourquoi** : toutes les phrases étaient écrites en français dans `Textes` et `Fenetre`. Traduire en ajoutant des
+  `if (anglais)` partout rendrait chaque méthode deux fois plus longue, et l'oubli d'une phrase invisible.
+- **Comment le faire** : un fichier `.properties` par langue, avec les **mêmes clés** (`textes_fr.properties`,
+  `textes_en.properties`), lu par `ResourceBundle.getBundle("textes.textes", locale)`. Chaque phrase passe par
+  `String.format` : `%s` pour un texte, `%d` pour un nombre, et donc `%%` pour écrire le signe %. Les longs textes
+  (l'aide) sont dans des fichiers `.txt` à part. Deux tests protègent le tout : les deux fichiers ont les mêmes clés,
+  et chaque phrase a les mêmes `%s` / `%d` dans les deux langues.
+- **Les pièges rencontrés** :
+  - **le repli silencieux** : sans `Control.getNoFallbackControl`, un fichier manquant serait remplacé en silence par
+    celui de la langue du système. On préfère une erreur ;
+  - **le pluriel** n'est pas « ajouter un s » : deux phrases (`apresEssai.un`, `apresEssai.plusieurs`) plutôt qu'un
+    `s` collé par le code ;
+  - **les nombres** : « 27 208 » en français, « 27,208 » en anglais (`DecimalFormatSymbols` de la `Locale`) ; « 76 % »
+    contre « 76% » ;
+  - **l'ordre alphabétique** dépend de la langue : `Collator.getInstance(locale)` ;
+  - les `.properties` sont lus en **UTF-8** depuis Java 9 (avant, il fallait écrire `\u00e9` pour « é »).
+- **Comment le penser** : séparer **ce qui est dit** (les phrases, l'affaire d'un traducteur) de **comment c'est
+  calculé** (les nombres, les pluriels, l'affaire du programmeur). Ajouter une troisième langue, c'est ajouter des
+  fichiers, une constante à `Langue`… et le compilateur montre le `switch` de `Texte.dans` à compléter.
+
+### Mettre à jour une interface déjà construite
+
+- **Pourquoi** : la langue change en pleine partie. Or Swing ne relit pas les textes tout seul : un bouton garde le
+  texte qu'on lui a donné.
+- **Comment le faire** : chaque `Action` est créée avec la **clé** de son nom (`nomsDesActions`), et
+  `appliquerLangue()` lui redonne son nom par `putValue(Action.NAME, …)` : le bouton **et** l'article de menu qui la
+  partagent changent ensemble. La barre de menus est simplement **reconstruite** (plus simple que de renommer chaque
+  article). Piège : la `JTable` **copie** les titres des colonnes à sa création ; il faut les lui redonner
+  (`setHeaderValue`) puis redessiner l'en-tête.
+- **Comment le penser** : pour chaque composant, se demander « qui garde une copie de ce texte ? ». Ce qui se calcule
+  à partir de l'état (le message sous la saisie, les indices) se recalcule ; ce qui a été copié doit être remplacé.
+
+### Un réglage « pas encore choisi »
+
+- **Pourquoi** : comme sur le web, l'unité suit la langue (miles en anglais) **tant que le joueur ne l'a pas
+  choisie**. Un `boolean` ne sait dire que oui ou non : il n'a pas de troisième valeur « pas choisi ».
+- **Comment le faire** : `Boolean unitesAnglaises` (l'objet, qui peut valoir `null`) et `Langue langue` (null =
+  celle du système). Les méthodes `unitesAnglaises()` et `langue()`, sans `get` ni `is`, donnent la valeur à
+  utiliser ; Jackson ne les voit pas et n'enregistre que le choix du joueur. Un ancien fichier de réglages qui
+  contenait `"unitesAnglaises" : false` se lit toujours : ce `false` devient simplement un choix.
+- **Comment le penser** : `null` a un sens précis ici (« pas de choix »), écrit en commentaire. Ailleurs, un `null`
+  sans explication est un piège ; quand il veut dire quelque chose, le dire.
+
+### Les notions Java rencontrées
+
+- **Interfaces scellées** (`sealed`), **records imbriqués**, **`switch` sur les motifs de records** (Java 21).
+- **`switch` expression** exhaustive sur un `enum` (`Texte.dans`, `Textes.indice`, `Textes.fin`, avec `yield`).
+- **Internationalisation** : `ResourceBundle`, `Locale`, `DecimalFormatSymbols`, `Collator`, `String.format(locale, …)`.
+- **Ressources du `.jar`** : `getResourceAsStream`, lu en entier avec `readAllBytes`.
+- **`Boolean`** (objet) contre **`boolean`** (primitif) : la valeur `null` en plus.
+- **`KeyEvent.getExtendedKeyCodeForChar`** : la touche d'une lettre, pour un raccourci Alt qui dépend de la langue.
+- **`assertInstanceOf`** (JUnit) : vérifier un type et récupérer l'objet converti.
+
+## Bilan de la Phase 8
+
+- **Le Java redevient la version complète** : mêmes règles, mêmes indices, mêmes langues que le web ; ce qui reste
+  propre au web (partage, compte à rebours) est noté dans la feuille de route.
+- **Un commit par nouveauté** dans une seule PR : indices, doublons, monument et 6 essais, anglais.
+- **Les tests ont guidé le changement** : passer à 6 essais a fait échouer exactement les tests à revoir, et deux
+  nouveaux tests surveillent les fichiers de traduction. 189 → 203 tests.
+- **La fenêtre a été vérifiée en image**, en français, en anglais et après un changement de langue en pleine partie :
+  633 points de haut, toujours sous la limite d'un écran portable.
+
+---
+
 ## Aide-mémoire
 
 ### Raccourcis IntelliJ

@@ -12,7 +12,7 @@ import java.util.List;
 Les statistiques à la Wordle, calculées à partir des résultats des parties du jour (jamais enregistrées elles-mêmes :
 on les recalcule à chaque fois, elles ne peuvent donc pas se désynchroniser de l'historique).
 
-  repartition : le nombre de victoires en 1, 2, 3, 4 et 5 essais (repartition.get(0) = victoires en 1 essai)
+  repartition : le nombre de victoires en 1, 2, 3, 4, 5 et 6 essais (repartition.get(0) = victoires en 1 essai)
   série       : des victoires sur des jours CONSÉCUTIFS. Une défaite, un abandon ou un jour sans partie l'interrompt.
  */
 public record Statistiques(int jouees, int victoires, int serieActuelle, int meilleureSerie, List<Integer> repartition) {
