@@ -524,7 +524,11 @@ class Fenetre {
         return RegionFr.suggestions(debut, partie.getMode(), textes.getLangue()).stream().map(textes::nom).toList();
     }
 
+    // comme dans la version web, une confirmation d'abord : un clic malheureux ne doit pas coûter la partie du jour
     private void abandonner() {
+        if (!confirmer(textes.texte("abandon.question"), textes.texte("action.abandonner"))) {
+            return;
+        }
         partie.abandonner();
         retenirDuJour();
         terminer();
@@ -803,6 +807,17 @@ class Fenetre {
     }
 
     // ---- petits utilitaires d'affichage ----
+
+    // une question Oui / Non ; vrai si le joueur répond Oui. Nos propres boutons plutôt que YES_NO_OPTION : les
+    // boutons de JOptionPane prennent la langue du système, pas celle choisie dans le jeu. « Non » est le bouton
+    // par défaut : Entrée par réflexe ne fait rien de grave
+    private boolean confirmer(String question, String titre) {
+        String oui = textes.texte("oui");
+        String non = textes.texte("non");
+        int choix = JOptionPane.showOptionDialog(frame, question, titre, JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE, null, new Object[]{oui, non}, non);
+        return choix == 0;
+    }
 
     private void activerSaisie(boolean active) {
         saisie.setEnabled(active);
