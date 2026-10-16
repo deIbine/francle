@@ -156,6 +156,9 @@ class Fenetre {
     // plus (la réponse ne s'afficherait même pas). Le Timer, lui, rappelle apresReponse sur l'EDT, une seule fois
     private static final int DUREE_REPONSE = 1200;
     private final Timer pause = new Timer(DUREE_REPONSE, e -> apresReponse());
+    // à minuit, la région du jour change, même si la fenêtre reste ouverte et la partie pas finie (repris de la
+    // version web). Un Timer réglé sur le temps qui reste jusqu'à minuit, reprogrammé à chaque fois
+    private final Timer minuit = new Timer(0, e -> aMinuit());
 
     // l'historique des parties du jour, les réglages, et les fichiers où ils sont enregistrés. Les sauvegardes sont
     // des paramètres, comme l'horloge : la vérification utilise un dossier temporaire, jamais les vrais fichiers du joueur
@@ -198,6 +201,8 @@ class Fenetre {
         new Autocompletion(saisie, this::suggestions, this::jouer);
         // au lancement, la partie du jour
         jouerDuJour();
+        minuit.setRepeats(false);
+        programmerMinuit();
     }
 
     void afficher() {
@@ -640,6 +645,23 @@ class Fenetre {
         if (choix == 0) {
             partager();
         }
+    }
+
+    // le Timer se déclenchera une seconde après minuit (une seconde de marge : déclenché une milliseconde trop tôt, il
+    // trouverait encore la veille)
+    private void programmerMinuit() {
+        long millisecondes = jusqueMinuit().toMillis() + 1000;
+        minuit.setInitialDelay((int) Math.min(Integer.MAX_VALUE, millisecondes));
+        minuit.restart();
+    }
+
+    // le jour a changé : si la partie du jour est à l'écran, on passe à la nouvelle. Pas en plein bonus (le joueur le
+    // finit tranquillement), ni en partie libre : la nouvelle région l'attendra au prochain « Partie du jour »
+    private void aMinuit() {
+        if (partie == duJour && !dansLeBonus) {
+            jouerDuJour();
+        }
+        programmerMinuit();
     }
 
     // la partie du jour d'aujourd'hui est finie (gagnée, perdue ou abandonnée) : il y a un résultat à partager
