@@ -30,9 +30,12 @@ Une silhouette de région s'affiche : à toi de la reconnaître en 6 essais maxi
 
 - **Partie du jour** : la même région pour tout le monde, parmi les 18 régions actuelles, une seule partie par jour.
   Elle est retrouvée si l'on ferme le jeu, et alimente les **statistiques** (parties, victoires, séries).
-- **Bonus des départements** : après une victoire en partie du jour, il faut retrouver sur la carte chacun des
+- **Bonus des départements** : après chaque victoire, il faut retrouver sur la carte chacun des
   départements de la région (un clic par département ; un zoom sur Paris pour l'Île-de-France). Pour une région
-  d'un seul département (outre-mer), on donne son numéro. Le score moyen s'ajoute aux statistiques.
+  d'un seul département (outre-mer), on donne son numéro. Le score moyen du bonus du jour s'ajoute aux
+  statistiques.
+- **Partager** (menu *Jeu* ou fenêtre des statistiques) : le résultat du jour en carrés 🟩🟨⬜, copié dans le
+  presse-papiers, sans dévoiler la réponse.
 - **Partie libre** : autant que tu veux, avec les régions actuelles ou les anciennes régions (avant 2016).
 
 ### Réglages (menu *Paramètres*, retenus d'un lancement à l'autre)

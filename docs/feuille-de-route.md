@@ -579,7 +579,8 @@ questions ouvertes ; ses réponses (plus bas) s'appliqueront au web.
 
 **Décisions** (le 16 octobre 2026, communes aux deux projets) :
 
-- **Seulement après une victoire**, en **partie du jour** seulement.
+- **Après chaque victoire**, en partie du jour **comme en partie libre** (d'abord prévu pour la partie du jour
+  seulement, changé après le test du jeu, voir plus bas). Le bonus d'une partie libre n'est pas enregistré.
 - **Tous les départements** de la région, dans un ordre tiré de la date (le même pour tous).
 - Deux modes programmés : **A. cliquer sur la carte** (« Cliquez sur : Finistère ») et **B. nommer le département
   colorié** (saisie avec suggestions). **A est le mode des joueurs** ; B se choisit dans le code
@@ -621,8 +622,29 @@ questions ouvertes ; ses réponses (plus bas) s'appliqueront au web.
    réponse ; les anciens fichiers restent lisibles ; score moyen dans la fenêtre des statistiques.
 6. **Les finitions** : textes FR et EN, aide, README, [leçons](lecons.md#phase-9--le-bonus-des-départements).
 
+**Retour du test et nouveautés du web** (le 16 octobre 2026, dans la même PR) :
+
+- **Le bonus est obligatoire après n'importe quelle victoire** : il commence de lui-même aussi en partie libre,
+  dans un ordre au hasard (`Bonus.auHasard`), avec les départements de l'époque jouée. « Passer » reste possible.
+  Le bonus d'une partie libre n'est ni enregistré ni compté, comme la partie libre elle-même.
+- **Les améliorations de la version web**, reprises après comparaison des deux projets :
+  1. **Entrée sur un début de nom** joue la seule région qu'il évoque (« bret » -> Bretagne) ; s'il en évoque
+     plusieurs, un message demande de choisir, sans coûter d'essai (`Reponse.Plusieurs`).
+  2. **Confirmation avant d'abandonner** (Oui / Non, dans la langue du jeu).
+  3. **Partage du résultat du jour** en carrés, copié dans le presse-papiers (menu Jeu, Ctrl+Maj+C, ou bouton
+     « Partager » des statistiques), avec 🌀 / 🙈 et le score du bonus (🗺️ 3/4).
+  4. **Modes difficiles fixés au premier essai** (`ModesDifficiles`), enregistrés avec la partie du jour ; avant le
+     premier essai, un changement de silhouette compte tout de suite.
+  5. **Compte à rebours** jusqu'à la région suivante, dans la fenêtre des statistiques.
+  6. **Changement de jour à minuit**, même en pleine partie, si la partie du jour est à l'écran.
+  7. **Liste des régions cliquable** : un clic propose la région ; celles déjà proposées sont barrées.
+  8. **« Comment jouer » au premier lancement**, avec un exemple calculé par les règles et les crédits.
+- Laissé de côté, propre au navigateur : la synchronisation entre onglets, le thème « automatique », les directions
+  en emoji dans le tableau (elles le sont dans le partage).
+- Un test vérifie maintenant que chaque clé de texte écrite dans le code existe dans les fichiers de textes.
+
 **Reste à faire, côté web** : reporter ces réponses dans le plan de [deIbine/francle-web](https://github.com/deIbine/francle-web)
-(étape web.7), puis y faire le bonus.
+(étape web.7), y compris le bonus après **chaque** victoire, puis y faire le bonus.
 
 **Ce que tu as appris :** dessiner soi-même en Swing (`paintComponent`, `Graphics2D`, `Path2D`), les clics de
 souris (`MouseListener`) et le test « ce point est-il dans cette forme ? » (`Shape.contains`), le zoom avec

@@ -1725,13 +1725,79 @@ transparentes, sinon la silhouette paraîtrait plus petite qu'à l'endroit une f
 - **Jackson** sur des ressources du `.jar`, vers des **records** privés qui décrivent la forme du fichier.
 - **Records** à deux constructeurs (le canonique et un raccourci qui appelle `this(…)`).
 
+### Quand le joueur change une règle
+
+- **Pourquoi** : en jouant, l'utilisateur a voulu le bonus après **chaque** victoire, pas seulement celle du jour.
+  Une décision prise « sur le papier » se corrige souvent une fois le jeu en main : c'est le but du test avant fusion.
+- **Comment le faire** : la règle tenait à une seule question, « la partie affichée est-elle gagnée ? » au lieu de
+  « la partie du jour est-elle gagnée ? ». La fenêtre garde maintenant le bonus **de la partie affichée** (`bonus`)
+  et, à part, celui du jour (`bonusDuJour`), qu'elle retrouve en revenant à la partie du jour. L'ordre du bonus
+  libre est tiré au hasard (`Bonus.auHasard(region, Random)`) ; le `Random` est un paramètre, si bien qu'un test peut
+  donner une graine fixe et retrouver le même ordre.
+- **Comment le penser** : quand une règle dépend de « laquelle », se demander si l'état appartient à **la chose
+  affichée** ou à **une chose précise** ; les mélanger donne des bugs du type « le bonus du jour apparaît en partie
+  libre ».
+
+### Comparer encore les deux versions
+
+- **Pourquoi** : la version web a continué d'avancer après la Phase 8 (web.6, web.6.2, la liste cliquable). Sans
+  comparaison régulière, les deux jeux redivergent.
+- **Comment le faire** : lire l'historique du web depuis la dernière comparaison (`git log`, les messages de PR
+  détaillent chaque correction), puis classer chaque nouveauté : **utile sur le bureau** (partage, confirmation,
+  minuit, liste cliquable, aide au premier lancement), ou **propre au navigateur** (synchroniser les onglets, thème
+  « automatique »). Les mêmes valeurs de test que le web (les carrés du partage) vérifient qu'on calcule pareil.
+- **Comment le penser** : reprendre une idée, pas un code : `navigator.clipboard` devient `Toolkit.getSystemClipboard`,
+  `<dialog>` devient `JDialog`, `setTimeout` devient `javax.swing.Timer`.
+
+### Un quatrième cas dans une interface scellée
+
+- **Pourquoi** : « bret » + Entrée doit jouer la Bretagne, et « nor » (trois régions possibles) doit demander de
+  choisir. C'est une réponse **nouvelle** de `Partie.proposer`.
+- **Comment le faire** : ajouter `record Plusieurs()` à `Reponse`, puis compiler : le compilateur a refusé le `switch`
+  de `Fenetre.jouer` (« does not cover all possible input values »), exactement à l'endroit à compléter.
+- **Comment le penser** : c'est la promesse de `sealed` faite en Phase 8, tenue ici : ajouter un cas ne peut pas être
+  oublié.
+
+### Fixer une valeur au premier essai
+
+- **Pourquoi** : le partage affiche 🌀 ou 🙈 si la partie a été jouée avec la silhouette tournée ou cachée. Si l'on
+  regardait les réglages au moment de partager, on pourrait cacher la silhouette juste avant de partager une partie
+  jouée sans. Il faut savoir avec quels modes la partie **a été jouée**.
+- **Comment le faire** : un record `ModesDifficiles`, `null` tant que la partie n'a pas d'essai (les réglages
+  comptent alors tout de suite), puis figé au premier essai et enregistré avec la partie du jour (champ `modes`,
+  `null` dans les anciens fichiers). Son constructeur compact garantit qu'une silhouette cachée n'est jamais tournée.
+- **Comment le penser** : distinguer **le réglage** (ce que le joueur veut maintenant) de **l'état de la partie** (ce
+  qui s'est passé). Le second ne doit dépendre du premier qu'à un moment précis, puis plus du tout.
+
+### Le presse-papiers, et un Timer qui s'arrête tout seul
+
+- **Pourquoi** : partager, c'est copier un texte pour le coller dans une messagerie ; et le compte à rebours doit
+  bouger chaque seconde, mais seulement pendant que la fenêtre des statistiques est ouverte.
+- **Comment le faire** : `Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(texte),
+  null)`, avec un `catch (IllegalStateException e)` : une autre application peut tenir le presse-papiers un instant.
+  Le texte lui-même est construit par `Partage.texte`, sans rien afficher, donc testé. Le compte à rebours est une
+  `JLabel` qui démarre son `Timer` dans `addNotify` (le composant entre dans une fenêtre affichée) et l'arrête dans
+  `removeNotify` (la fenêtre se ferme). Le passage à minuit est un autre `Timer`, réglé sur le temps qui reste.
+- **Comment le penser** : tout ce qui démarre (Timer, fil d'exécution, fichier ouvert) doit savoir **quand
+  s'arrêter** ; le rattacher à la vie d'un composant le fait sans y penser.
+
+### Un test qui lit le code
+
+- **Pourquoi** : une clé de texte écrite dans le code mais oubliée dans le fichier ne se voit qu'en jeu, au moment
+  d'afficher la phrase. C'est arrivé en écrivant la confirmation d'abandon (une modification de fichier ratée, sans
+  que rien ne le signale).
+- **Comment le faire** : `TextesTest.clesUtilisees` parcourt `src/main/java` (`Files.walk`), cherche `texte("…")` et
+  `action("…")` avec une expression régulière, et vérifie que chaque clé existe.
+- **Comment le penser** : quand une erreur est passée une fois, se demander quel test l'aurait attrapée, et l'écrire.
+
 ## Bilan de la Phase 9
 
 - **Le bonus est complet** : carte cliquable, zoom sur Paris, question du numéro en outre-mer, mode B caché
   (`Bonus.MODE = NOM`), enregistrement, score moyen, textes en français et en anglais, aide.
 - **Une seule liste de départements** pour Java et Python, et des contours générés (les anciennes régions comprises).
-- **Un commit par étape** dans une seule PR : données, contours, règles, affichage, enregistrement, finitions.
-- **283 tests** (203 avant) : les règles du bonus, le découpage, les contours, le clic (y compris dans l'encart),
+- **Un commit par étape** dans une seule PR : données, contours, règles, affichage, enregistrement, finitions ;
+  puis, après le test du jeu, le bonus après chaque victoire et huit nouveautés reprises du web, une par commit.
+- **307 tests** (203 avant) : les règles du bonus, le découpage, les contours, le clic (y compris dans l'encart),
   l'enregistrement et la lecture d'un ancien fichier.
 - **La fenêtre a été vérifiée en image** (sans l'ouvrir à l'écran) : clair et sombre, français et anglais, Bretagne,
   Île-de-France, Occitanie, Guadeloupe, relance après un bonus interrompu, fenêtre des statistiques. Toujours
