@@ -30,10 +30,10 @@ Une silhouette de région s'affiche : à toi de la reconnaître en 6 essais maxi
 
 - **Partie du jour** : la même région pour tout le monde, parmi les 18 régions actuelles, une seule partie par jour.
   Elle est retrouvée si l'on ferme le jeu, et alimente les **statistiques** (parties, victoires, séries).
-- **Bonus des départements** : après chaque victoire, il faut retrouver sur la carte chacun des
-  départements de la région (un clic par département ; un zoom sur Paris pour l'Île-de-France). Pour une région
-  d'un seul département (outre-mer), on donne son numéro. Le score moyen du bonus du jour s'ajoute aux
-  statistiques.
+- **Bonus des départements** : dès chaque victoire, on clique sur chacun des départements de la région, puis on
+  écrit son nom ou son numéro (une réponse par département ; un zoom sur Paris pour l'Île-de-France ; au clavier,
+  les flèches et Entrée). Pour une région d'un seul département (outre-mer), on donne son numéro. Le score moyen du
+  bonus du jour s'ajoute aux statistiques.
 - **Partager** (menu *Jeu* ou fenêtre des statistiques) : le résultat du jour en carrés 🟩🟨⬜, copié dans le
   presse-papiers, sans dévoiler la réponse.
 - **Partie libre** : autant que tu veux, avec les régions actuelles ou les anciennes régions (avant 2016).
@@ -118,6 +118,7 @@ et ce qu'elle a permis d'apprendre dans [docs/lecons.md](docs/lecons.md).
 - [x] **Phase 7** : la version web, devenue un projet à part ([francle-web](https://github.com/deIbine/francle-web))
 - [x] **Phase 8** : reprendre les nouveautés de la version web (6 essais, monument, doublons, anglais)
 - [x] **Phase 9** : le bonus des départements (carte cliquable, zoom sur Paris, score moyen)
+- [x] **Phase 10** : le bonus revu, repris du web (dès la victoire ; choisir un département, puis le nommer)
 
 ## Historique
 

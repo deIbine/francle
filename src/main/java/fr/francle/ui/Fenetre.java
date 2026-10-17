@@ -160,13 +160,11 @@ class Fenetre {
     private ModesDifficiles modesDuJour;
     // vrai quand la fenêtre montre le bonus (la carte des départements) plutôt que la partie
     private boolean dansLeBonus;
-    // après chaque réponse du bonus, le temps de voir si c'était juste, avant la question suivante. Un Timer de
-    // Swing, et non un Thread.sleep : sleep bloquerait l'Event Dispatch Thread, et la fenêtre ne se redessinerait
-    // plus (la réponse ne s'afficherait même pas). Le Timer, lui, rappelle apresReponse sur l'EDT, une seule fois
-    private static final int DUREE_REPONSE = 1200;
-    private final Timer pause = new Timer(DUREE_REPONSE, e -> apresReponse());
     // le bonus fini, les résultats s'ouvrent d'eux-mêmes, mais pas tout de suite : le temps de voir la couleur de la
-    // dernière réponse (repris de la version web)
+    // dernière réponse (repris de la version web). Un Timer de Swing, et non un Thread.sleep : sleep bloquerait
+    // l'Event Dispatch Thread, et la fenêtre ne se redessinerait plus (la réponse ne s'afficherait même pas). Le
+    // Timer, lui, rappelle montrerResultats sur l'EDT, une seule fois. Depuis le mode C, c'est la seule minuterie du
+    // bonus : le joueur choisit lui-même le département suivant, il n'y a plus de question suivante à attendre
     private static final int DUREE_AVANT_RESULTATS = 1500;
     private final Timer avantResultats = new Timer(DUREE_AVANT_RESULTATS, e -> montrerResultats());
     // à minuit, la région du jour change, même si la fenêtre reste ouverte et la partie pas finie (repris de la
@@ -208,7 +206,6 @@ class Fenetre {
         if (reglages.isThemeSombre()) {
             Theme.changer(true);
         }
-        pause.setRepeats(false);
         avantResultats.setRepeats(false);
         valider.addActionListener(e -> jouer());
         // la touche Entrée dans le champ : l'autocomplétion choisit la suggestion surlignée, ou appelle jouer()
@@ -405,8 +402,8 @@ class Fenetre {
         JPanel boutons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         boutons.add(valider);
         boutons.add(boutonAbandonner);
-        boutons.add(boutonRejouer);
         boutons.add(boutonPasser);
+        boutons.add(boutonRejouer);
         boutons.add(boutonBonus);
         boutons.add(boutonResultats);
         boutonResultats.setVisible(false);
@@ -513,8 +510,13 @@ class Fenetre {
     // Valider, ou Entrée dans le champ de saisie : une proposition de région, ou une réponse du bonus
     private void jouer() {
         if (dansLeBonus) {
-            // pendant que la réponse précédente s'affiche, ou une fois le bonus fini, il n'y a rien à valider
-            if (bonus.enCours() && !pause.isRunning()) {
+            // une fois le bonus fini, ou en mode C avant d'avoir choisi un département, il n'y a rien à valider
+            if (!bonus.enCours()) {
+                return;
+            }
+            if (bonus.getQuestion() == Bonus.Question.CHOIX) {
+                carte.getChoisi().ifPresent(choisi -> repondre(bonus.repondre(choisi, saisie.getText())));
+            } else {
                 repondre(bonus.repondre(saisie.getText()));
             }
             return;
@@ -569,12 +571,14 @@ class Fenetre {
             return List.of();
         }
         if (dansLeBonus) {
+            // mode C : parmi les 101 départements (limitées à la région, les suggestions donneraient la réponse) ;
             // mode B : les départements de la région ; pour un numéro, rien à suggérer
-            if (bonus.getQuestion() != Bonus.Question.NOM) {
-                return List.of();
-            }
-            return Departement.suggestions(debut, bonus.getRegion().getDepartements(), textes.getLangue()).stream()
-                    .map(Departement::nom).toList();
+            List<Departement> parmi = switch (bonus.getQuestion()) {
+                case CHOIX -> Departement.tous();
+                case NOM -> bonus.getRegion().getDepartements();
+                case CARTE, NUMERO -> List.of();
+            };
+            return Departement.suggestions(debut, parmi, textes.getLangue()).stream().map(Departement::nom).toList();
         }
         return RegionFr.suggestions(debut, partie.getMode(), textes.getLangue()).stream().map(textes::nom).toList();
     }
@@ -814,10 +818,7 @@ class Fenetre {
         tableau.setUnitesAnglaises(reglages.unitesAnglaises());
         afficherTitre();
         if (dansLeBonus) {
-            // (pendant l'affichage d'une réponse, le message garde sa langue le temps de passer à la question suivante)
-            if (!pause.isRunning()) {
-                afficherBonus();
-            }
+            afficherBonus();
         } else {
             message.setText(partie.enCours() ? textes.apresEssai(partie) : messageDeFin());
         }
@@ -888,15 +889,21 @@ class Fenetre {
         carte.montrer(bonus);
         cartes.show(cadre, DEPARTEMENTS);
         saisie.setText("");
+        // (afficherBonus donne aussi le focus du clavier à la carte : la saisie de la région, ou le bouton « Bonus »,
+        // vient d'être grisée ou cachée, et le focus y resterait sinon, Tab repartant d'on ne sait où)
         afficherBonus();
-        // la saisie de la région vient de disparaître (ou le bouton « Bonus ») : sans cela, le focus du clavier
-        // resterait sur un composant grisé, et Tab repartirait d'on ne sait où. Il va sur la carte
-        carte.requestFocusInWindow();
     }
 
-    // un clic sur un département de la carte (la carte ne le transmet que quand on peut cliquer)
+    // un clic sur un département de la carte, ou Entrée au clavier (la carte ne le transmet que quand on peut le
+    // choisir). Mode C : le département est choisi, il reste à le nommer, et le joueur peut encore changer d'avis ;
+    // mode A : c'est la réponse
     private void cliquer(Departement departement) {
-        repondre(bonus.repondre(departement));
+        if (bonus.getQuestion() == Bonus.Question.CHOIX) {
+            carte.choisir(departement);
+            afficherBonus();
+        } else {
+            repondre(bonus.repondre(departement));
+        }
     }
 
     private void repondre(ReponseBonus reponse) {
@@ -908,13 +915,16 @@ class Fenetre {
             case ReponseBonus.Jouee(Tentative tentative) -> {
                 retenirBonus();
                 saisie.setText("");
-                carte.montrerReponse(tentative.juste() ? null : tentative.donne());
-                message.setText(textes.reponseBonus(bonus, tentative));
-                // rien à faire pendant que la réponse s'affiche : la carte est bloquée, la saisie et Passer grisés
-                saisie.setEnabled(false);
-                valider.setEnabled(false);
-                passer.setEnabled(false);
-                pause.restart();
+                // mode CARTE : le département cliqué à tort est entouré de rouge ; dans les autres modes, la bonne
+                // réponse est écrite dans le message. Plus de département choisi : le joueur clique le suivant
+                Bonus.Question question = bonus.getQuestion();
+                carte.montrerReponse(question == Bonus.Question.CARTE && !tentative.juste() ? tentative.donne() : null);
+                afficherBonus();
+                // mode C : la réponse (« Bien vu », « Raté : c'était… ») reste affichée jusqu'au choix suivant. Les
+                // modes A et B, eux, passent tout de suite à la question suivante (seules les couleurs le disent)
+                if (bonus.enCours() && question == Bonus.Question.CHOIX) {
+                    message.setText(textes.reponseBonus(bonus, tentative));
+                }
                 if (!bonus.enCours()) {
                     avantResultats.restart();
                 }
@@ -922,23 +932,16 @@ class Fenetre {
         }
     }
 
-    // la réponse a été vue : la question suivante, ou la fin du bonus
-    private void apresReponse() {
-        carte.reprendre();
-        afficherBonus();
-    }
-
     // le bouton « Passer » : le bonus s'arrête là, et les résultats s'ouvrent. S'il n'a pas commencé, on revient à la
     // fin de la partie, et il reste à jouer (bouton « Bonus »)
     private void passerBonus() {
-        pause.stop();
         if (bonus.getTentatives().isEmpty()) {
-            dansLeBonus = false;
+            quitterBonus();
             montrerPartie(partie);
         } else {
             bonus.passer();
             retenirBonus();
-            carte.reprendre();
+            carte.montrerReponse(null);
             afficherBonus();
         }
         resultatsEnFin();
@@ -947,7 +950,6 @@ class Fenetre {
     // le joueur va voir ailleurs (partie libre, partie du jour…) en plein bonus : un bonus commencé compte comme
     // passé, avec les réponses déjà données
     private void quitterBonus() {
-        pause.stop();
         // des résultats en attente seraient ceux de la partie qu'on quitte
         avantResultats.stop();
         if (dansLeBonus && bonus.enCours() && !bonus.getTentatives().isEmpty()) {
@@ -955,17 +957,27 @@ class Fenetre {
             // (rien de nouveau à enregistrer : les réponses le sont déjà, et un bonus relu est toujours fini)
         }
         dansLeBonus = false;
+        saisie.putClientProperty(TEXTE_FANTOME, null);
         cartes.show(cadre, IMAGE);
     }
+
+    // le texte grisé d'un champ vide (« placeholder »), que FlatLaf dessine à la place du texte
+    private static final String TEXTE_FANTOME = "JTextField.placeholderText";
 
     // les boutons et le message du bonus, d'après son état
     private void afficherBonus() {
         boolean enCours = bonus.enCours();
-        // en mode CARTE, on répond en cliquant : la saisie ne sert pas
-        boolean ecrire = enCours && bonus.getQuestion() != Bonus.Question.CARTE;
+        Bonus.Question question = bonus.getQuestion();
+        boolean choisi = carte.getChoisi().isPresent();
+        // en mode CARTE, on répond en cliquant : la saisie ne sert pas. En mode CHOIX, elle attend le choix d'un
+        // département : grisée, avec ce qu'il faut faire d'abord
+        boolean saisieVisible = enCours && question != Bonus.Question.CARTE;
+        boolean ecrire = saisieVisible && (question != Bonus.Question.CHOIX || choisi);
         saisie.setEnabled(ecrire);
+        saisie.putClientProperty(TEXTE_FANTOME,
+                saisieVisible && !ecrire ? textes.texte("bonus.choixDabord") : null);
         valider.setEnabled(ecrire);
-        valider.setVisible(ecrire);
+        valider.setVisible(saisieVisible);
         abandonner.setEnabled(false);
         boutonAbandonner.setVisible(false);
         passer.setEnabled(enCours);
@@ -978,11 +990,15 @@ class Fenetre {
         boutonBonus.setVisible(false);
         actionBonus.setEnabled(true);
         partager.setEnabled(duJourFini());
-        message.setText(enCours ? textes.questionBonus(bonus) : textes.finBonus(bonus));
+        message.setText(enCours ? textes.questionBonus(bonus, choisi) : textes.finBonus(bonus));
         frame.getRootPane().setDefaultButton(ecrire ? valider : enCours ? null : boutonRejouer);
+        // le focus du clavier là où est la suite : la saisie s'il faut écrire, sinon la carte pour choisir (ou
+        // cliquer) un département, et à la fin, le bouton de la partie suivante
         if (ecrire) {
             saisie.requestFocusInWindow();
-        } else if (!enCours) {
+        } else if (enCours) {
+            carte.requestFocusInWindow();
+        } else {
             boutonRejouer.requestFocusInWindow();
         }
     }

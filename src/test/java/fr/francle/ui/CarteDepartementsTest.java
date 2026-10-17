@@ -120,6 +120,43 @@ class CarteDepartementsTest {
     }
 
     @Test
+    @DisplayName("Au clavier, les flèches passent d'un département encore à jouer à l'autre, Entrée choisit")
+    void clavier() {
+        List<Departement> choix = new ArrayList<>();
+        Bonus bonus = new Bonus(RegionFr.BRETAGNE, RegionFr.BRETAGNE.getDepartements(), Bonus.Question.CHOIX);
+        bonus.repondre(departement("29"), departement("29"));
+        CarteDepartements carte = new CarteDepartements(choix::add);
+        carte.setSize(400, 220);
+        carte.montrer(bonus);
+
+        // dans l'ordre des numéros, sans le Finistère, qui a déjà sa réponse ; après le dernier, le premier
+        carte.deplacer(1);
+        assertEquals(Optional.of(departement("22")), carte.getVise());
+        carte.deplacer(1);
+        assertEquals(Optional.of(departement("35")), carte.getVise());
+        carte.deplacer(1);
+        carte.deplacer(1);
+        assertEquals(Optional.of(departement("22")), carte.getVise());
+        carte.deplacer(-1);
+        assertEquals(Optional.of(departement("56")), carte.getVise());
+        carte.choisirVise();
+
+        assertEquals(List.of(departement("56")), choix);
+    }
+
+    @Test
+    @DisplayName("Mode C : le département choisi est retenu, puis oublié après la réponse")
+    void choisir() {
+        CarteDepartements carte = new CarteDepartements(d -> {});
+        carte.montrer(new Bonus(RegionFr.BRETAGNE, RegionFr.BRETAGNE.getDepartements(), Bonus.Question.CHOIX));
+
+        carte.choisir(departement("35"));
+        assertEquals(Optional.of(departement("35")), carte.getChoisi());
+        carte.montrerReponse(null);
+        assertEquals(Optional.empty(), carte.getChoisi());
+    }
+
+    @Test
     @DisplayName("Avant d'avoir une taille, la carte ne trouve rien (et ne plante pas)")
     void sansTaille() {
         CarteDepartements carte = new CarteDepartements(d -> {});

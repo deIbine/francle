@@ -12,6 +12,9 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Shape;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
@@ -19,18 +22,23 @@ import java.awt.geom.NoninvertibleTransformException;
 import java.awt.geom.Path2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
+import javax.swing.AbstractAction;
 import javax.swing.JComponent;
+import javax.swing.KeyStroke;
+import javax.swing.UIManager;
 
 /*
 La carte des départements du bonus, dessinée à la main (comme les barres des statistiques) : chaque département est
 une forme (Path2D) remplie d'une couleur qui dit où l'on en est.
-    bleu clair   pas encore demandé (plus foncé sous la souris, quand on peut cliquer)
-    bleu foncé   le département à nommer (modes NOM et NUMERO)
+    bleu clair   pas encore répondu (plus foncé sous la souris, quand on peut cliquer)
+    bleu foncé   le département à nommer : celui que le joueur a choisi (mode CHOIX), ou celui de la question
+                 (modes NOM et NUMERO)
     vert, rouge  trouvé, raté
-Pendant que la réponse s'affiche, le département cliqué à tort est entouré de rouge.
+En mode CARTE, le département cliqué à tort est entouré de rouge jusqu'à la réponse suivante.
 
 Les contours sont dans les unités de leur fichier : une transformation affine (AffineTransform : une mise à l'échelle
 puis un déplacement) les amène dans le composant. Pour savoir où l'on a cliqué, on fait le chemin inverse : le point
@@ -38,6 +46,11 @@ du clic, transformé à l'envers, revient dans les unités du fichier, où Path2
 
 L'Île-de-France a en plus un encart à droite : le même dessin avec une autre transformation, qui agrandit Paris et la
 petite couronne (sans lui, Paris ne ferait que quelques pixels).
+
+Au clavier (modes CHOIX et CARTE) : Tab amène le focus sur la carte, les flèches passent d'un département à l'autre
+(dans l'ordre des numéros, sans écrire leur nom, qui serait la réponse), Entrée ou Espace choisit celui qui est
+entouré. Un composant dessiné à la main n'a rien de tout cela d'office : il faut le rendre focalisable, lui donner ses
+touches (InputMap et ActionMap) et dessiner soi-même où est le focus.
  */
 final class CarteDepartements extends JComponent {
 
@@ -55,12 +68,15 @@ final class CarteDepartements extends JComponent {
     private final Consumer<Departement> auClic;
     private Bonus bonus;
     private Contours contours;
-    // le temps que la réponse s'affiche, la carte ne répond plus aux clics
-    private boolean bloquee;
     private Departement survole;
     private Departement erreur;
+    // mode CHOIX : le département choisi, à nommer (null avant le choix, et après chaque réponse)
+    private Departement choisi;
+    // le département entouré quand la carte a le focus du clavier : celui qu'Entrée choisirait
+    private Departement vise;
 
-    // auClic : ce qu'il faut faire quand le joueur clique un département (la fenêtre le transmet au Bonus)
+    // auClic : ce qu'il faut faire quand le joueur clique (ou choisit au clavier) un département : la fenêtre le
+    // transmet au Bonus (mode CARTE) ou le retient comme choix (mode CHOIX)
     CarteDepartements(Consumer<Departement> auClic) {
         this.auClic = auClic;
         MouseAdapter souris = new MouseAdapter() {
@@ -78,13 +94,15 @@ final class CarteDepartements extends JComponent {
             // l'appui et le relâchement, et le joueur croirait que son clic a été perdu
             @Override
             public void mousePressed(MouseEvent e) {
-                if (cliquable()) {
-                    departementSous(e.getPoint()).ifPresent(auClic);
-                }
+                departementSous(e.getPoint()).filter(CarteDepartements.this::cliquable).ifPresent(departement -> {
+                    vise = departement;
+                    auClic.accept(departement);
+                });
             }
         };
         addMouseListener(souris);
         addMouseMotionListener(souris);
+        clavier();
         // inscrit le composant auprès du gestionnaire des bulles d'aide : getToolTipText est alors appelé au survol
         setToolTipText("");
     }
@@ -93,28 +111,46 @@ final class CarteDepartements extends JComponent {
     void montrer(Bonus aMontrer) {
         bonus = aMontrer;
         contours = Contours.de(aMontrer.getRegion());
-        bloquee = false;
         erreur = null;
+        choisi = null;
+        vise = null;
         repaint();
     }
 
-    // la réponse vient d'être donnée : on la montre, sans accepter d'autre clic. erreur : le département cliqué ou
-    // nommé à tort (ou null)
+    // mode CHOIX : le département que le joueur va nommer, mis en évidence (il peut encore changer d'avis)
+    void choisir(Departement departement) {
+        choisi = departement;
+        vise = departement;
+        repaint();
+    }
+
+    Optional<Departement> getChoisi() {
+        return Optional.ofNullable(choisi);
+    }
+
+    // une réponse vient d'être donnée : plus de choix (le joueur clique lui-même le suivant). erreur : en mode CARTE,
+    // le département cliqué à tort, entouré de rouge (ou null)
     void montrerReponse(Departement erreurDonnee) {
-        bloquee = true;
         erreur = erreurDonnee;
+        choisi = null;
         repaint();
     }
 
-    // la question suivante (ou la fin) : la carte répond de nouveau
-    void reprendre() {
-        bloquee = false;
-        erreur = null;
-        repaint();
+    // ce département peut-il être cliqué ? En mode CARTE, tous ; en mode CHOIX, ceux qui n'ont pas encore de réponse
+    private boolean cliquable(Departement departement) {
+        if (bonus == null || !bonus.enCours()) {
+            return false;
+        }
+        return switch (bonus.getQuestion()) {
+            case CARTE -> true;
+            case CHOIX -> bonus.restants().contains(departement);
+            case NOM, NUMERO -> false;
+        };
     }
 
-    private boolean cliquable() {
-        return bonus != null && bonus.enCours() && !bloquee && bonus.getQuestion() == Bonus.Question.CARTE;
+    // les départements cliquables, dans l'ordre des numéros : le parcours des flèches
+    private List<Departement> cliquables() {
+        return bonus == null ? List.of() : bonus.getRegion().getDepartements().stream().filter(this::cliquable).toList();
     }
 
     private void survoler(Departement departement) {
@@ -122,6 +158,68 @@ final class CarteDepartements extends JComponent {
             survole = departement;
             repaint();
         }
+    }
+
+    // ---- le clavier ----
+
+    private void clavier() {
+        setFocusable(true);
+        // deux tables : InputMap (touche -> nom d'action), ActionMap (nom -> ce qu'il faut faire). WHEN_FOCUSED :
+        // seulement quand la carte a le focus (ailleurs, Entrée garde son rôle : Valider, Partie libre…)
+        touche("LEFT", "precedent", () -> deplacer(-1));
+        touche("UP", "precedent", () -> deplacer(-1));
+        touche("RIGHT", "suivant", () -> deplacer(1));
+        touche("DOWN", "suivant", () -> deplacer(1));
+        touche("ENTER", "choisir", this::choisirVise);
+        touche("SPACE", "choisir", this::choisirVise);
+        addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                // en arrivant sur la carte, le premier département encore à jouer est entouré
+                if (vise == null || !cliquable(vise)) {
+                    List<Departement> liste = cliquables();
+                    vise = liste.isEmpty() ? null : liste.get(0);
+                }
+                repaint();
+            }
+
+            @Override
+            public void focusLost(FocusEvent e) {
+                repaint();
+            }
+        });
+    }
+
+    private void touche(String touche, String nom, Runnable quoiFaire) {
+        getInputMap(WHEN_FOCUSED).put(KeyStroke.getKeyStroke(touche), nom);
+        getActionMap().put(nom, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                quoiFaire.run();
+            }
+        });
+    }
+
+    // le département suivant (sens 1) ou précédent (sens -1) parmi les cliquables ; après le dernier, le premier
+    void deplacer(int sens) {
+        List<Departement> liste = cliquables();
+        if (liste.isEmpty()) {
+            return;
+        }
+        int rang = liste.indexOf(vise);
+        vise = rang < 0 ? liste.get(0) : liste.get(Math.floorMod(rang + sens, liste.size()));
+        repaint();
+    }
+
+    // Entrée ou Espace : comme un clic sur le département entouré
+    void choisirVise() {
+        if (vise != null && cliquable(vise)) {
+            auClic.accept(vise);
+        }
+    }
+
+    Optional<Departement> getVise() {
+        return Optional.ofNullable(vise);
     }
 
     // ---- la géométrie : où se dessine chaque partie ----
@@ -226,13 +324,21 @@ final class CarteDepartements extends JComponent {
             g2.setColor(TRAIT);
             g2.draw(forme);
         }
-        // (en mode NOM, le joueur peut nommer un département d'une autre région : il n'est pas sur la carte)
         if (erreur != null && contours.formes().containsKey(erreur)) {
-            g2.setColor(RATE);
-            g2.setStroke(new BasicStroke(2.5f));
-            g2.draw(transformation.createTransformedShape(contours.formes().get(erreur)));
-            g2.setStroke(new BasicStroke(1f));
+            entourer(g2, transformation, erreur, RATE);
         }
+        // le focus du clavier : le département qu'Entrée choisirait, entouré de la couleur du focus du thème
+        if (isFocusOwner() && vise != null && cliquable(vise)) {
+            Color focus = UIManager.getColor("Component.focusColor");
+            entourer(g2, transformation, vise, focus != null ? focus : DEMANDE);
+        }
+    }
+
+    private void entourer(Graphics2D g2, AffineTransform transformation, Departement departement, Color couleur) {
+        g2.setColor(couleur);
+        g2.setStroke(new BasicStroke(2.5f));
+        g2.draw(transformation.createTransformedShape(contours.formes().get(departement)));
+        g2.setStroke(new BasicStroke(1f));
     }
 
     private Color couleur(Departement departement) {
@@ -240,10 +346,15 @@ final class CarteDepartements extends JComponent {
         if (tentative.isPresent()) {
             return tentative.get().juste() ? TROUVE : RATE;
         }
-        if (bonus.enCours() && !bloquee && bonus.getQuestion() != Bonus.Question.CARTE
-                && departement.equals(bonus.demande())) {
+        if (departement.equals(choisi) || departement.equals(questionEnCours())) {
             return DEMANDE;
         }
-        return departement.equals(survole) && cliquable() ? SURVOL : FOND;
+        return departement.equals(survole) && cliquable(departement) ? SURVOL : FOND;
+    }
+
+    // modes NOM et NUMERO : le département de la question, colorié pour être nommé (null sinon)
+    private Departement questionEnCours() {
+        boolean colorie = bonus.getQuestion() == Bonus.Question.NOM || bonus.getQuestion() == Bonus.Question.NUMERO;
+        return bonus.enCours() && colorie ? bonus.demande() : null;
     }
 }
