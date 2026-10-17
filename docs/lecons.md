@@ -1805,7 +1805,108 @@ transparentes, sinon la silhouette paraîtrait plus petite qu'à l'endroit une f
 
 ---
 
+## Phase 10 : le bonus revu
+
+### Déplacer un moment du jeu sans le dupliquer
+
+- **Pourquoi** : les résultats s'ouvraient à la victoire, et le bonus à leur fermeture. Il fallait inverser : le bonus
+  d'abord, les résultats à sa fin. Or « ouvrir les résultats » arrive maintenant à cinq moments (fin du bonus, bonus
+  passé, défaite, abandon, lancement du jeu) et de deux façons (statistiques du jour, fenêtre de fin d'une partie
+  libre). Recopier le choix à chaque endroit, c'était risquer d'en oublier un.
+- **Comment le faire** : une seule méthode, `montrerResultats()`, sait **quoi** ouvrir ; les cinq moments ne disent
+  que **quand** (directement, par `invokeLater`, ou par un `Timer`). Pour trouver tous les endroits concernés, chercher
+  les appels de l'ancienne méthode (Ctrl+Alt+H dans IntelliJ : la hiérarchie des appels), puis la renommer
+  (Maj+F6) : le nouveau nom, `resultatsEnFin`, dit ce qu'elle fait désormais.
+- **Comment le penser** : séparer la **décision** (quoi montrer) du **déclenchement** (quand). Le jour où l'on change
+  ce qu'on montre, on ne touche qu'à un endroit ; le jour où l'on ajoute un moment, on ajoute un appel.
+
+### Lire deux formats, n'en écrire qu'un
+
+- **Pourquoi** : le bonus était enregistré comme la liste des numéros donnés, dans l'ordre du jour : le département
+  demandé s'en déduisait. En mode C, le joueur choisit l'ordre : il faut garder **les deux** numéros. Mais les fichiers
+  des joueurs contiennent déjà l'ancien format.
+- **Comment le faire** : un nouveau champ, `paires` (`[["29", "22"], …]`), **à côté** de l'ancien `bonus`. On n'écrit
+  plus que `paires` (`Resultat.avecBonus` met `bonus` à `null`) ; `rejouerBonus` lit l'un ou l'autre. Jackson laisse à
+  `null` un champ absent du fichier : un fichier d'avant la phase 9 n'a ni l'un ni l'autre, « pas de bonus ». Un test
+  relit un ancien format, puis le réenregistre et vérifie qu'il est passé au nouveau, avec les mêmes réponses.
+- **Comment le penser** : un format enregistré est une **promesse** envers les fichiers d'hier. On peut l'enrichir,
+  jamais la rompre ; et rejouer les réponses (plutôt qu'enregistrer le résultat) permet de relire un vieux fichier avec
+  les règles d'aujourd'hui, comme pour la partie.
+
+### Laisser le compilateur trouver ce qu'il faut compléter
+
+- **Pourquoi** : le mode C ajoute une sorte de question (`CHOIX`) et deux réponses (`Plusieurs`, `DejaTrouve`). Chaque
+  `switch` qui les traite doit le savoir.
+- **Comment le faire** : `ReponseBonus` est une interface **scellée** (`sealed`), et `Question` un `enum`. Un `switch`
+  écrit comme une **expression** (`return switch …`) ou sur une interface scellée doit couvrir tous les cas, sans
+  `default`. Ajouter les cas fait donc échouer la compilation à chaque `switch` incomplet : `Fenetre.repondre`,
+  `Textes.questionBonus`. La liste des erreurs **est** la liste du travail.
+- **Comment le penser** : un `default` est commode, mais il fait taire le compilateur le jour où l'on ajoute un cas. Sur
+  une liste fermée de possibilités, mieux vaut écrire chaque cas, et laisser le compilateur rappeler ceux qui manquent.
+
+### Un composant dessiné à la main, au clavier
+
+- **Pourquoi** : un bouton Swing sait recevoir le focus, se dessiner entouré, réagir à Espace. La carte, dessinée dans
+  `paintComponent`, ne sait rien de tout cela : sans travail en plus, le bonus ne se jouait qu'à la souris.
+- **Comment le faire** : `setFocusable(true)` pour que Tab s'y arrête ; deux tables pour les touches, `InputMap`
+  (touche -> nom d'action) et `ActionMap` (nom -> ce qu'il faut faire), avec `WHEN_FOCUSED` : les flèches et Entrée
+  n'agissent que quand la carte a le focus (ailleurs, Entrée garde son rôle de bouton par défaut) ; un `FocusListener`
+  pour redessiner à l'arrivée et au départ du focus ; et, dans `paintComponent`, le département visé entouré de la
+  couleur du focus du thème (`UIManager.getColor("Component.focusColor")`), seulement si `isFocusOwner()`.
+- **Comment le penser** : l'accessibilité au clavier n'est pas un bonus : c'est la moitié du contrat d'un composant.
+  Quand on dessine soi-même, on reprend aussi ce contrat à sa charge. Et on ne montre au clavier que ce que la souris
+  montrerait : la carte entoure un département, sans écrire son nom, qui serait la réponse.
+
+### Retirer une minuterie
+
+- **Pourquoi** : après chaque réponse, un `Timer` attendait 1,2 s avant la question suivante. En mode C, il n'y a plus
+  de question suivante : c'est le joueur qui choisit. Le garder, c'était bloquer la carte pour rien.
+- **Comment le faire** : supprimer le champ `pause` et laisser le compilateur montrer chaque usage
+  (`pause.isRunning()`, `pause.stop()`…), puis se demander pour chacun ce qu'il protégeait. Il ne reste qu'un `Timer`,
+  celui qui ouvre les résultats 1,5 s après la dernière réponse ; il est arrêté dès qu'on quitte le bonus, sinon il
+  ouvrirait les résultats de la partie d'avant.
+- **Comment le penser** : chaque minuterie est un petit état caché (« quelque chose va se passer plus tard »). Moins il
+  y en a, moins il y a de cas à imaginer : que se passe-t-il si le joueur change de partie, de langue, ferme le jeu
+  pendant l'attente ?
+
+### Garder le jeu jouable entre deux commits
+
+- **Pourquoi** : la phase est faite en trois PR empilées. Si 10.2 avait déjà mis `Bonus.MODE` à `CHOIX`, le jeu de 10.2
+  aurait proposé un mode dont la carte ne savait pas encore choisir.
+- **Comment le faire** : 10.2 ajoute les règles sans changer le mode ; 10.3 change le mode en même temps que
+  l'affichage. Les tests qui supposaient le mode A le disent maintenant eux-mêmes (`bonusCarte()` dans
+  `HistoriqueTest`), au lieu de dépendre de la constante.
+- **Comment le penser** : chaque commit devrait pouvoir être lancé. C'est ce qui permet de revenir à n'importe quel
+  point de l'historique (`git bisect`) pour trouver quand un bug est apparu. Et un test ne devrait dépendre que de ce
+  qu'il dit tester.
+
+### Vérifier en image, à la vraie taille
+
+- **Pourquoi** : la première série d'images montrait une fenêtre plus large que dans le jeu. Le harnais refaisait
+  `pack()` à chaque image, alors que le jeu ne le fait qu'au lancement : la largeur est celle de l'état de départ
+  (441 points), et la saisie se partage ce qui reste avec les boutons.
+- **Comment le faire** : un seul `pack()`, juste après la création de la fenêtre, comme `afficher()`. À la bonne
+  largeur, le texte grisé de la saisie était coupé (« Cliquez d'abord sur un dép… ») : il est devenu « Cliquez d'abord
+  la carte ». Ce texte grisé (*placeholder*) n'existe pas en Swing pur : FlatLaf le dessine quand on le demande par
+  `putClientProperty("JTextField.placeholderText", …)`.
+- **Comment le penser** : un outil de vérification doit imiter le vrai programme jusque dans ses détails. Une image
+  fausse rassure à tort.
+
+## Bilan de la Phase 10
+
+- **Le bonus commence dès la victoire**, et les résultats s'ouvrent à sa fin ; le mode C (choisir, puis nommer) est
+  celui des joueurs, au clavier comme à la souris.
+- **Trois PR empilées** : l'enchaînement, les règles (sans affichage), l'affichage.
+- **318 tests** (307 avant) : le mode C (ordre libre, déjà trouvé, début de nom parmi les 101), les paires, la relecture
+  de l'ancien format, le clavier de la carte, les textes.
+- **Vérifié en image** (sans ouvrir de fenêtre à l'écran) : Bretagne, Île-de-France en thème sombre, Guadeloupe en
+  anglais, partie libre, fin du bonus. Pas vus en image : le focus entouré (il faut une fenêtre affichée) et les
+  boîtes de dialogue des résultats.
+
+---
+
 ## Aide-mémoire
+
 
 ### Raccourcis IntelliJ
 

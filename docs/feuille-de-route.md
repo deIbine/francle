@@ -19,6 +19,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 7 | Version web | ✅ Devenue un projet à part : [deIbine/francle-web](https://github.com/deIbine/francle-web) |
 | 8 | Reprendre les nouveautés de la version web | ✅ Fait (PR #32) |
 | 9 | Le bonus des départements | ✅ Fait (PR #34) |
+| 10 | Le bonus revu : dès la victoire, et le mode C | ✅ Fait (PR #36 à #38) |
 
 ---
 
@@ -652,7 +653,65 @@ puis quitté (page fermée, onglet rechargé) **reprend là où il en était** a
 onglet par erreur arrive souvent. « Passer » un bonus commencé le termine dans les deux versions. Le Java reste tel
 quel.
 
+**Trois autres choix du web** (notés le 17 octobre 2026, à la phase 10) : la version web n'a jamais eu de minuterie
+entre deux questions ; en mode B, Entrée sur un début de nom y joue le seul département évoqué ; un bonus pas commencé
+y attend son bouton jusqu'à minuit. Les trois valent maintenant ici aussi : la minuterie a disparu avec le mode C,
+Entrée sur un début de nom marche en mode C, et le bonus pas commencé attendait déjà son bouton.
+
 **Ce que tu as appris :** dessiner soi-même en Swing (`paintComponent`, `Graphics2D`, `Path2D`), les clics de
 souris (`MouseListener`) et le test « ce point est-il dans cette forme ? » (`Shape.contains`), le zoom avec
 `AffineTransform`, lire des contours en JSON avec Jackson, et faire évoluer un fichier enregistré sans casser les
 anciens.
+
+---
+
+## Phase 10 : le bonus revu ✅
+
+**Pourquoi.** Retours des joueurs de la version web, le 17 octobre 2026 : (1) le bonus doit commencer **juste après
+la victoire**, au lieu d'attendre la fermeture des statistiques ; (2) plutôt que de chercher sur la carte un
+département nommé, on **clique sur un département, puis on écrit son nom**, comme on écrit une région. Le web l'a fait
+d'abord (étapes web.7.5 à web.7.7, plan dans `docs/plan.md` de
+[deIbine/francle-web](https://github.com/deIbine/francle-web)) ; le Java reprend les mêmes décisions.
+
+**Les décisions** (celles du web, le 17 octobre 2026, et leurs réponses propres au Java) :
+
+- Après une victoire, du jour ou libre, **plus de fenêtre** : le bonus prend tout de suite la place de la silhouette.
+  Les résultats s'ouvrent **à la fin du bonus**, après une pause d'environ 1,5 s (le temps de voir la couleur de la
+  dernière réponse), ou tout de suite quand on le passe. Un bonus passé avant toute réponse reste à jouer (bouton
+  « Bonus »).
+- Sous le bonus : **« Résultats »** pour la partie du jour, **« Partie libre »** pour une partie libre (qui abandonne
+  le bonus sans rien demander, rien n'en étant compté).
+- **Partie libre** : le même enchaînement. Comme sur le web, une **fenêtre de fin** s'ouvre (fin du bonus, défaite
+  ou abandon) : le message de fin et un bouton « Partie libre ».
+- Au lancement, si la partie du jour est déjà finie, ses **résultats s'ouvrent**, comme sur le web. Le Java garde
+  son écart : **pas de reprise** d'un bonus commencé.
+- **Le mode C** : on clique un département (bleu foncé ; on peut changer d'avis), puis on écrit son nom ou son
+  numéro. Suggestions parmi les **101 départements** ; une seule réponse par département ; un département **déjà
+  trouvé** est refusé sans rien coûter ; un département d'une autre région est une réponse fausse ; Entrée sur un
+  début de nom joue le seul département qu'il évoque ; aucune sélection automatique après une réponse. Outre-mer :
+  toujours la question du numéro. A et B restent dans le code, cachés (`Bonus.MODE`).
+- **La saisie** est grisée avant le choix, avec « Cliquez d'abord la carte » ; elle reçoit le focus au choix.
+- **Le clavier** (réponse propre au Java) : Tab jusqu'à la carte, les **flèches** d'un département à l'autre, Entrée
+  pour le choisir. À la victoire, le focus va sur la carte.
+- **L'enregistrement** : des **paires** (demandé, donné) à la place des seuls numéros donnés ; l'ancien format se relit
+  avec l'ordre du jour.
+- Les textes du Java restent au **vouvoiement**. **Trois PR** empilées, une par étape.
+
+**Ce qui a été fait :**
+
+1. **10.1 L'enchaînement** (`Fenetre`) : une victoire lance `jouerBonus()` ; `montrerResultats()` est l'unique entrée
+   vers les résultats (statistiques du jour, ou fenêtre de fin d'une partie libre), appelée à la fin du bonus par un
+   `Timer` de 1,5 s, quand on le passe, après une défaite ou un abandon, et au lancement.
+2. **10.2 Les règles** (`Bonus`, `ReponseBonus`, `Resultat`) : la question `CHOIX`, `repondre(choisi, donne)` et
+   `repondre(choisi, saisie)`, `restants()`, `trouve()`, `relire()` ; deux cas de plus dans `ReponseBonus`
+   (`Plusieurs`, `DejaTrouve`) ; `Resultat.paires`. `MODE` est resté `CARTE` jusqu'à 10.3, pour que le jeu reste
+   jouable entre les deux.
+3. **10.3 L'affichage** : `CarteDepartements` choisit au lieu de répondre, se parcourt au clavier et dessine le focus ;
+   la minuterie entre deux questions disparaît ; `MODE` passe à `CHOIX` ; aide et textes en français et en anglais ;
+   [leçons](lecons.md#phase-10--le-bonus-revu).
+
+**Ce que tu as appris :** déplacer un moment du jeu sans le dupliquer (une seule méthode pour « ouvrir les
+résultats »), lire deux formats et n'en écrire qu'un, laisser le compilateur montrer les `switch` à compléter,
+rendre un composant dessiné à la main utilisable au clavier (`InputMap`, `ActionMap`, focus), et garder un jeu
+jouable entre deux commits.
+
