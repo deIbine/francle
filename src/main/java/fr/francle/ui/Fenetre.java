@@ -129,6 +129,9 @@ class Fenetre {
     // bonus a été passé avant toute réponse
     private final JButton boutonPasser = new JButton(passer);
     private final JButton boutonBonus = new JButton(actionBonus);
+    // pendant le bonus de la partie du jour : les statistiques, sans quitter le bonus (comme « Voir les résultats »
+    // dans la version web)
+    private final JButton boutonResultats = new JButton(statistiques);
     private final JLabel message = new JLabel(" ", SwingConstants.CENTER);
     private final JTextArea indices = new JTextArea(Indice.values().length, 30);
 
@@ -162,6 +165,10 @@ class Fenetre {
     // plus (la réponse ne s'afficherait même pas). Le Timer, lui, rappelle apresReponse sur l'EDT, une seule fois
     private static final int DUREE_REPONSE = 1200;
     private final Timer pause = new Timer(DUREE_REPONSE, e -> apresReponse());
+    // le bonus fini, les résultats s'ouvrent d'eux-mêmes, mais pas tout de suite : le temps de voir la couleur de la
+    // dernière réponse (repris de la version web)
+    private static final int DUREE_AVANT_RESULTATS = 1500;
+    private final Timer avantResultats = new Timer(DUREE_AVANT_RESULTATS, e -> montrerResultats());
     // à minuit, la région du jour change, même si la fenêtre reste ouverte et la partie pas finie (repris de la
     // version web). Un Timer réglé sur le temps qui reste jusqu'à minuit, reprogrammé à chaque fois
     private final Timer minuit = new Timer(0, e -> aMinuit());
@@ -202,6 +209,7 @@ class Fenetre {
             Theme.changer(true);
         }
         pause.setRepeats(false);
+        avantResultats.setRepeats(false);
         valider.addActionListener(e -> jouer());
         // la touche Entrée dans le champ : l'autocomplétion choisit la suggestion surlignée, ou appelle jouer()
         new Autocompletion(saisie, this::suggestions, this::jouer);
@@ -221,6 +229,11 @@ class Fenetre {
             reglages.setAideVue(true);
             retenirReglages();
             SwingUtilities.invokeLater(this::montrerAide);
+        }
+        // la partie du jour déjà finie (le jeu est relancé dans la journée) : ses résultats s'ouvrent, comme dans la
+        // version web. Un bonus pas commencé attend son bouton : il ne surprend pas le joueur
+        if (duJourFini()) {
+            SwingUtilities.invokeLater(this::montrerResultats);
         }
         if (!avertissements.isEmpty()) {
             List<String> lignes = avertissements.stream()
@@ -395,6 +408,8 @@ class Fenetre {
         boutons.add(boutonRejouer);
         boutons.add(boutonPasser);
         boutons.add(boutonBonus);
+        boutons.add(boutonResultats);
+        boutonResultats.setVisible(false);
         JPanel ligneSaisie = new JPanel(new BorderLayout());
         ligneSaisie.add(saisie, BorderLayout.CENTER);
         ligneSaisie.add(boutons, BorderLayout.EAST);
@@ -536,11 +551,13 @@ class Fenetre {
             message.setText(textes.apresEssai(partie));
         } else {
             terminer();
-            if (partie == duJour) {
-                statistiquesEnFinDuJour();
-            } else if (bonusAJouer()) {
-                // une partie libre gagnée : le bonus tout de suite (pas de statistiques pour elle)
+            if (bonusAJouer()) {
+                // une victoire, du jour ou libre : le bonus tout de suite, à la place de la silhouette. Les
+                // résultats attendront sa fin
                 jouerBonus();
+            } else {
+                // une défaite : les résultats tout de suite
+                resultatsEnFin();
             }
         }
     }
@@ -570,7 +587,7 @@ class Fenetre {
         partie.abandonner();
         retenirDuJour();
         terminer();
-        statistiquesEnFinDuJour();
+        resultatsEnFin();
     }
 
     // après chaque essai ou abandon de la partie du jour : l'historique est mis à jour et enregistré tout de suite,
@@ -621,17 +638,29 @@ class Fenetre {
         }
     }
 
-    // la partie du jour vient de se terminer : les statistiques s'affichent d'elles-mêmes, comme dans Wordle.
-    // invokeLater : d'abord la fin de partie dessinée (carte, message), ensuite la boîte de dialogue. Après une
-    // victoire, le bonus commence dès qu'on la ferme (showMessageDialog ne rend la main qu'une fois fermée)
-    private void statistiquesEnFinDuJour() {
-        if (partie == duJour && !partie.enCours()) {
-            SwingUtilities.invokeLater(() -> {
-                montrerStatistiques();
-                if (partie == duJour && bonusAJouer()) {
-                    jouerBonus();
-                }
-            });
+    // il n'y a plus rien à jouer (partie perdue ou abandonnée, bonus fini ou passé) : les résultats s'affichent
+    // d'eux-mêmes, comme dans Wordle. invokeLater : d'abord la fin dessinée (carte, message), ensuite la boîte de
+    // dialogue
+    private void resultatsEnFin() {
+        if (!partie.enCours()) {
+            SwingUtilities.invokeLater(this::montrerResultats);
+        }
+    }
+
+    // la fenêtre des résultats : les statistiques pour la partie du jour ; pour une partie libre (qui n'en a pas),
+    // la fin de la partie et de quoi en commencer une autre, comme dans la version web
+    private void montrerResultats() {
+        avantResultats.stop();
+        if (partie == duJour) {
+            montrerStatistiques();
+            return;
+        }
+        String rejouer = textes.texte("action.libre");
+        String fermer = textes.texte("fermer");
+        int choix = JOptionPane.showOptionDialog(frame, messageDeFin(), textes.texte("resultats"),
+                JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, new Object[]{rejouer, fermer}, rejouer);
+        if (choix == 0) {
+            jouerLibre();
         }
     }
 
@@ -805,6 +834,8 @@ class Fenetre {
         // le bouton du bonus a un nom court, à lui : celui de l'action (« Bonus des départements ») élargirait la fenêtre
         boutonBonus.setHideActionText(true);
         boutonBonus.setText(textes.texte("bouton.bonus"));
+        boutonResultats.setHideActionText(true);
+        boutonResultats.setText(textes.texte("resultats"));
         indices.setBorder(BorderFactory.createTitledBorder(textes.texte("indices")));
         tableau.setTextes(textes);
         // la JTable a copié les titres des colonnes à sa création : on les lui redonne, puis on redessine l'en-tête
@@ -837,8 +868,8 @@ class Fenetre {
     }
 
     // montre le bonus de la partie affichée dans l'état où il est : nouveau, en cours, ou fini (pour revoir la carte).
-    // Il commence de lui-même après chaque victoire : à la fermeture des statistiques pour la partie du jour, tout de
-    // suite pour une partie libre
+    // Il commence de lui-même dès chaque victoire, partie du jour ou partie libre ; sinon, par le bouton « Bonus »
+    // (passé avant toute réponse) ou le menu Jeu
     private void jouerBonus() {
         // déjà dans le bonus (Ctrl+B en plein bonus) : rien à faire, et surtout pas le quitter, ce qui le passerait
         if (dansLeBonus || !bonusGagne()) {
@@ -858,6 +889,9 @@ class Fenetre {
         cartes.show(cadre, DEPARTEMENTS);
         saisie.setText("");
         afficherBonus();
+        // la saisie de la région vient de disparaître (ou le bouton « Bonus ») : sans cela, le focus du clavier
+        // resterait sur un composant grisé, et Tab repartirait d'on ne sait où. Il va sur la carte
+        carte.requestFocusInWindow();
     }
 
     // un clic sur un département de la carte (la carte ne le transmet que quand on peut cliquer)
@@ -878,6 +912,9 @@ class Fenetre {
                 valider.setEnabled(false);
                 passer.setEnabled(false);
                 pause.restart();
+                if (!bonus.enCours()) {
+                    avantResultats.restart();
+                }
             }
         }
     }
@@ -888,24 +925,28 @@ class Fenetre {
         afficherBonus();
     }
 
-    // le bouton « Passer » : le bonus s'arrête là. S'il n'a pas commencé, il reste à jouer (bouton « Bonus »)
+    // le bouton « Passer » : le bonus s'arrête là, et les résultats s'ouvrent. S'il n'a pas commencé, on revient à la
+    // fin de la partie, et il reste à jouer (bouton « Bonus »)
     private void passerBonus() {
         pause.stop();
         if (bonus.getTentatives().isEmpty()) {
             dansLeBonus = false;
             montrerPartie(partie);
-            return;
+        } else {
+            bonus.passer();
+            retenirBonus();
+            carte.reprendre();
+            afficherBonus();
         }
-        bonus.passer();
-        retenirBonus();
-        carte.reprendre();
-        afficherBonus();
+        resultatsEnFin();
     }
 
     // le joueur va voir ailleurs (partie libre, partie du jour…) en plein bonus : un bonus commencé compte comme
     // passé, avec les réponses déjà données
     private void quitterBonus() {
         pause.stop();
+        // des résultats en attente seraient ceux de la partie qu'on quitte
+        avantResultats.stop();
         if (dansLeBonus && bonus.enCours() && !bonus.getTentatives().isEmpty()) {
             bonus.passer();
             // (rien de nouveau à enregistrer : les réponses le sont déjà, et un bonus relu est toujours fini)
@@ -926,7 +967,11 @@ class Fenetre {
         boutonAbandonner.setVisible(false);
         passer.setEnabled(enCours);
         boutonPasser.setVisible(enCours);
-        boutonRejouer.setVisible(!enCours);
+        // sous le bonus, comme dans la version web : « Résultats » pour la partie du jour, « Partie libre » pour une
+        // partie libre (qui abandonne le bonus sans rien demander : rien n'en est compté)
+        boolean duJourAffiche = partie == duJour;
+        boutonResultats.setVisible(duJourAffiche);
+        boutonRejouer.setVisible(!enCours || !duJourAffiche);
         boutonBonus.setVisible(false);
         actionBonus.setEnabled(true);
         partager.setEnabled(duJourFini());
@@ -972,6 +1017,7 @@ class Fenetre {
         boutonAbandonner.setVisible(active);
         boutonRejouer.setVisible(!active);
         boutonPasser.setVisible(false);
+        boutonResultats.setVisible(false);
         // à la fin d'une partie gagnée, tant que le bonus n'est pas fini
         boutonBonus.setVisible(!active && bonusAJouer());
         actionBonus.setEnabled(bonusGagne());
