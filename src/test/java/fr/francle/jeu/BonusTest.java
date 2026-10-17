@@ -147,4 +147,88 @@ class BonusTest {
         assertEquals(0, bonus.score());
         assertFalse(bonus.enCours());
     }
+
+    // ---- le mode C : le joueur choisit le département, puis le nomme ----
+
+    @Test
+    @DisplayName("Mode C : pas de question imposée ; le joueur choisit l'ordre, une réponse par département")
+    void modeChoix() {
+        Bonus bonus = bretagne(Bonus.Question.CHOIX);
+
+        assertEquals(Bonus.Question.CHOIX, bonus.getQuestion());
+        assertThrows(IllegalStateException.class, bonus::demande);
+        // le Morbihan d'abord, bien nommé : la tentative garde le département choisi et celui qui a été écrit
+        assertEquals(new ReponseBonus.Jouee(new Tentative(departement("56"), departement("56"))),
+                bonus.repondre(departement("56"), departement("56")));
+        // puis le Finistère, nommé à tort Côtes-d'Armor : une réponse fausse, qui compte
+        assertTrue(bonus.repondre(departement("29"), departement("22")) instanceof ReponseBonus.Jouee jouee
+                && !jouee.tentative().juste());
+        assertEquals(List.of(departement("22"), departement("35")), bonus.restants());
+        assertEquals(3, bonus.rang());
+        // un département qui a déjà sa réponse ne se choisit plus
+        assertThrows(IllegalArgumentException.class, () -> bonus.repondre(departement("29"), departement("29")));
+        // ni un département d'une autre région
+        assertThrows(IllegalArgumentException.class, () -> bonus.repondre(departement("33"), departement("33")));
+        bonus.repondre(departement("22"), departement("22"));
+        bonus.repondre(departement("35"), departement("35"));
+
+        assertEquals(Bonus.Etat.TERMINE, bonus.getEtat());
+        assertEquals(3, bonus.score());
+        assertFalse(bonus.tentative(departement("29")).orElseThrow().juste());
+    }
+
+    @Test
+    @DisplayName("Mode C : un département déjà trouvé est refusé sans rien coûter ; un nom donné à tort, non")
+    void dejaTrouve() {
+        Bonus bonus = bretagne(Bonus.Question.CHOIX);
+        bonus.repondre(departement("56"), departement("56"));
+        bonus.repondre(departement("29"), departement("35"));     // faux : l'Ille-et-Vilaine n'est pas trouvée
+
+        assertEquals(new ReponseBonus.DejaTrouve(departement("56")), bonus.repondre(departement("22"), departement("56")));
+        assertEquals(2, bonus.getTentatives().size());
+        // l'Ille-et-Vilaine a été donnée, mais au mauvais endroit : elle peut l'être encore
+        assertTrue(bonus.repondre(departement("35"), departement("35")) instanceof ReponseBonus.Jouee);
+        // un département d'une autre région est une réponse fausse, qui compte
+        assertTrue(bonus.repondre(departement("22"), departement("33")) instanceof ReponseBonus.Jouee jouee
+                && !jouee.tentative().juste());
+        assertEquals(Bonus.Etat.TERMINE, bonus.getEtat());
+    }
+
+    @Test
+    @DisplayName("Mode C, la saisie : un nom, un numéro, ou un début de nom qui n'évoque qu'un département des 101")
+    void saisieChoix() {
+        Bonus bonus = bretagne(Bonus.Question.CHOIX);
+
+        assertEquals(new ReponseBonus.Inconnue(), bonus.repondre(departement("22"), "Bretagne"));
+        // « haute » évoque Haute-Corse, Haute-Garonne… : on demande de choisir, sans rien coûter
+        assertEquals(new ReponseBonus.Plusieurs(), bonus.repondre(departement("22"), "haute"));
+        assertTrue(bonus.getTentatives().isEmpty());
+        assertTrue(bonus.repondre(departement("22"), "22") instanceof ReponseBonus.Jouee jouee
+                && jouee.tentative().juste());
+        // « fin » n'évoque que le Finistère, parmi les 101
+        assertEquals(new ReponseBonus.Jouee(new Tentative(departement("29"), departement("29"))),
+                bonus.repondre(departement("29"), "fin"));
+        assertTrue(bonus.repondre(departement("35"), "ille et vilaine") instanceof ReponseBonus.Jouee jouee
+                && jouee.tentative().juste());
+    }
+
+    @Test
+    @DisplayName("Mode C en outre-mer : la question du numéro, comme dans les autres modes")
+    void choixOutreMer() {
+        Bonus bonus = new Bonus(RegionFr.GUYANE, RegionFr.GUYANE.getDepartements(), Bonus.Question.CHOIX);
+
+        assertEquals(Bonus.Question.NUMERO, bonus.getQuestion());
+        assertEquals(departement("973"), bonus.demande());
+    }
+
+    @Test
+    @DisplayName("Relire une réponse d'un fichier : acceptée si elle est possible, ignorée sinon")
+    void relire() {
+        Bonus bonus = bretagne(Bonus.Question.CHOIX);
+
+        assertTrue(bonus.relire(departement("29"), departement("22")));
+        assertFalse(bonus.relire(departement("29"), departement("29")));     // déjà répondu
+        assertFalse(bonus.relire(departement("33"), departement("33")));     // pas dans la région
+        assertEquals(List.of(new Tentative(departement("29"), departement("22"))), bonus.getTentatives());
+    }
 }

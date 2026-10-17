@@ -60,9 +60,10 @@ public record Historique(int version, List<Resultat> resultats, PartieEnCours en
         if (partie.enCours()) {
             return new Historique(VERSION, resultats, new PartieEnCours(date, propositions, modes));
         }
+        Resultat termine = new Resultat(date, partie.getCible(), propositions, partie.getEtat(), null, modes);
         // le bonus déjà enregistré pour cette date, s'il y en a un, est gardé
-        List<String> bonus = resultat(date).map(Resultat::bonus).orElse(null);
-        return remplacer(new Resultat(date, partie.getCible(), propositions, partie.getEtat(), bonus, modes), null);
+        Optional<Resultat> avant = resultat(date);
+        return remplacer(avant.map(termine::avecBonusDe).orElse(termine), null);
     }
 
     // les modes difficiles de la partie du jour de cette date, terminée ou en cours, s'ils sont connus
@@ -82,10 +83,7 @@ public record Historique(int version, List<Resultat> resultats, PartieEnCours en
         if (bonus.getTentatives().isEmpty()) {
             return this;
         }
-        List<String> reponses = bonus.getTentatives().stream().map(tentative -> tentative.donne().code()).toList();
-        Resultat avecBonus = new Resultat(date, resultat.region(), resultat.propositions(), resultat.etat(), reponses,
-                resultat.modes());
-        return remplacer(avecBonus, enCours);
+        return remplacer(resultat.avecBonus(bonus), enCours);
     }
 
     // le bonus de la partie du jour de cette date, s'il a été joué (toujours fini : voir Resultat.rejouerBonus)

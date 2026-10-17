@@ -902,6 +902,9 @@ class Fenetre {
     private void repondre(ReponseBonus reponse) {
         switch (reponse) {
             case ReponseBonus.Inconnue() -> refuser(textes.bonusInconnu(bonus, saisie.getText()));
+            case ReponseBonus.Plusieurs() -> refuser(textes.texte("bonus.plusieurs", saisie.getText().strip()));
+            case ReponseBonus.DejaTrouve(Departement departement) ->
+                    refuser(textes.texte("bonus.dejaTrouve", departement.nom()));
             case ReponseBonus.Jouee(Tentative tentative) -> {
                 retenirBonus();
                 saisie.setText("");

@@ -151,15 +151,22 @@ class HistoriqueTest {
         return Historique.vide().avec(JOUR, partie);
     }
 
+    // le bonus du jour en mode A, quel que soit Bonus.MODE : ces tests posent les questions dans l'ordre du jour
+    private static Bonus bonusCarte() {
+        return new Bonus(CIBLE, Bonus.duJour(CIBLE, JOUR).getOrdre(), Bonus.Question.CARTE);
+    }
+
     @Test
     @DisplayName("Le bonus est retenu réponse par réponse, puis reconstruit fini : commencé, il compte comme passé")
     void bonus() {
-        Bonus bonus = Bonus.duJour(CIBLE, JOUR);
+        Bonus bonus = bonusCarte();
         Departement premier = bonus.demande();
         bonus.repondre(premier);                         // juste
         Historique historique = gagnee().avecBonus(JOUR, bonus);
 
-        assertEquals(List.of(premier.code()), historique.resultats().get(0).bonus());
+        // en paires : le département demandé, puis celui qui a été donné. L'ancien format n'est plus écrit
+        assertEquals(List.of(List.of(premier.code(), premier.code())), historique.resultats().get(0).paires());
+        assertNull(historique.resultats().get(0).bonus());
         Bonus relu = historique.bonusDuJour(JOUR).orElseThrow();
         // le jeu a été fermé en plein bonus : pas de reprise, il compte comme passé avec ses réponses
         assertEquals(Bonus.Etat.PASSE, relu.getEtat());
@@ -168,9 +175,61 @@ class HistoriqueTest {
     }
 
     @Test
+    @DisplayName("Mode C : les paires gardent l'ordre choisi par le joueur, et se relisent à l'identique")
+    void bonusChoix() {
+        Bonus bonus = new Bonus(CIBLE, Bonus.duJour(CIBLE, JOUR).getOrdre(), Bonus.Question.CHOIX);
+        List<Departement> ordre = bonus.getOrdre();
+        bonus.repondre(ordre.get(1), ordre.get(1));     // juste, et pas dans l'ordre du jour
+        bonus.repondre(ordre.get(0), ordre.get(2));     // faux
+
+        Historique historique = gagnee().avecBonus(JOUR, bonus);
+        Bonus relu = historique.bonusDuJour(JOUR).orElseThrow();
+
+        assertEquals(List.of(List.of(ordre.get(1).code(), ordre.get(1).code()),
+                List.of(ordre.get(0).code(), ordre.get(2).code())), historique.resultats().get(0).paires());
+        assertEquals(bonus.getTentatives(), relu.getTentatives());
+        assertEquals(1, relu.score());
+    }
+
+    @Test
+    @DisplayName("L'ancien format (Phase 9 : les numéros donnés, dans l'ordre du jour) se relit toujours")
+    void bonusAncienFormat() {
+        List<Departement> ordre = Bonus.duJour(CIBLE, JOUR).getOrdre();
+        // la première réponse juste, la seconde fausse ; un numéro inconnu (fichier modifié à la main) est ignoré
+        Resultat resultat = new Resultat(JOUR, CIBLE, List.of(CIBLE), Partie.Etat.GAGNEE,
+                List.of(ordre.get(0).code(), "999", ordre.get(0).code()));
+
+        Bonus relu = resultat.rejouerBonus().orElseThrow();
+
+        assertEquals(List.of(new fr.francle.jeu.Tentative(ordre.get(0), ordre.get(0)),
+                new fr.francle.jeu.Tentative(ordre.get(1), ordre.get(0))), relu.getTentatives());
+        assertEquals(Bonus.Etat.PASSE, relu.getEtat());
+        // retenu de nouveau, il passe au nouveau format, avec les mêmes réponses
+        Resultat nouveau = resultat.avecBonus(relu);
+        assertNull(nouveau.bonus());
+        assertEquals(relu.getTentatives(), nouveau.rejouerBonus().orElseThrow().getTentatives());
+    }
+
+    @Test
+    @DisplayName("Des paires impossibles (fichier modifié à la main) sont ignorées")
+    void pairesImpossibles() {
+        List<Departement> ordre = Bonus.duJour(CIBLE, JOUR).getOrdre();
+        String premier = ordre.get(0).code();
+        // un département d'une autre région
+        String ailleurs = Departement.tous().stream().filter(d -> !ordre.contains(d)).findFirst().orElseThrow().code();
+        Resultat resultat = new Resultat(JOUR, CIBLE, List.of(CIBLE), Partie.Etat.GAGNEE, null, null,
+                List.of(List.of(premier, premier), List.of(premier, premier), List.of("999", premier), List.of(premier),
+                        List.of(ailleurs, ailleurs)));
+
+        Bonus relu = resultat.rejouerBonus().orElseThrow();
+
+        assertEquals(1, relu.getTentatives().size());
+    }
+
+    @Test
     @DisplayName("Un bonus fini se relit fini, avec le même score")
     void bonusFini() {
-        Bonus bonus = Bonus.duJour(CIBLE, JOUR);
+        Bonus bonus = bonusCarte();
         while (bonus.enCours()) {
             // la première réponse juste, toutes les autres fausses (le premier département de l'ordre, encore)
             bonus.repondre(bonus.getOrdre().get(0));
@@ -195,7 +254,7 @@ class HistoriqueTest {
     @Test
     @DisplayName("Pas de bonus sans partie du jour gagnée")
     void bonusSansVictoire() {
-        Bonus bonus = Bonus.duJour(CIBLE, JOUR);
+        Bonus bonus = bonusCarte();
         bonus.repondre(bonus.demande());
 
         assertThrows(IllegalStateException.class, () -> Historique.vide().avecBonus(JOUR, bonus));
@@ -206,7 +265,7 @@ class HistoriqueTest {
     void bonusGarde() {
         Partie partie = Historique.vide().partieDuJour(JOUR);
         partie.proposer(CIBLE.getNom());
-        Bonus bonus = Bonus.duJour(CIBLE, JOUR);
+        Bonus bonus = bonusCarte();
         bonus.repondre(bonus.demande());
 
         Historique historique = Historique.vide().avec(JOUR, partie).avecBonus(JOUR, bonus).avec(JOUR, partie);
@@ -229,7 +288,7 @@ class HistoriqueTest {
         Historique gagnee = enCours.avec(JOUR, partie);
         assertEquals(Optional.of(tournee), gagnee.modesDuJour(JOUR));
 
-        Bonus bonus = Bonus.duJour(CIBLE, JOUR);
+        Bonus bonus = bonusCarte();
         bonus.repondre(bonus.demande());
         assertEquals(Optional.of(tournee), gagnee.avecBonus(JOUR, bonus).modesDuJour(JOUR));
         assertEquals(Optional.empty(), Historique.vide().modesDuJour(JOUR));

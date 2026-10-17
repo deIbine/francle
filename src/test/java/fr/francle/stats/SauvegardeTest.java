@@ -94,6 +94,22 @@ class SauvegardeTest {
     }
 
     @Test
+    @DisplayName("Le bonus en paires (Phase 10) est enregistré, et relu à l'identique")
+    void paires() throws IOException {
+        Sauvegarde<Historique> sauvegarde = Sauvegarde.historique(dossier.resolve("historique.json"));
+        Historique historique = new Historique(Historique.VERSION, List.of(new Resultat(JOUR, RegionFr.BRETAGNE,
+                List.of(RegionFr.BRETAGNE), Partie.Etat.GAGNEE, null, null,
+                List.of(List.of("56", "56"), List.of("29", "22")))), null);
+
+        sauvegarde.enregistrer(historique);
+
+        String json = Files.readString(sauvegarde.getFichier());
+        // une paire est un tableau de deux numéros : [ "29", "22" ]
+        assertTrue(json.replaceAll("\\s", "").contains("\"paires\":[[\"56\",\"56\"],[\"29\",\"22\"]]"), json);
+        assertEquals(historique, sauvegarde.charger());
+    }
+
+    @Test
     @DisplayName("Un fichier d'avant le bonus (Phase 8) se lit toujours : pas de bonus joué")
     void avantLeBonus() throws IOException {
         Path fichier = dossier.resolve("historique.json");
