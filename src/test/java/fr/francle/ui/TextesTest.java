@@ -44,8 +44,8 @@ class TextesTest {
     @DisplayName("Bonus : la question, la réponse et la fin, selon la sorte de question")
     void bonus() {
         Bonus bretagne = new Bonus(RegionFr.BRETAGNE, RegionFr.BRETAGNE.getDepartements(), Bonus.Question.CARTE);
-        assertEquals("Bonus 1/4 · Cliquez sur : Côtes-d'Armor", FR.questionBonus(bretagne));
-        assertEquals("Bonus 1/4 · Click on: Côtes-d'Armor", EN.questionBonus(bretagne));
+        assertEquals("Bonus 1/4 · Cliquez sur : Côtes-d'Armor", FR.questionBonus(bretagne, false));
+        assertEquals("Bonus 1/4 · Click on: Côtes-d'Armor", EN.questionBonus(bretagne, false));
         Departement finistere = Departement.parCode("29").orElseThrow();
         bretagne.repondre(finistere);
         Tentative ratee = bretagne.getTentatives().get(0);
@@ -55,13 +55,20 @@ class TextesTest {
         assertEquals("Bonus : 0/4.", FR.resumeBonus(bretagne));
 
         Bonus nom = new Bonus(RegionFr.CORSE, RegionFr.CORSE.getDepartements(), Bonus.Question.NOM);
-        assertEquals("Bonus 1/2 · Quel est ce département ?", FR.questionBonus(nom));
+        assertEquals("Bonus 1/2 · Quel est ce département ?", FR.questionBonus(nom, false));
         nom.repondre(Departement.parCode("2B").orElseThrow());
         assertEquals("Raté : c'était 2A · Corse-du-Sud.", FR.reponseBonus(nom, nom.getTentatives().get(0)));
         assertEquals("« Bretagne » n'est pas un département : réessayez.", FR.bonusInconnu(nom, " Bretagne "));
 
+        Bonus choix = new Bonus(RegionFr.CORSE, RegionFr.CORSE.getDepartements(), Bonus.Question.CHOIX);
+        assertEquals("Bonus 1/2 · Cliquez sur un département de la carte", FR.questionBonus(choix, false));
+        assertEquals("Bonus 1/2 · Quel est ce département ?", FR.questionBonus(choix, true));
+        assertEquals("Bonus 1/2 · Click on a département on the map", EN.questionBonus(choix, false));
+        choix.repondre(Departement.parCode("2B").orElseThrow(), Departement.parCode("2A").orElseThrow());
+        assertEquals("Raté : c'était 2B · Haute-Corse.", FR.reponseBonus(choix, choix.getTentatives().get(0)));
+
         Bonus guyane = Bonus.duJour(RegionFr.GUYANE, LocalDate.of(2030, 3, 10));
-        assertEquals("Bonus · Quel est le numéro de : Guyane ?", FR.questionBonus(guyane));
+        assertEquals("Bonus · Quel est le numéro de : Guyane ?", FR.questionBonus(guyane, false));
         guyane.repondre("973");
         assertEquals("Bonus : bravo, c'est bien le 973 !", FR.finBonus(guyane));
     }

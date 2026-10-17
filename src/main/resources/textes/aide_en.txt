@@ -16,10 +16,12 @@ you like, with the regions chosen in the Settings menu (former or current).
 Only daily games count in the statistics (Game menu), where you can also
 copy your result to share it, without giving the answer away.
 
-Département bonus: after each win, find each département of the region on the map
-(one click per département; green: found, red: missed). For a region with a single
-département, give its number. The daily bonus counts from the first answer,
-even if skipped or interrupted, and its average score appears in the statistics.
+Département bonus 🗺️: after each win, click on each département of the region, then
+type its name or its number (with the keyboard: Tab to the map, the arrow keys, then
+Enter). One answer per département (green: found, red: missed), and your score is
+added to your shared result. For a region with a single département, give its number.
+The daily bonus counts from the first answer, even if skipped or interrupted,
+and its average score appears in the statistics.
 
 Accents, capitals, spaces and hyphens are ignored: “ile de france” is accepted,
 and so are the French names (“Bretagne”). While you type, suggestions appear:

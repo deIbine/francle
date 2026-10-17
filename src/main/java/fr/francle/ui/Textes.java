@@ -179,12 +179,13 @@ final class Textes {
 
     // la question en cours : « Bonus 2/4 · Cliquez sur : Finistère ». Les noms des départements n'ont pas d'article
     // (« le Finistère », « la Somme », « l'Ain », « les Landes »…) : la phrase est tournée pour s'en passer
-    String questionBonus(Bonus bonus) {
+    // choisi : en mode CHOIX, le joueur a déjà choisi le département à nommer
+    String questionBonus(Bonus bonus, boolean choisi) {
         return switch (bonus.getQuestion()) {
             case CARTE -> texte("bonus.carte", bonus.rang(), bonus.total(), bonus.demande().nom());
             case NOM -> texte("bonus.nom", bonus.rang(), bonus.total());
-            // pas de question imposée : c'est au joueur de choisir un département
-            case CHOIX -> texte("bonus.choix", bonus.rang(), bonus.total());
+            // pas de question imposée : c'est au joueur de choisir un département, puis de le nommer
+            case CHOIX -> texte(choisi ? "bonus.nom" : "bonus.choix", bonus.rang(), bonus.total());
             case NUMERO -> texte("bonus.numero", bonus.demande().nom());
         };
     }

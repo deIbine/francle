@@ -18,11 +18,12 @@ la région, un par un, dans un ordre tiré de la date pour la partie du jour (le
 Comme Partie, sans aucun affichage : la fenêtre transmet les réponses du joueur et affiche ce que le bonus répond.
 
 Quatre sortes de questions :
-    CARTE   « Où est le Finistère ? » : le joueur clique sur la carte (mode A, celui des joueurs)
-    NOM     « Quel est ce département ? » : un département est colorié, le joueur écrit son nom ou son numéro (mode B)
-    CHOIX   le joueur choisit lui-même un département sur la carte, puis écrit son nom ou son numéro (mode C, repris
-            de la version web) : pas de question imposée, ni d'ordre. Une Tentative y garde le département choisi
-            (demande) et celui qui a été écrit (donne)
+    CARTE   « Où est le Finistère ? » : le joueur clique sur la carte (mode A, caché)
+    NOM     « Quel est ce département ? » : un département est colorié, le joueur écrit son nom ou son numéro
+            (mode B, caché)
+    CHOIX   le joueur choisit lui-même un département sur la carte, puis écrit son nom ou son numéro (mode C, celui des
+            joueurs depuis la phase 10, repris de la version web) : pas de question imposée, ni d'ordre. Une
+            Tentative y garde le département choisi (demande) et celui qui a été écrit (donne)
     NUMERO  « Quel est le numéro de la Guadeloupe ? » : pour une région d'un seul département, où cliquer sur le
             seul département de la carte serait gratuit (comme le choisir, puis recopier le nom de la région)
  */
@@ -32,7 +33,7 @@ public class Bonus {
 
     // A, B ou C : choisi de notre côté, dans le code, sans le montrer aux joueurs. NOM pour essayer le mode B,
     // CHOIX pour le mode C
-    public static final Question MODE = Question.CARTE;
+    public static final Question MODE = Question.CHOIX;
 
     // TERMINE : tous les départements ont eu leur réponse ; PASSE : le joueur a arrêté avant (bouton « Passer », ou
     // jeu fermé au milieu). Les deux comptent dans les statistiques, avec les réponses données
