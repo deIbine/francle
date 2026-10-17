@@ -1,6 +1,7 @@
 package fr.francle.jeu;
 
 import fr.francle.donnees.Departement;
+import fr.francle.donnees.Langue;
 import fr.francle.donnees.RegionFr;
 
 import java.time.LocalDate;
@@ -16,17 +17,21 @@ Le bonus des départements, après chaque victoire (partie du jour ou partie lib
 la région, un par un, dans un ordre tiré de la date pour la partie du jour (le même pour tous), au hasard sinon. Une seule réponse par département : juste ou fausse, on passe au suivant.
 Comme Partie, sans aucun affichage : la fenêtre transmet les réponses du joueur et affiche ce que le bonus répond.
 
-Trois sortes de questions :
+Quatre sortes de questions :
     CARTE   « Où est le Finistère ? » : le joueur clique sur la carte (mode A, celui des joueurs)
     NOM     « Quel est ce département ? » : un département est colorié, le joueur écrit son nom ou son numéro (mode B)
+    CHOIX   le joueur choisit lui-même un département sur la carte, puis écrit son nom ou son numéro (mode C, repris
+            de la version web) : pas de question imposée, ni d'ordre. Une Tentative y garde le département choisi
+            (demande) et celui qui a été écrit (donne)
     NUMERO  « Quel est le numéro de la Guadeloupe ? » : pour une région d'un seul département, où cliquer sur le
-            seul département de la carte serait gratuit
+            seul département de la carte serait gratuit (comme le choisir, puis recopier le nom de la région)
  */
 public class Bonus {
 
-    public enum Question { CARTE, NOM, NUMERO }
+    public enum Question { CARTE, NOM, CHOIX, NUMERO }
 
-    // A ou B : choisi de notre côté, dans le code, sans le montrer aux joueurs. NOM pour essayer le mode B
+    // A, B ou C : choisi de notre côté, dans le code, sans le montrer aux joueurs. NOM pour essayer le mode B,
+    // CHOIX pour le mode C
     public static final Question MODE = Question.CARTE;
 
     // TERMINE : tous les départements ont eu leur réponse ; PASSE : le joueur a arrêté avant (bouton « Passer », ou
@@ -39,8 +44,9 @@ public class Bonus {
     private final List<Tentative> tentatives = new ArrayList<>();
     private Etat etat = Etat.EN_COURS;
 
-    // ordre : les départements de la région, dans l'ordre des questions. mode : CARTE ou NOM, remplacé par NUMERO
-    // pour une région d'un seul département
+    // ordre : les départements de la région, dans l'ordre des questions (en mode CHOIX, le joueur choisit le sien :
+    // celui-ci ne sert plus qu'à relire les fichiers d'avant la phase 10). mode : CARTE, NOM ou CHOIX, remplacé par
+    // NUMERO pour une région d'un seul département
     public Bonus(RegionFr region, List<Departement> ordre, Question mode) {
         if (ordre.size() != region.getDepartements().size()
                 || !new HashSet<>(ordre).equals(new HashSet<>(region.getDepartements()))) {
@@ -77,20 +83,89 @@ public class Bonus {
     // les octets ASCII de « Bonus »
     private static final long SEL = 0x426F6E7573L;
 
-    // le département de la question en cours
+    // le département de la question en cours. En mode CHOIX, il n'y en a pas : c'est le joueur qui choisit
     public Departement demande() {
         verifierEnCours();
+        if (question == Question.CHOIX) {
+            throw new IllegalStateException("Pas de question imposée en mode CHOIX : le joueur choisit le département");
+        }
         return ordre.get(tentatives.size());
     }
 
     // la réponse du joueur : le département cliqué (CARTE), ou celui qu'il a nommé
     public ReponseBonus repondre(Departement donne) {
-        Tentative tentative = new Tentative(demande(), donne);
+        return new ReponseBonus.Jouee(ajouter(demande(), donne));
+    }
+
+    // une réponse de plus, et le bonus se termine quand chaque département a la sienne
+    private Tentative ajouter(Departement demande, Departement donne) {
+        Tentative tentative = new Tentative(demande, donne);
         tentatives.add(tentative);
         if (tentatives.size() == ordre.size()) {
             etat = Etat.TERMINE;
         }
-        return new ReponseBonus.Jouee(tentative);
+        return tentative;
+    }
+
+    // mode CHOIX : le joueur a choisi un département sur la carte, et donne un nom. Un département déjà trouvé
+    // ailleurs est refusé sans coûter de réponse (le joueur s'est sûrement trompé de département sur la carte), comme
+    // une région déjà proposée dans la partie ; un nom déjà donné à tort, lui, reste possible. Un département d'une
+    // autre région est une réponse fausse, qui compte
+    public ReponseBonus repondre(Departement choisi, Departement donne) {
+        verifierEnCours();
+        if (question != Question.CHOIX) {
+            throw new IllegalStateException("Pas de choix libre pour la question " + question);
+        }
+        // choisir un département hors de la région, ou qui a déjà sa réponse, est une erreur de programmation : la
+        // carte ne le permet pas
+        if (!restants().contains(choisi)) {
+            throw new IllegalArgumentException(choisi.code() + " ne peut pas être choisi");
+        }
+        if (trouve(donne)) {
+            return new ReponseBonus.DejaTrouve(donne);
+        }
+        return new ReponseBonus.Jouee(ajouter(choisi, donne));
+    }
+
+    // mode CHOIX, la réponse écrite : le nom ou le numéro d'un des 101 départements, ou, comme pour les régions, le
+    // début d'un nom qui n'en évoque qu'un (« fin » joue le Finistère). Parmi les 101, et pas seulement ceux de la
+    // région : sinon, la liste des suggestions donnerait la réponse. Une saisie qui n'est pas un département, ou qui
+    // en évoque plusieurs, ne coûte rien
+    public ReponseBonus repondre(Departement choisi, String saisie) {
+        Optional<Departement> departement = Departement.chercher(saisie);
+        if (departement.isEmpty()) {
+            // (la langue ne sert qu'à ranger les suggestions : ici, seul leur nombre compte)
+            List<Departement> evoques = Departement.suggestions(saisie, Departement.tous(), Langue.FR);
+            if (evoques.size() > 1) {
+                return new ReponseBonus.Plusieurs();
+            }
+            if (evoques.isEmpty()) {
+                return new ReponseBonus.Inconnue();
+            }
+            departement = Optional.of(evoques.get(0));
+        }
+        return repondre(choisi, departement.get());
+    }
+
+    // une réponse relue dans un fichier : le département demandé (ou choisi) et celui qui a été donné, dans l'ordre où
+    // le joueur les a joués. Faux si elle est impossible (fichier modifié à la main : un département hors de la
+    // région, ou qui a déjà sa réponse, ou un bonus déjà fini) ; elle est alors ignorée
+    public boolean relire(Departement demande, Departement donne) {
+        if (!enCours() || !restants().contains(demande)) {
+            return false;
+        }
+        ajouter(demande, donne);
+        return true;
+    }
+
+    // les départements qui n'ont pas encore de réponse : ceux que le joueur peut encore choisir en mode CHOIX
+    public List<Departement> restants() {
+        return ordre.stream().filter(departement -> tentative(departement).isEmpty()).toList();
+    }
+
+    // vrai si ce département a déjà été trouvé (donné au bon endroit)
+    public boolean trouve(Departement departement) {
+        return tentatives.stream().anyMatch(tentative -> tentative.juste() && tentative.donne().equals(departement));
     }
 
     // la réponse écrite par le joueur. NOM : le nom ou le numéro d'un département ; NUMERO : un numéro seulement
