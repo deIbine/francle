@@ -77,11 +77,28 @@ class PartieTest {
     }
 
     @Test
-    @DisplayName("Une ancienne région est refusée en mode « nouvelles régions »")
+    @DisplayName("Une ancienne région est refusée en mode « nouvelles régions », comme une autre époque")
     void ancienneRegionRefusee() {
         Partie partie = new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES);
 
-        assertEquals(new Reponse.Inconnue(), partie.proposer("Alsace"));
+        assertEquals(new Reponse.AutreEpoque(RegionFr.ALSACE), partie.proposer("alsace"));
+        assertTrue(partie.getEssais().isEmpty());
+    }
+
+    @Test
+    @DisplayName("Le nom exact d'une autre époque passe avant les suggestions : « Bourgogne » ne joue pas Bourgogne-Franche-Comté")
+    void autreEpoqueAvantSuggestions() {
+        Partie nouvelles = new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES);
+        Partie anciennes = new Partie(RegionFr.BRETAGNE, ModeRegions.ANCIENNES);
+
+        assertEquals(new Reponse.AutreEpoque(RegionFr.BOURGOGNE), nouvelles.proposer("Bourgogne"));
+        assertEquals(new Reponse.AutreEpoque(RegionFr.CENTRE), nouvelles.proposer("Centre"));
+        // et non « plusieurs régions » (Basse- et Haute-Normandie)
+        assertEquals(new Reponse.AutreEpoque(RegionFr.NORMANDIE), anciennes.proposer("Normandie"));
+        assertTrue(nouvelles.getEssais().isEmpty());
+        assertTrue(anciennes.getEssais().isEmpty());
+        // un simple début de nom reste une suggestion : « bourg » joue Bourgogne-Franche-Comté, la seule du mode
+        assertInstanceOf(Reponse.Jouee.class, nouvelles.proposer("bourg"));
     }
 
     @Test
@@ -140,8 +157,8 @@ class PartieTest {
 
         // Grand Est et Alsace ont la même capitale : avant la Phase 6, le mode « toutes » permettait de proposer
         // l'une pour l'autre, à 0 km, sans gagner. Les deux époques ne se mélangent plus
-        assertEquals(new Reponse.Inconnue(), anciennes.proposer("Grand Est"));
-        assertEquals(new Reponse.Inconnue(), nouvelles.proposer("Alsace"));
+        assertEquals(new Reponse.AutreEpoque(RegionFr.GRAND_EST), anciennes.proposer("Grand Est"));
+        assertEquals(new Reponse.AutreEpoque(RegionFr.ALSACE), nouvelles.proposer("Alsace"));
         assertTrue(anciennes.getEssais().isEmpty());
         assertTrue(nouvelles.getEssais().isEmpty());
     }
@@ -171,13 +188,17 @@ class PartieTest {
     }
 
     @Test
-    @DisplayName("Indices révélés : un par essai raté, aucun pour l'essai gagnant")
+    @DisplayName("Indices révélés : un par essai raté pendant la partie, tous une fois la partie finie")
     void indicesReveles() {
         assertEquals(List.of(), new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES).indicesReveles());
         assertEquals(List.of(Indice.SUPERFICIE, Indice.SPECIALITE),
                 jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES, "Corse", "Normandie").indicesReveles());
-        assertEquals(List.of(Indice.SUPERFICIE),
+        // gagnée au 2e essai : la superficie était seule révélée ; maintenant, tout est à lire
+        assertEquals(List.of(Indice.values()),
                 jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES, "Corse", "Bretagne").indicesReveles());
+        Partie abandonnee = new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES);
+        abandonnee.abandonner();
+        assertEquals(List.of(Indice.values()), abandonnee.indicesReveles());
         // 6 essais ratés : 5 indices seulement, il n'y en a pas de sixième
         assertEquals(List.of(Indice.values()),
                 jouer(RegionFr.BRETAGNE, ModeRegions.NOUVELLES,

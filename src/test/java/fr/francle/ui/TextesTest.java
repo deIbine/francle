@@ -195,6 +195,26 @@ class TextesTest {
     }
 
     @Test
+    @DisplayName("Région de l'autre époque : ce qu'elle est devenue, ou ce qu'elle regroupe, en français et en anglais")
+    void autreEpoque() {
+        assertEquals("Alsace : une ancienne région (avant 2016), aujourd'hui dans la région Grand Est.",
+                FR.autreEpoque(RegionFr.ALSACE));
+        assertEquals("Grand Est : une région d'après 2016, qui regroupe Alsace, Champagne-Ardenne et Lorraine.",
+                FR.autreEpoque(RegionFr.GRAND_EST));
+        assertEquals("Normandie : une région d'après 2016, qui regroupe Basse-Normandie et Haute-Normandie.",
+                FR.autreEpoque(RegionFr.NORMANDIE));
+        assertEquals("Centre : une ancienne région (avant 2016), aujourd'hui appelée Centre-Val de Loire.",
+                FR.autreEpoque(RegionFr.CENTRE));
+        assertEquals("Centre-Val de Loire : une région d'après 2016, nouveau nom de la région Centre.",
+                FR.autreEpoque(RegionFr.CENTRE_VAL_DE_LOIRE));
+        assertEquals("Alsace: a former region (before 2016), now part of the Grand Est region.",
+                EN.autreEpoque(RegionFr.ALSACE));
+        // les noms anglais, triés dans l'ordre anglais
+        assertEquals("Normandy: a region created in 2016, which brings together Lower Normandy and Upper Normandy.",
+                EN.autreEpoque(RegionFr.NORMANDIE));
+    }
+
+    @Test
     @DisplayName("La liste des régions est triée à la française (Île-de-France à la lettre I)")
     void listeTriee() {
         List<String> noms = FR.regionsTriees(ModeRegions.NOUVELLES).stream().map(FR::nom).toList();

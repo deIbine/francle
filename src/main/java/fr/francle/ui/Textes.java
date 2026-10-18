@@ -1,6 +1,7 @@
 package fr.francle.ui;
 
 import fr.francle.donnees.Departement;
+import fr.francle.donnees.Epoque;
 import fr.francle.donnees.Langue;
 import fr.francle.donnees.ModeRegions;
 import fr.francle.donnees.RegionFr;
@@ -160,6 +161,29 @@ final class Textes {
 
     String dejaProposee(RegionFr region) {
         return texte("dejaProposee", nom(region));
+    }
+
+    // une région de l'autre époque, et ce qu'elle est devenue (ou ce qu'elle regroupe). « Alsace : une ancienne
+    // région (avant 2016), aujourd'hui dans la région Grand Est. » ; « Grand Est : une région d'après 2016, qui
+    // regroupe Alsace, Champagne-Ardenne et Lorraine. ». Le Centre, lui, a seulement changé de nom : une phrase à part
+    String autreEpoque(RegionFr region) {
+        List<RegionFr> liees = new ArrayList<>(region.autreEpoque());
+        liees.sort(Comparator.comparing(this::nom, Collator.getInstance(langue.getLocale())));
+        boolean ancienne = region.getEpoque() == Epoque.ANCIENNE;
+        // renommée : une seule région de l'autre côté, avec exactement les mêmes départements
+        boolean renommee = liees.size() == 1
+                && Set.copyOf(liees.get(0).getDepartements()).equals(Set.copyOf(region.getDepartements()));
+        String cle = "autreEpoque." + (ancienne ? "ancienne" : "nouvelle") + (renommee ? ".renommee" : "");
+        return texte(cle, nom(region), enumeration(liees.stream().map(this::nom).toList()));
+    }
+
+    // « A », « A et B », « A, B et C » (« and » en anglais)
+    String enumeration(List<String> noms) {
+        if (noms.size() <= 1) {
+            return String.join("", noms);
+        }
+        String debut = String.join(", ", noms.subList(0, noms.size() - 1));
+        return texte("enumeration", debut, noms.getLast());
     }
 
     String fin(Partie partie) {

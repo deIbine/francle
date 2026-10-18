@@ -219,7 +219,12 @@ public enum RegionFr {
 
     // la région correspondant à la saisie du joueur, ou Optional.empty() si elle est inconnue ou refusée dans ce mode
     public static Optional<RegionFr> chercher(String saisie, ModeRegions mode) {
-        return Optional.ofNullable(PAR_CLE.get(simplifier(saisie))).filter(mode::contient);
+        return chercher(saisie).filter(mode::contient);
+    }
+
+    // la région correspondant à la saisie, quelle que soit son époque
+    public static Optional<RegionFr> chercher(String saisie) {
+        return Optional.ofNullable(PAR_CLE.get(simplifier(saisie)));
     }
 
     // les suggestions pour un joueur francophone
@@ -338,4 +343,20 @@ public enum RegionFr {
     // ses départements, par ordre de numéro : ceux de la région à son époque (la Picardie en a trois, les
     // Hauts-de-France cinq)
     public List<Departement> getDepartements() { return Decoupage.de(this); }
+
+    // les régions de l'autre époque qui recouvrent celle-ci : pour l'Alsace, le Grand Est ; pour le Grand Est,
+    // l'Alsace, la Champagne-Ardenne et la Lorraine ; aucune pour une région inchangée en 2016 (Bretagne…).
+    // Rien de nouveau n'est écrit pour cela : le lien est déduit des départements (deux régions d'époques différentes
+    // qui ont un département en commun), que l'on connaît déjà pour le bonus. En 2016, aucun département n'a changé
+    // de région : une ancienne région est donc tout entière dans une seule nouvelle
+    public List<RegionFr> autreEpoque() {
+        if (epoque == Epoque.LES_DEUX) {
+            return List.of();
+        }
+        Epoque autre = epoque == Epoque.ANCIENNE ? Epoque.NOUVELLE : Epoque.ANCIENNE;
+        return Arrays.stream(values())
+                .filter(region -> region.epoque == autre)
+                .filter(region -> region.getDepartements().stream().anyMatch(getDepartements()::contains))
+                .toList();
+    }
 }
