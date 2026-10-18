@@ -23,6 +23,8 @@ class AutocompletionTest {
     private JTextField champ;
     private Autocompletion autocompletion;
     private int validations;
+    // ce que répond l'action de validation : saisie acceptée (vrai) ou refusée (faux)
+    private boolean acceptee;
 
     @BeforeEach
     void preparer() {
@@ -30,9 +32,13 @@ class AutocompletionTest {
         JRootPane racine = new JRootPane();
         racine.getContentPane().add(champ);
         validations = 0;
+        acceptee = true;
         autocompletion = new Autocompletion(champ,
                 debut -> RegionFr.suggestions(debut, ModeRegions.ANCIENNES).stream().map(RegionFr::getNom).toList(),
-                () -> validations++);
+                () -> {
+                    validations++;
+                    return acceptee;
+                });
     }
 
     // comme un appui sur la touche : on suit la liaison du champ, de la touche jusqu'à l'action
@@ -89,6 +95,48 @@ class AutocompletionTest {
 
         assertEquals(1, validations);
         assertEquals("bre", champ.getText());
+    }
+
+    @Test
+    @DisplayName("Saisie refusée (« nor » évoque plusieurs régions) : la liste se rouvre, sans ligne surlignée")
+    void refuseeRouvre() {
+        acceptee = false;
+        champ.setText("nor");
+
+        touche("ENTER");
+
+        assertEquals(1, validations);
+        assertTrue(autocompletion.estOuverte(), "« choisissez dans la liste » : il faut une liste où choisir");
+        assertEquals(List.of("Nord-Pas-de-Calais", "Basse-Normandie", "Haute-Normandie"), autocompletion.suggestions());
+
+        // aucune ligne surlignée : un second Entrée valide encore le texte, au lieu de jouer une région au hasard
+        touche("ENTER");
+        assertEquals(2, validations);
+        assertEquals("nor", champ.getText());
+        assertTrue(autocompletion.estOuverte());
+    }
+
+    @Test
+    @DisplayName("Saisie refusée alors que la liste était fermée (Échap) : elle se rouvre")
+    void refuseeApresEchap() {
+        acceptee = false;
+        champ.setText("nor");
+        touche("ESCAPE");
+
+        touche("ENTER");
+
+        assertTrue(autocompletion.estOuverte());
+    }
+
+    @Test
+    @DisplayName("Saisie acceptée : la liste reste fermée")
+    void accepteeFerme() {
+        champ.setText("nor");
+
+        touche("ENTER");
+
+        assertEquals(1, validations);
+        assertFalse(autocompletion.estOuverte());
     }
 
     @Test

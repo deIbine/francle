@@ -208,7 +208,8 @@ class Fenetre {
         }
         avantResultats.setRepeats(false);
         valider.addActionListener(e -> jouer());
-        // la touche Entrée dans le champ : l'autocomplétion choisit la suggestion surlignée, ou appelle jouer()
+        // la touche Entrée dans le champ : l'autocomplétion choisit la suggestion surlignée, ou appelle jouer() (et
+        // rouvre ses suggestions si la saisie est refusée)
         new Autocompletion(saisie, this::suggestions, this::jouer);
         // au lancement, la partie du jour
         jouerDuJour();
@@ -507,34 +508,45 @@ class Fenetre {
         saisie.requestFocusInWindow();
     }
 
-    // Valider, ou Entrée dans le champ de saisie : une proposition de région, ou une réponse du bonus
-    private void jouer() {
+    // Valider, ou Entrée dans le champ de saisie : une proposition de région, ou une réponse du bonus. Vrai si la
+    // saisie a été acceptée (un essai, une réponse du bonus), faux si elle a été refusée ou s'il n'y avait rien à jouer
+    private boolean jouer() {
+        String texte = saisie.getText();
+        // un champ vide (ou fait d'espaces) : rien ne se passe, sans message, dans la partie comme dans le bonus.
+        // Un Entrée de trop n'est pas une erreur à reprocher au joueur
+        if (texte.isBlank()) {
+            return false;
+        }
         if (dansLeBonus) {
             // une fois le bonus fini, ou en mode C avant d'avoir choisi un département, il n'y a rien à valider
             if (!bonus.enCours()) {
-                return;
+                return false;
             }
             if (bonus.getQuestion() == Bonus.Question.CHOIX) {
-                carte.getChoisi().ifPresent(choisi -> repondre(bonus.repondre(choisi, saisie.getText())));
-            } else {
-                repondre(bonus.repondre(saisie.getText()));
+                return carte.getChoisi().map(choisi -> repondre(bonus.repondre(choisi, texte))).orElse(false);
             }
-            return;
+            return repondre(bonus.repondre(texte));
         }
-        // un switch sur les trois réponses possibles : Reponse est « sealed », le compilateur vérifie qu'aucune
-        // n'est oubliée. « case Reponse.DejaProposee(RegionFr region) » teste le type ET sort le champ du record
-        switch (partie.proposer(saisie.getText())) {
-            case Reponse.Inconnue() -> refuser(textes.nonReconnue(saisie.getText()));
-            case Reponse.Plusieurs() -> refuser(textes.texte("plusieurs", saisie.getText().strip()));
+        // un switch sur les réponses possibles : Reponse est « sealed », le compilateur vérifie qu'aucune n'est
+        // oubliée. « case Reponse.DejaProposee(RegionFr region) » teste le type ET sort le champ du record.
+        // Un switch « expression » (return switch) : chaque cas donne une valeur ; au bout d'un bloc, c'est « yield »
+        return switch (partie.proposer(texte)) {
+            case Reponse.Inconnue() -> refuser(textes.nonReconnue(texte));
+            case Reponse.Plusieurs() -> refuser(textes.texte("plusieurs", texte.strip()));
             case Reponse.DejaProposee(RegionFr region) -> refuser(textes.dejaProposee(region));
-            case Reponse.Jouee jouee -> essaiJoue();
-        }
+            case Reponse.Jouee jouee -> {
+                essaiJoue();
+                yield true;
+            }
+        };
     }
 
-    // une saisie refusée ne coûte pas d'essai : on la laisse dans le champ, sélectionnée, pour la corriger
-    private void refuser(String explication) {
+    // une saisie refusée ne coûte pas d'essai : on la laisse dans le champ, sélectionnée, pour la corriger.
+    // Renvoie toujours faux (la saisie n'est pas acceptée) : « return refuser(...) » se lit d'un trait
+    private boolean refuser(String explication) {
         message.setText(explication);
         saisie.selectAll();
+        return false;
     }
 
     private void essaiJoue() {
@@ -906,8 +918,9 @@ class Fenetre {
         }
     }
 
-    private void repondre(ReponseBonus reponse) {
-        switch (reponse) {
+    // vrai si la réponse a compté (juste ou fausse), faux si elle a été refusée
+    private boolean repondre(ReponseBonus reponse) {
+        return switch (reponse) {
             case ReponseBonus.Inconnue() -> refuser(textes.bonusInconnu(bonus, saisie.getText()));
             case ReponseBonus.Plusieurs() -> refuser(textes.texte("bonus.plusieurs", saisie.getText().strip()));
             case ReponseBonus.DejaTrouve(Departement departement) ->
@@ -928,8 +941,9 @@ class Fenetre {
                 if (!bonus.enCours()) {
                     avantResultats.restart();
                 }
+                yield true;
             }
-        }
+        };
     }
 
     // le bouton « Passer » : le bonus s'arrête là, et les résultats s'ouvrent. S'il n'a pas commencé, on revient à la

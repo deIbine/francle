@@ -11,6 +11,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import javax.swing.AbstractAction;
 import javax.swing.DefaultListCellRenderer;
@@ -30,7 +31,8 @@ import javax.swing.event.DocumentListener;
 /*
 L'autocomplétion, faite maison : sous le champ de saisie, une liste de suggestions mise à jour à chaque lettre.
   ↓ et ↑   parcourent la liste
-  Entrée   choisit la suggestion surlignée ; sans suggestion surlignée, valide ce qui est écrit
+  Entrée   choisit la suggestion surlignée ; sans suggestion surlignée, valide ce qui est écrit (et, si la saisie
+           est refusée, rouvre la liste sur ce qu'elle évoque)
   Échap    ferme la liste
   un clic  choisit une suggestion
 
@@ -39,7 +41,7 @@ Ce n'est ni une fenêtre ni un JPopupMenu : un composant léger qui ne prend jam
 champ garde le clavier pendant qu'on tape.
 
 Cette classe ne connaît ni les régions ni le jeu : la fenêtre lui fournit la fonction qui calcule les suggestions
-(source) et l'action à lancer quand on valide.
+(source) et l'action à lancer quand on valide, qui dit si la saisie a été acceptée.
  */
 class Autocompletion {
 
@@ -47,13 +49,14 @@ class Autocompletion {
 
     private final JTextField champ;
     private final Function<String, List<String>> source;
-    private final Runnable valider;
+    // valide ce qui est écrit, et dit si la saisie a été acceptée (vrai) ou refusée (faux)
+    private final BooleanSupplier valider;
 
     private final DefaultListModel<String> modele = new DefaultListModel<>();
     private final JList<String> liste = new JList<>(modele);
     private final JScrollPane cadre = new JScrollPane(liste);
 
-    Autocompletion(JTextField champ, Function<String, List<String>> source, Runnable valider) {
+    Autocompletion(JTextField champ, Function<String, List<String>> source, BooleanSupplier valider) {
         this.champ = champ;
         this.source = source;
         this.valider = valider;
@@ -137,7 +140,12 @@ class Autocompletion {
             choisir(choisie);
         } else {
             fermer();
-            valider.run();
+            // une saisie refusée reste dans le champ : la liste se rouvre sur ce qu'elle évoque (« nor » -> trois
+            // régions), sinon « choisissez dans la liste » renverrait à une liste fermée. Sans ligne surlignée
+            // (mettreAJour l'efface) : deux Entrée de suite ne jouent pas une région au hasard
+            if (!valider.getAsBoolean()) {
+                mettreAJour();
+            }
         }
     }
 
