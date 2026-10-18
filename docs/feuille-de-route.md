@@ -20,6 +20,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 8 | Reprendre les nouveautés de la version web | ✅ Fait (PR #32) |
 | 9 | Le bonus des départements | ✅ Fait (PR #34) |
 | 10 | Le bonus revu : dès la victoire, et le mode C | ✅ Fait (PR #36 à #38) |
+| 11 | Les corrections relevées en jouant (avec la version web) | À faire : découpage et décisions à valider |
 
 ---
 
@@ -714,4 +715,53 @@ d'abord (étapes web.7.5 à web.7.7, plan dans `docs/plan.md` de
 résultats »), lire deux formats et n'en écrire qu'un, laisser le compilateur montrer les `switch` à compléter,
 rendre un composant dessiné à la main utilisable au clavier (`InputMap`, `ActionMap`, focus), et garder un jeu
 jouable entre deux commits.
+
+---
+
+## Phase 11 : les corrections relevées en jouant (à faire)
+
+**Pourquoi.** Le 18 octobre 2026, la version web a été testée de bout en bout (tests, jeu dans le navigateur, sur
+ordinateur et à la taille d'un téléphone). Chaque problème trouvé a été comparé au Java, en lisant son code et en
+exécutant ses règles dans `jshell` (`jshell --class-path "target/classes:<jars Jackson>"`, puis
+`new Partie(...).proposer("")`). Ceux qui suivent existent **aussi dans le Java**. La liste complète, avec ceux
+propres au web, est dans `docs/plan.md` de [deIbine/francle-web](https://github.com/deIbine/francle-web), section
+« Les corrections relevées le 18 octobre 2026 ».
+
+**Rien n'est décidé ni commencé** : découpage et décisions à valider d'abord, de préférence les mêmes que le web
+(règles communes, textes équivalents). Les numéros sont ceux de la liste du web.
+
+**Les bugs :**
+
+- **(1) « Choisissez dans la liste », mais la liste est fermée.** En partie libre, anciennes régions, taper « nor »
+  puis Entrée : le message dit de choisir dans la liste, qui vient de se fermer (il faut retaper une lettre). Même
+  chose dans le bonus avec « corse ». Cause : `Autocompletion.entree()` appelle `fermer()` avant `valider.run()`,
+  que la saisie soit acceptée ou non. Piste : garder (ou rouvrir) la liste quand la réponse est `Plusieurs`.
+- **(4) Une saisie vide est « une région non reconnue ».** Valider un champ vide affiche « «  » n'est pas une région
+  reconnue : réessayez. », avec des guillemets vides (`proposer("")` renvoie `Inconnue`). Piste : ne rien faire, ou
+  un message « Écrivez le nom d'une région ».
+
+**Les améliorations :**
+
+- **(5) Une ancienne région en partie du jour.** « Alsace » répond « n'est pas une région reconnue » alors qu'elle
+  existe (`proposer("Alsace")` renvoie `Inconnue`, car `ModeRegions.contient` l'écarte). Piste : « L'Alsace est une
+  ancienne région, aujourd'hui dans le Grand Est », sans coûter d'essai (une nouvelle `Reponse`, par exemple
+  `AutreEpoque`). Et l'inverse en partie libre, anciennes régions.
+- **(6) Les indices restent cachés à la fin.** Une partie gagnée au 2e essai ne montre que la superficie
+  (`indicesReveles()` vérifié dans `jshell`) : la capitale et le monument ne se voient jamais. Piste : tout révéler
+  une fois la partie finie, pour apprendre.
+- **(7) La question du numéro, en outre-mer.** « Bonus · Quel est le numéro de : La Réunion ? » : les deux-points
+  sont maladroits (`bonus.numero` dans les textes). Piste : « Quel est le numéro de La Réunion ? », ce qui demande
+  l'article de chacun des cinq départements d'outre-mer (« de la Guadeloupe », « de la Guyane », « de Mayotte »…) :
+  sans doute la raison des deux-points. Le focus, lui, va déjà dans la
+  saisie : rien à changer ici (le web, lui, doit le corriger).
+- **(8) Les numéros dans les suggestions de départements.** « corse » propose « Corse-du-Sud, Haute-Corse », sans
+  2A ni 2B (`Departement::nom` dans `Fenetre.suggestions`). Piste : « Finistère (29) », pour apprendre les numéros en
+  passant ; la saisie doit alors accepter la suggestion choisie avec son numéro.
+- **(12) La carte de fin.** Elle ne colore que la réponse (des images toutes faites, `Representation.carte`).
+  Piste, déjà notée côté web : montrer aussi les régions proposées ; demande de dessiner la carte (comme le web avec
+  ses contours), donc une étape plus longue.
+
+**Ce qui ne concerne pas le Java** (vérifié) : le pourcentage des statistiques (le Java passe déjà par
+`textes.pourcentage`), la réponse lisible dans le nom de l'image (propre au navigateur), l'affichage sur téléphone et
+le « survol » au doigt, et le score du bonus dans les résultats d'une partie libre (`messageDeFin()` l'ajoute déjà).
 
