@@ -210,6 +210,9 @@ class BonusTest {
                 bonus.repondre(departement("29"), "fin"));
         assertTrue(bonus.repondre(departement("35"), "ille et vilaine") instanceof ReponseBonus.Jouee jouee
                 && jouee.tentative().juste());
+        // la suggestion choisie, avec son numéro (« Morbihan (56) »), répond bien avec ce département
+        assertTrue(bonus.repondre(departement("56"), "Morbihan (56)") instanceof ReponseBonus.Jouee jouee
+                && jouee.tentative().juste());
     }
 
     @Test

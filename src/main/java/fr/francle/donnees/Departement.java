@@ -27,14 +27,26 @@ public record Departement(String code, String nom) {
         return Decoupage.parCode(code);
     }
 
-    // le département que le joueur a voulu dire, par son nom (« finistere ») ou son numéro (« 29 », « 2a », « 1 »)
+    // le département que le joueur a voulu dire, par son nom (« finistere »), son numéro (« 29 », « 2a », « 1 »), ou
+    // les deux, comme dans les suggestions (« Finistère (29) »)
     public static Optional<Departement> chercher(String saisie) {
         Optional<Departement> parNumero = parCode(numero(saisie));
         if (parNumero.isPresent()) {
             return parNumero;
         }
+        // simplifier enlève les parenthèses et garde les chiffres : « Finistère (29) » -> « finistere29 ». Un nom et
+        // un numéro qui ne vont pas ensemble (« Finistère (22) ») ne reconnaissent rien
         String cle = RegionFr.simplifier(saisie);
-        return tous().stream().filter(departement -> RegionFr.simplifier(departement.nom).equals(cle)).findFirst();
+        return tous().stream()
+                .filter(departement -> RegionFr.simplifier(departement.nom).equals(cle)
+                        || RegionFr.simplifier(departement.nomEtNumero()).equals(cle))
+                .findFirst();
+    }
+
+    // « Finistère (29) », « Corse-du-Sud (2A) » : le nom et le numéro, tels que les montrent les suggestions du bonus
+    // (pour apprendre les numéros en passant)
+    public String nomEtNumero() {
+        return nom + " (" + code + ")";
     }
 
     // la saisie écrite comme un numéro de département : « 2a » -> « 2A », « 1 » -> « 01 » (les numéros à un chiffre

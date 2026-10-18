@@ -210,7 +210,9 @@ final class Textes {
             case NOM -> texte("bonus.nom", bonus.rang(), bonus.total());
             // pas de question imposée : c'est au joueur de choisir un département, puis de le nommer
             case CHOIX -> texte(choisi ? "bonus.nom" : "bonus.choix", bonus.rang(), bonus.total());
-            case NUMERO -> texte("bonus.numero", bonus.demande().nom());
+            // une phrase par département d'outre-mer, pour son article : « de la Guadeloupe », « de La Réunion »,
+            // « de Mayotte »… Les seuls départements à avoir une question à eux (une région d'un seul département)
+            case NUMERO -> texte("bonus.numero." + bonus.demande().code());
         };
     }
 

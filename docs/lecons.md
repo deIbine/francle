@@ -1903,6 +1903,106 @@ transparentes, sinon la silhouette paraîtrait plus petite qu'à l'endroit une f
   anglais, partie libre, fin du bonus. Pas vus en image : le focus entouré (il faut une fenêtre affichée) et les
   boîtes de dialogue des résultats.
 
+## Phase 11 : les corrections relevées en jouant
+
+### Une action qui répond
+
+- **Pourquoi** : en anciennes régions, « nor » puis Entrée disait « choisissez dans la liste »… que l'autocomplétion
+  venait de fermer. Elle fermait sa liste **avant** de valider, sans savoir si la saisie serait acceptée : elle recevait
+  un `Runnable`, une action qui ne répond rien.
+- **Comment le faire** : remplacer le `Runnable` par un `BooleanSupplier` (`java.util.function`) : une action qui
+  renvoie vrai ou faux. `Fenetre.jouer()` renvoie vrai si la saisie a compté ; `refuser(...)` renvoie toujours faux, ce
+  qui permet d'écrire `return refuser(...)`. Refusée, l'autocomplétion appelle `mettreAJour()`, qui rouvre la liste sur
+  ce que la saisie évoque, **sans ligne surlignée** : un second Entrée ne joue pas une région au hasard. Le test simule
+  les deux réponses avec un simple champ `acceptee`.
+- **Comment le penser** : un composant réutilisable (l'autocomplétion ne connaît ni les régions ni le bonus) a parfois
+  besoin d'un **résultat** de celui qui l'utilise. On ne lui apprend pas les règles du jeu : on lui fait dire ce qu'il
+  lui faut savoir, ici un seul booléen. Choisir l'interface fonctionnelle la plus petite qui porte l'information.
+
+### Ne rien faire est aussi une décision
+
+- **Pourquoi** : valider un champ vide affichait « «  » n'est pas une région reconnue », avec des guillemets vides.
+- **Comment le faire** : deux lignes au début de `Fenetre.jouer()` : `if (texte.isBlank()) return false;`. Un seul
+  endroit couvre la partie, le bonus, le bouton Valider et la touche Entrée.
+- **Comment le penser** : chercher l'endroit par où **tout** passe, plutôt que de corriger chaque message. Et un Entrée
+  de trop n'est pas une faute à reprocher au joueur : le silence est la bonne réponse.
+
+### Déduire une donnée plutôt que la recopier
+
+- **Pourquoi** : pour dire « Alsace : une ancienne région, aujourd'hui dans la région Grand Est », il faut savoir quelle
+  nouvelle région contient l'Alsace. On aurait pu l'écrire dans l'`enum` (un champ de plus, 22 fois).
+- **Comment le faire** : `RegionFr.autreEpoque()` le **déduit** des départements, déjà connus pour le bonus : deux
+  régions d'époques différentes qui ont un département en commun. Un test paramétré (`@EnumSource(RegionFr.class)`)
+  vérifie l'invariant sur toutes les régions : chaque ancienne est dans une seule nouvelle, et le lien va dans les deux
+  sens.
+- **Comment le penser** : une information écrite deux fois finit par se contredire. Quand une donnée découle d'une autre,
+  la calculer ; et écrire en test la règle qui la rend juste (« en 2016, aucun département n'a changé de région »).
+
+### L'ordre des règles compte
+
+- **Pourquoi** : en nouvelles régions, « Bourgogne » n'évoque qu'une suggestion, Bourgogne-Franche-Comté, qui était
+  donc jouée : un essai que le joueur n'avait pas voulu.
+- **Comment le faire** : dans `Partie.proposer`, chercher le **nom exact** d'une région de l'autre époque **avant** les
+  suggestions. La nouvelle réponse `Reponse.AutreEpoque` est refusée sans coûter d'essai. L'interface étant scellée, le
+  compilateur a montré le seul `switch` à compléter (`Fenetre.jouer`).
+- **Comment le penser** : quand plusieurs règles peuvent s'appliquer à une même saisie, la plus précise passe en
+  premier. Écrire un test pour chaque cas où deux règles se croisent (`autreEpoqueAvantSuggestions`).
+
+### La grammaire dans les fichiers de textes
+
+- **Pourquoi** : « Quel est le numéro de : La Réunion ? » : les deux-points évitaient de choisir entre « de la
+  Guadeloupe », « de La Réunion » et « de Mayotte ». Et « A, B et C » s'écrit « A, B and C » en anglais.
+- **Comment le faire** : une phrase entière par département d'outre-mer (`bonus.numero.971`…), et une clé
+  `enumeration = %s et %s` qui joint le dernier nom. Le code ne fait que choisir la clé ; un test vérifie que chaque
+  région d'un seul département a sa phrase dans les deux langues.
+- **Comment le penser** : les articles, les accords, les pluriels sont propres à chaque langue. Les laisser au traducteur
+  (le fichier de textes) plutôt qu'au code, même si cela fait quelques lignes de plus.
+
+### Un message sur deux lignes
+
+- **Pourquoi** : « Grand Est : une région d'après 2016, qui regroupe Alsace, Champagne-Ardenne et Lorraine. » était
+  coupé par « … » : un `JLabel` n'écrit qu'une ligne. Vu seulement **en image**, à la vraie largeur de la fenêtre.
+- **Comment le faire** : une petite classe `Message extends JLabel` habille le texte en HTML (que Swing sait couper),
+  centré par `text-align`, et **échappe** `<`, `>` et `&` (une saisie du joueur n'est pas du HTML). Le JLabel calcule sa
+  hauteur pour une seule ligne : `getPreferredSize` demande à la « vue » HTML (`BasicHTML.propertyKey`) sa hauteur à la
+  largeur réelle (`vue.setSize(largeur, 0)`, puis `getPreferredSpan(View.Y_AXIS)`).
+- **Comment le penser** : un texte plus long arrive toujours un jour (une autre langue, un nom composé). Prévoir qu'il
+  passe à la ligne plutôt que de raccourcir la phrase. Et toute donnée venue de l'utilisateur, insérée dans un format
+  (HTML, SQL, JSON), doit être échappée.
+
+### Ce qu'on montre doit pouvoir être relu
+
+- **Pourquoi** : les suggestions du bonus montrent maintenant « Finistère (29) », pour apprendre les numéros en
+  passant. Mais choisir une suggestion écrit ce texte dans la saisie : il doit être une réponse acceptée.
+- **Comment le faire** : `Departement.nomEtNumero()` fabrique le texte, et `Departement.chercher` le reconnaît
+  (`simplifier` enlève les parenthèses et garde les chiffres : « finistere29 »). Un test fait l'**aller-retour** pour
+  les 101 départements : `chercher(d.nomEtNumero())` redonne `d`. Un nom et un numéro qui ne vont pas ensemble
+  (« Finistère (22) ») ne reconnaissent rien.
+- **Comment le penser** : quand un même texte est écrit par le programme et relu par lui, tester l'aller-retour sur
+  toutes les valeurs, pas sur un exemple.
+
+### Un test qui échoue au hasard
+
+- **Pourquoi** : deux fois, un test qui se servait d'un dossier temporaire (`@TempDir`) a échoué sur « Failed to delete
+  temp directory », puis est passé à la relance. Rien dans le code testé : sous Windows, un fichier encore ouvert (par
+  l'antivirus, l'indexation) ne peut pas être supprimé.
+- **Comment le faire** : relancer, lire le message jusqu'au bout (`DirectoryNotEmptyException` : c'est le nettoyage
+  qui échoue, pas une assertion), et noter le cas. S'il revenait souvent, JUnit sait régler le nettoyage de ses dossiers
+  temporaires (l'attribut `cleanup` de `@TempDir`) : à regarder à ce moment-là.
+- **Comment le penser** : distinguer un test **rouge** (le code est faux) d'un test **instable** (l'environnement
+  hésite). Les deux se traitent, mais pas de la même façon.
+
+## Bilan de la Phase 11
+
+- **Trois PR empilées**, comme le web, les mêmes jours : 11.1 les bugs (liste rouverte, saisie vide), 11.2 la saisie et
+  la fin de partie (autre époque, tous les indices, message sur deux lignes), 11.3 le bonus (question d'outre-mer,
+  numéros dans les suggestions).
+- **403 tests** (318 avant) : la plupart sont des tests paramétrés sur toutes les régions (le lien entre les époques, la
+  question du numéro) et l'aller-retour des 101 départements.
+- **Vérifié en image** : le message de « Grand Est » sur deux lignes, la liste rouverte après « nor », les indices
+  après une victoire au premier essai, les suggestions « Corse-du-Sud (2A) », la question de La Réunion.
+- Le point 12 (la carte de fin, avec les régions proposées) reste pour plus tard.
+
 ---
 
 ## Aide-mémoire

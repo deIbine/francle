@@ -20,7 +20,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 8 | Reprendre les nouveautés de la version web | ✅ Fait (PR #32) |
 | 9 | Le bonus des départements | ✅ Fait (PR #34) |
 | 10 | Le bonus revu : dès la victoire, et le mode C | ✅ Fait (PR #36 à #38) |
-| 11 | Les corrections relevées en jouant (avec la version web) | Décidée (18 octobre 2026), à faire en même temps que le web |
+| 11 | Les corrections relevées en jouant (avec la version web) | ✅ Fait (PR #40 à #42) |
 
 ---
 
@@ -718,7 +718,23 @@ jouable entre deux commits.
 
 ---
 
-## Phase 11 : les corrections relevées en jouant (décidée, à faire)
+## Phase 11 : les corrections relevées en jouant ✅
+
+**Faite le 18 octobre 2026**, en trois PR empilées : deIbine/francle#40 (11.1), #41 (11.2), #42 (11.3). Ce qui a été
+fait, en plus des décisions plus bas :
+
+- **11.1** : l'autocomplétion reçoit une action qui dit si la saisie est acceptée (`BooleanSupplier`) ; refusée, la
+  liste se rouvre. Un champ vide ne fait rien (`Fenetre.jouer()`).
+- **11.2** : `Reponse.AutreEpoque`, cherchée **avant** les suggestions (sinon « Bourgogne » jouait
+  Bourgogne-Franche-Comté) ; `RegionFr.autreEpoque()` déduit le lien des départements ; le Centre, seulement renommé,
+  a sa phrase (« aujourd'hui appelée Centre-Val de Loire ») ; tous les indices une fois la partie finie, dès la fin
+  (abandon compris), et l'aide le dit. Le message de « Grand Est » était coupé : une classe `Message` le passe sur
+  deux lignes quand il le faut.
+- **11.3** : une phrase par département d'outre-mer (`bonus.numero.971`…) ; `Departement.nomEtNumero()` dans les
+  suggestions, relu par `Departement.chercher`.
+
+Les leçons sont dans [lecons.md](lecons.md#phase-11--les-corrections-relevées-en-jouant). Le point 12 (la carte de
+fin) reste à faire.
 
 **Pourquoi.** Le 18 octobre 2026, la version web a été testée de bout en bout (tests, jeu dans le navigateur, sur
 ordinateur et à la taille d'un téléphone). Chaque problème trouvé a été comparé au Java, en lisant son code et en

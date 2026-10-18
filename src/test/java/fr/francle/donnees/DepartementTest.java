@@ -79,6 +79,10 @@ class DepartementTest {
             "01             | 01",
             "971            | 971",
             "territoire de belfort | 90",
+            "Finistère (29) | 29",
+            "Corse-du-Sud (2A) | 2A",
+            "corse du sud 2a | 2A",
+            "La Réunion (974) | 974",
     })
     @DisplayName("chercher reconnaît un département par son nom ou son numéro")
     void chercher(String saisie, String code) {
@@ -87,7 +91,7 @@ class DepartementTest {
     }
 
     @ParameterizedTest(name = "« {0} »")
-    @CsvSource({"Bretagne", "0", "20", "975", "''", "Paris 2"})
+    @CsvSource({"Bretagne", "0", "20", "975", "''", "Paris 2", "Finistère (22)"})
     @DisplayName("chercher ne reconnaît ni une région, ni un numéro qui n'existe pas")
     void inconnu(String saisie) {
         assertEquals(Optional.empty(), Departement.chercher(saisie));
@@ -104,6 +108,16 @@ class DepartementTest {
         // seulement parmi les départements donnés : la Charente-Maritime n'est pas en Bretagne
         assertEquals(List.of("Côtes-d'Armor"), noms(Departement.suggestions("c", bretagne, Langue.FR)));
         assertEquals(List.of(), Departement.suggestions("", bretagne, Langue.FR));
+    }
+
+    @Test
+    @DisplayName("Le nom et le numéro, comme dans les suggestions du bonus : « Finistère (29) »")
+    void nomEtNumero() {
+        assertEquals("Finistère (29)", Departement.parCode("29").orElseThrow().nomEtNumero());
+        assertEquals("Corse-du-Sud (2A)", Departement.parCode("2A").orElseThrow().nomEtNumero());
+        // chaque suggestion se relit comme son département
+        Departement.tous().forEach(departement ->
+                assertEquals(Optional.of(departement), Departement.chercher(departement.nomEtNumero())));
     }
 
     private static List<String> noms(List<Departement> departements) {
