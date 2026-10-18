@@ -119,6 +119,7 @@ et ce qu'elle a permis d'apprendre dans [docs/lecons.md](docs/lecons.md).
 - [x] **Phase 8** : reprendre les nouveautés de la version web (6 essais, monument, doublons, anglais)
 - [x] **Phase 9** : le bonus des départements (carte cliquable, zoom sur Paris, score moyen)
 - [x] **Phase 10** : le bonus revu, repris du web (dès la victoire ; choisir un département, puis le nommer)
+- [x] **Phase 11** : les corrections relevées en jouant (autre époque expliquée, indices montrés en fin de partie…)
 
 ## Historique
 

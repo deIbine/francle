@@ -584,13 +584,15 @@ class Fenetre {
         }
         if (dansLeBonus) {
             // mode C : parmi les 101 départements (limitées à la région, les suggestions donneraient la réponse) ;
-            // mode B : les départements de la région ; pour un numéro, rien à suggérer
+            // mode B : les départements de la région ; pour un numéro, rien à suggérer. Chacun avec son numéro
+            // (« Finistère (29) »), que la réponse accepte (Departement.chercher)
             List<Departement> parmi = switch (bonus.getQuestion()) {
                 case CHOIX -> Departement.tous();
                 case NOM -> bonus.getRegion().getDepartements();
                 case CARTE, NUMERO -> List.of();
             };
-            return Departement.suggestions(debut, parmi, textes.getLangue()).stream().map(Departement::nom).toList();
+            return Departement.suggestions(debut, parmi, textes.getLangue()).stream()
+                    .map(Departement::nomEtNumero).toList();
         }
         return RegionFr.suggestions(debut, partie.getMode(), textes.getLangue()).stream().map(textes::nom).toList();
     }

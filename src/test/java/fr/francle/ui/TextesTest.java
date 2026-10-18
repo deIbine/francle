@@ -11,6 +11,8 @@ import fr.francle.jeu.Tentative;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -37,6 +39,17 @@ class TextesTest {
                 cles.filter(cle -> !cle.endsWith("."))
                         .forEach(cle -> assertTrue(FR.cles().contains(cle), cle + " (" + fichier.getFileName() + ")"));
             }
+        }
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @EnumSource(RegionFr.class)
+    @DisplayName("Chaque région d'un seul département a sa question du numéro, dans les deux langues")
+    void questionNumero(RegionFr region) {
+        Bonus bonus = Bonus.duJour(region, LocalDate.of(2030, 3, 10));
+        if (bonus.getQuestion() == Bonus.Question.NUMERO) {
+            assertFalse(FR.questionBonus(bonus, false).isBlank());
+            assertFalse(EN.questionBonus(bonus, false).isBlank());
         }
     }
 
@@ -68,7 +81,10 @@ class TextesTest {
         assertEquals("Raté : c'était 2B · Haute-Corse.", FR.reponseBonus(choix, choix.getTentatives().get(0)));
 
         Bonus guyane = Bonus.duJour(RegionFr.GUYANE, LocalDate.of(2030, 3, 10));
-        assertEquals("Bonus · Quel est le numéro de : Guyane ?", FR.questionBonus(guyane, false));
+        assertEquals("Bonus · Quel est le numéro de la Guyane ?", FR.questionBonus(guyane, false));
+        assertEquals("Bonus · What is the number of French Guiana?", EN.questionBonus(guyane, false));
+        assertEquals("Bonus · Quel est le numéro de La Réunion ?",
+                FR.questionBonus(Bonus.duJour(RegionFr.LA_REUNION, LocalDate.of(2030, 3, 10)), false));
         guyane.repondre("973");
         assertEquals("Bonus : bravo, c'est bien le 973 !", FR.finBonus(guyane));
     }
