@@ -7,7 +7,8 @@ After each guess, the table shows:
 {exemple}
 
 Each wrong guess reveals a clue: the area, a food specialty,
-a famous person, the regional capital, then a landmark.
+a famous person, the regional capital, then a landmark. Once the game is
+over, all the clues are shown.
 Guessing the same region twice does not cost a guess.
 
 Daily game: the same region for everyone, one game per day,

@@ -3,11 +3,11 @@ package fr.francle.jeu;
 import fr.francle.donnees.RegionFr;
 
 /*
-Ce que la Partie répond à une saisie du joueur : exactement l'un de ces quatre cas.
+Ce que la Partie répond à une saisie du joueur : exactement l'un de ces cinq cas.
 
 « sealed » ferme la liste : aucune autre classe ne peut implémenter Reponse. Un switch sur une Reponse peut donc
-traiter les trois cas sans « default », et le compilateur refuse un switch qui en oublierait un (le jour où l'on
-ajouterait un quatrième cas, il montrerait tous les endroits à compléter).
+traiter tous les cas sans « default », et le compilateur refuse un switch qui en oublierait un (quand la phase 11 a
+ajouté AutreEpoque, il a montré tous les endroits à compléter).
  */
 public sealed interface Reponse {
 
@@ -21,6 +21,11 @@ public sealed interface Reponse {
     // Nord-Pas-de-Calais, Basse- et Haute-Normandie) : mieux vaut demander de choisir que d'en jouer une au hasard
     // et faire perdre un essai. Repris de la version web
     record Plusieurs() implements Reponse {}
+
+    // la saisie est le nom d'une région de l'autre époque (« Alsace » en nouvelles régions, « Grand Est » en
+    // anciennes) : elle existe, mais ne peut pas être la réponse. Refusée sans coûter d'essai, avec une explication
+    // (RegionFr.autreEpoque dit à quelles régions elle correspond). Repris de la version web
+    record AutreEpoque(RegionFr region) implements Reponse {}
 
     // la région a déjà été proposée dans cette partie : refusée, sans coûter d'essai (le joueur s'est sûrement
     // trompé, et elle ne lui apprendrait rien de plus)

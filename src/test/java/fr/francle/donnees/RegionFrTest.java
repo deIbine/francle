@@ -227,4 +227,30 @@ class RegionFrTest {
         // « co » : Corse / Corsica. En anglais, Corsica avant… rien d'autre ; en français, Corse seule aussi
         assertTrue(RegionFr.suggestions("co", ModeRegions.NOUVELLES, Langue.EN).contains(RegionFr.CORSE));
     }
+
+    @Test
+    @DisplayName("Le lien entre les époques, déduit des départements : Alsace → Grand Est, Grand Est → trois régions")
+    void autreEpoque() {
+        assertEquals(List.of(RegionFr.GRAND_EST), RegionFr.ALSACE.autreEpoque());
+        assertEquals(java.util.Set.of(RegionFr.ALSACE, RegionFr.CHAMPAGNE_ARDENNE, RegionFr.LORRAINE),
+                java.util.Set.copyOf(RegionFr.GRAND_EST.autreEpoque()));
+        assertEquals(List.of(RegionFr.CENTRE_VAL_DE_LOIRE), RegionFr.CENTRE.autreEpoque());
+        assertEquals(List.of(), RegionFr.BRETAGNE.autreEpoque());
+        assertEquals(List.of(), RegionFr.GUADELOUPE.autreEpoque());
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @EnumSource(RegionFr.class)
+    @DisplayName("Chaque ancienne région est dans une seule nouvelle, et chaque nouvelle regroupe des anciennes")
+    void autreEpoqueCoherente(RegionFr region) {
+        switch (region.getEpoque()) {
+            case ANCIENNE -> assertEquals(1, region.autreEpoque().size());
+            case NOUVELLE -> {
+                assertFalse(region.autreEpoque().isEmpty());
+                // et le lien va dans les deux sens
+                region.autreEpoque().forEach(ancienne -> assertEquals(List.of(region), ancienne.autreEpoque()));
+            }
+            case LES_DEUX -> assertTrue(region.autreEpoque().isEmpty());
+        }
+    }
 }

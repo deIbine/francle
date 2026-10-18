@@ -7,7 +7,8 @@ Après chaque essai, le tableau indique :
 {exemple}
 
 Chaque essai raté révèle un indice : la superficie, la spécialité culinaire,
-une personnalité, la capitale régionale, puis un monument.
+une personnalité, la capitale régionale, puis un monument. Une fois la partie
+finie, tous les indices sont montrés.
 Proposer deux fois la même région ne coûte pas d'essai.
 
 Partie du jour : la même région pour tout le monde, une seule partie par jour,

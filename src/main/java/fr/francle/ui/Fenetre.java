@@ -132,7 +132,7 @@ class Fenetre {
     // pendant le bonus de la partie du jour : les statistiques, sans quitter le bonus (comme « Voir les résultats »
     // dans la version web)
     private final JButton boutonResultats = new JButton(statistiques);
-    private final JLabel message = new JLabel(" ", SwingConstants.CENTER);
+    private final Message message = new Message();
     private final JTextArea indices = new JTextArea(Indice.values().length, 30);
 
     // l'horloge qui donne la date du jour. Un paramètre plutôt qu'un appel direct à LocalDate.now() : un test ou un
@@ -412,7 +412,6 @@ class Fenetre {
         ligneSaisie.add(saisie, BorderLayout.CENTER);
         ligneSaisie.add(boutons, BorderLayout.EAST);
 
-        message.setFont(message.getFont().deriveFont(Font.BOLD));
         JPanel haut = new JPanel(new BorderLayout(0, 6));
         haut.add(ligneSaisie, BorderLayout.CENTER);
         haut.add(message, BorderLayout.SOUTH);
@@ -533,6 +532,7 @@ class Fenetre {
         return switch (partie.proposer(texte)) {
             case Reponse.Inconnue() -> refuser(textes.nonReconnue(texte));
             case Reponse.Plusieurs() -> refuser(textes.texte("plusieurs", texte.strip()));
+            case Reponse.AutreEpoque(RegionFr region) -> refuser(textes.autreEpoque(region));
             case Reponse.DejaProposee(RegionFr region) -> refuser(textes.dejaProposee(region));
             case Reponse.Jouee jouee -> {
                 essaiJoue();
@@ -750,6 +750,8 @@ class Fenetre {
 
     private void terminer() {
         message.setText(messageDeFin());
+        // tous les indices, maintenant que la partie est finie (après un abandon aussi)
+        afficherIndices();
         activerSaisie(false);
         // la réponse sur la carte de France (métropole) ; pour l'outre-mer, on garde l'image affichée
         Representation.carte(partie.getCible(), partie.getMode()).ifPresent(this::montrer);

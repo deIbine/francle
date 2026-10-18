@@ -30,14 +30,21 @@ public class Partie {
         this.mode = mode;
     }
 
-    // joue la saisie du joueur et dit ce qui s'est passé : un essai joué, une saisie inconnue, ambiguë, ou une région
-    // déjà proposée. Seul le premier cas coûte un essai.
+    // joue la saisie du joueur et dit ce qui s'est passé : un essai joué, une saisie inconnue, ambiguë, une région de
+    // l'autre époque, ou une région déjà proposée. Seul le premier cas coûte un essai.
     // La saisie est le nom d'une région, ou, comme dans la version web, le début d'un nom qui n'en évoque qu'une
     // (« bret » + Entrée joue la Bretagne : c'est la seule suggestion)
     public Reponse proposer(String saisie) {
         verifierEnCours();
         Optional<RegionFr> trouvee = RegionFr.chercher(saisie, mode);
         if (trouvee.isEmpty()) {
+            // le nom exact d'une région, mais pas de ce mode : elle est de l'autre époque. On le dit, plutôt que
+            // « pas une région reconnue ». Et avant de chercher des suggestions : sinon « Bourgogne », en nouvelles
+            // régions, jouerait Bourgogne-Franche-Comté (sa seule suggestion), un essai que le joueur n'a pas voulu
+            Optional<RegionFr> autreEpoque = RegionFr.chercher(saisie);
+            if (autreEpoque.isPresent()) {
+                return new Reponse.AutreEpoque(autreEpoque.get());
+            }
             List<RegionFr> evoquees = RegionFr.suggestions(saisie, mode);
             if (evoquees.size() > 1) {
                 return new Reponse.Plusieurs();
@@ -74,8 +81,12 @@ public class Partie {
         }
     }
 
-    // les indices révélés jusqu'ici : un par essai raté, dans l'ordre (un essai gagnant n'en révèle pas)
+    // les indices révélés jusqu'ici : un par essai raté, dans l'ordre (un essai gagnant n'en révèle pas). Une fois la
+    // partie finie (gagnée, perdue ou abandonnée), tous : il n'y a plus rien à deviner, mais encore à apprendre
     public List<Indice> indicesReveles() {
+        if (!enCours()) {
+            return List.of(Indice.values());
+        }
         List<Indice> indices = new ArrayList<>();
         for (int i = 0; i < essais.size(); i++) {
             if (essais.get(i).proposition() != cible) {
