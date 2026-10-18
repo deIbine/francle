@@ -20,6 +20,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 8 | Reprendre les nouveautés de la version web | ✅ Fait (PR #32) |
 | 9 | Le bonus des départements | ✅ Fait (PR #34) |
 | 10 | Le bonus revu : dès la victoire, et le mode C | ✅ Fait (PR #36 à #38) |
+| 11 | Les corrections relevées en jouant (avec la version web) | Décidée (18 octobre 2026), à faire en même temps que le web |
 
 ---
 
@@ -714,4 +715,87 @@ d'abord (étapes web.7.5 à web.7.7, plan dans `docs/plan.md` de
 résultats »), lire deux formats et n'en écrire qu'un, laisser le compilateur montrer les `switch` à compléter,
 rendre un composant dessiné à la main utilisable au clavier (`InputMap`, `ActionMap`, focus), et garder un jeu
 jouable entre deux commits.
+
+---
+
+## Phase 11 : les corrections relevées en jouant (décidée, à faire)
+
+**Pourquoi.** Le 18 octobre 2026, la version web a été testée de bout en bout (tests, jeu dans le navigateur, sur
+ordinateur et à la taille d'un téléphone). Chaque problème trouvé a été comparé au Java, en lisant son code et en
+exécutant ses règles dans `jshell` (`jshell --class-path "target/classes:<jars Jackson>"`, puis
+`new Partie(...).proposer("")`). Ceux qui suivent existent **aussi dans le Java**. La liste complète, avec ceux
+propres au web, est dans `docs/plan.md` de [deIbine/francle-web](https://github.com/deIbine/francle-web), section
+« Les corrections relevées le 18 octobre 2026 ».
+
+**Découpée et décidée le 18 octobre 2026, pas commencée.** Les décisions sont **celles du web**, validées le même
+jour (section « Les décisions (validées le 18 octobre 2026) » du `docs/plan.md` du web), adaptées au Java plus bas.
+Le web et le Java se font **en même temps, dans deux conversations différentes** (décidé le 18 octobre 2026) : celle
+du Java part de cette phase, sans attendre le web. Les numéros entre parenthèses sont ceux de la liste du web.
+
+### Pour reprendre (conversation du Java)
+
+1. Vérifier que `main` est à jour (`git pull`) et que la PR de ce plan (phase 11, deIbine/francle#39) est fusionnée.
+2. Lire cette phase, puis `docs/lecons.md`. Les décisions ci-dessous sont **déjà validées** : ne pas les reposer,
+   seulement présenter le découpage à l'utilisateur et attendre son accord avant de coder.
+3. Une branche et une PR par étape (11.1, 11.2, 11.3), empilées, comme à la phase 10.
+
+### Le découpage (trois PR, comme le web)
+
+1. **11.1 Les bugs** (points 1 et 4) : `Autocompletion`, `Fenetre.jouer()`, `Partie.proposer()`, tests JUnit.
+2. **11.2 La saisie et la fin de partie** (points 5 et 6) : une nouvelle réponse `Reponse.AutreEpoque` (le
+   compilateur montrera les `switch` à compléter), le lien entre les époques déduit de `Decoupage` (les départements
+   de chaque région), `Partie.indicesReveles()` en fin de partie, textes FR et EN, tests.
+3. **11.3 Le bonus** (points 7 et 8) : `textes_*.properties` (`bonus.numero`), les suggestions de départements
+   avec leur numéro, et la saisie qui les accepte, tests.
+
+Le point 12 (carte de fin) est remis à plus tard, comme sur le web.
+
+### Les décisions (celles du web, adaptées au Java)
+
+| Point | Décision |
+|---|---|
+| (1) « Plusieurs » | La liste **reste ouverte** sur les régions (ou départements) évoquées, **sans ligne sélectionnée** : deux Entrée de suite ne jouent pas une région au hasard. Dans `Autocompletion.entree()`, ne fermer la liste que si la saisie est acceptée (ou la rouvrir quand la réponse est `Plusieurs`). |
+| (4) Saisie vide | **Rien ne se passe**, sans message (ni dans la partie, ni dans le bonus). |
+| (5) Autre époque | Refusée **sans coûter d'essai**, sans article, **au vouvoiement** si une phrase en demande : partie du jour, « Alsace : une ancienne région (avant 2016), aujourd'hui dans la région Grand Est. » ; partie libre, anciennes régions, « Grand Est : une région d'après 2016, qui regroupe Alsace, Champagne-Ardenne et Lorraine. » Lien entre les époques **déduit des départements**, sans nouvelle donnée. En anglais aussi. |
+| (6) Indices | **Tous montrés** une fois la partie finie (gagnée, perdue ou abandonnée), sans distinction. Le partage ne change pas. |
+| (7) Question d'outre-mer | « Bonus · Quel est le numéro de la Guadeloupe / de la Martinique / de la Guyane / de La Réunion / de Mayotte ? » (l'article des cinq départements d'outre-mer, dans les textes) ; en anglais « What is the number of Guadeloupe? ». Le **focus** va déjà dans la saisie : rien à changer. |
+| (8) Suggestions | **« Finistère (29) »** partout dans le bonus ; choisir une suggestion répond bien avec ce département. |
+| (12) Carte de fin | **Plus tard**, dans sa propre étape. |
+
+Ne concernent que le web : les points 2, 3, 9, 10 et 11 (voir plus bas), et la PR d'outillage des tests.
+
+**Les bugs :**
+
+- **(1) « Choisissez dans la liste », mais la liste est fermée.** En partie libre, anciennes régions, taper « nor »
+  puis Entrée : le message dit de choisir dans la liste, qui vient de se fermer (il faut retaper une lettre). Même
+  chose dans le bonus avec « corse ». Cause : `Autocompletion.entree()` appelle `fermer()` avant `valider.run()`,
+  que la saisie soit acceptée ou non. Piste : garder (ou rouvrir) la liste quand la réponse est `Plusieurs`.
+- **(4) Une saisie vide est « une région non reconnue ».** Valider un champ vide affiche « «  » n'est pas une région
+  reconnue : réessayez. », avec des guillemets vides (`proposer("")` renvoie `Inconnue`). Piste : ne rien faire, ou
+  un message « Écrivez le nom d'une région ».
+
+**Les améliorations :**
+
+- **(5) Une ancienne région en partie du jour.** « Alsace » répond « n'est pas une région reconnue » alors qu'elle
+  existe (`proposer("Alsace")` renvoie `Inconnue`, car `ModeRegions.contient` l'écarte). Piste : « L'Alsace est une
+  ancienne région, aujourd'hui dans le Grand Est », sans coûter d'essai (une nouvelle `Reponse`, par exemple
+  `AutreEpoque`). Et l'inverse en partie libre, anciennes régions.
+- **(6) Les indices restent cachés à la fin.** Une partie gagnée au 2e essai ne montre que la superficie
+  (`indicesReveles()` vérifié dans `jshell`) : la capitale et le monument ne se voient jamais. Piste : tout révéler
+  une fois la partie finie, pour apprendre.
+- **(7) La question du numéro, en outre-mer.** « Bonus · Quel est le numéro de : La Réunion ? » : les deux-points
+  sont maladroits (`bonus.numero` dans les textes). Piste : « Quel est le numéro de La Réunion ? », ce qui demande
+  l'article de chacun des cinq départements d'outre-mer (« de la Guadeloupe », « de la Guyane », « de Mayotte »…) :
+  sans doute la raison des deux-points. Le focus, lui, va déjà dans la saisie : rien à changer ici (le web, lui,
+  doit le corriger).
+- **(8) Les numéros dans les suggestions de départements.** « corse » propose « Corse-du-Sud, Haute-Corse », sans
+  2A ni 2B (`Departement::nom` dans `Fenetre.suggestions`). Piste : « Finistère (29) », pour apprendre les numéros en
+  passant ; la saisie doit alors accepter la suggestion choisie avec son numéro.
+- **(12) La carte de fin.** Elle ne colore que la réponse (des images toutes faites, `Representation.carte`).
+  Piste, déjà notée côté web : montrer aussi les régions proposées ; demande de dessiner la carte (comme le web avec
+  ses contours), donc une étape plus longue.
+
+**Ce qui ne concerne pas le Java** (vérifié) : le pourcentage des statistiques (le Java passe déjà par
+`textes.pourcentage`), la réponse lisible dans le nom de l'image (propre au navigateur), l'affichage sur téléphone et
+le « survol » au doigt, et le score du bonus dans les résultats d'une partie libre (`messageDeFin()` l'ajoute déjà).
 
