@@ -838,9 +838,13 @@ plus bas. Le web et le Java se font chacun dans sa conversation, sans s'attendre
    d'étiquette, ni supprimer de branche** (refusé par le serveur intermédiaire du cloud, erreur 403). Ce qui reste à
    faire dans ce dépôt est listé ici ; la liste complète, avec le web (à faire en premier), est dans la section
    « À faire sur le PC, avant toute chose » du `docs/plan.md` de
-   [deIbine/francle-web](https://github.com/deIbine/francle-web). Toutes les PR du cloud sont déjà fusionnées (#43,
-   #44, #45) ; seule #43 a une étiquette, les deux autres ne sont que des notes. Une fois fait, retirer ce point
-   (petite PR).
+   [deIbine/francle-web](https://github.com/deIbine/francle-web). Toutes les PR du cloud sont déjà fusionnées (#43
+   à #46) ; seule #43 a une étiquette, les autres ne sont que des notes. **L'utilisateur ne lance aucune commande**
+   (décidé le 19 octobre 2026) : c'est **Claude Code sur le PC** (avec `gh`, connecté au compte `deIbine`) qui lance
+   celles-ci, vérifie et explique ; le ménage est déjà autorisé, Claude l'annonce et le fait. En principe, la
+   conversation du web s'en charge en premier ; si ce n'est pas fait (`git tag` ne montre pas `phase-12.0`), la
+   conversation du Java le fait. Une fois fait, retirer ce point (petite PR, fusionnée avec l'accord de
+   l'utilisateur).
 
    ```bash
    git checkout main && git pull --prune
@@ -849,7 +853,7 @@ plus bas. Le web et le Java se font chacun dans sa conversation, sans s'attendre
    git push origin --delete ccr-8009fd8d-mbx5ca
    ```
 
-   Puis vérifier : `git tag` montre `phase-12.0`, `git branch -a` ne montre plus `ccr-8009fd8d-mbx5ca`, `git branch`
+   Puis Claude vérifie : `git tag` montre `phase-12.0`, `git branch -a` ne montre plus `ccr-8009fd8d-mbx5ca`, `git branch`
    ne montre plus que `main` (supprimer les branches locales fusionnées avec `git branch -D <nom>`), et `mvn test`
    passe. Chaque PR fusionnée depuis le cloud ajoute ses lignes ici.
 1. Vérifier que `main` est à jour (`git pull`) et que la PR de ce plan est fusionnée.
