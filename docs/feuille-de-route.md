@@ -820,7 +820,10 @@ le « survol » au doigt, et le score du bonus dans les résultats d'une partie 
 
 ## Phase 12 : la liste des départements
 
-**Décidée le 19 octobre 2026, pas commencée.** Le code attend l'accord de l'utilisateur.
+**Décidée le 19 octobre 2026, pas commencée** ; à faire **plus tard** (décidé le 19 octobre 2026), dans la
+conversation du Java. Le code attend l'accord de l'utilisateur. **Le web l'a déjà faite** le 19 octobre 2026
+(web.7.12, PR deIbine/francle-web#36) : son code et ses leçons (`docs/lecons.md` du web, section web.7.12) peuvent
+servir de modèle.
 
 **Pourquoi.** Idée de l'utilisateur, le 19 octobre 2026 : le bonus n'a pas de liste, contrairement à la partie (menu
 Jeu, « Liste des régions », Ctrl+L). Pendant le bonus, cette commande ouvrirait donc la **liste des départements**.
@@ -830,11 +833,14 @@ plus bas. Le web et le Java se font chacun dans sa conversation, sans s'attendre
 
 ### Pour reprendre (conversation du Java)
 
-0. **⚠️ Sur le PC, avant toute chose** : depuis le 19 octobre 2026, le travail se fait aussi dans le cloud (Claude
-   Code sur le web), qui peut fusionner les PR mais **ni poser d'étiquette, ni supprimer de branche** (refusé par le
-   serveur intermédiaire du cloud, erreur 403). Ce qui reste à faire est listé ici ; la liste complète, avec le web,
-   est dans la section « À faire sur le PC, avant toute chose » du `docs/plan.md` de
-   [deIbine/francle-web](https://github.com/deIbine/francle-web). Une fois fait, retirer ce point (petite PR).
+0. **⚠️ Sur le PC, avant toute chose** (retour prévu le **samedi 24 octobre 2026**) : depuis le 19 octobre 2026, le
+   travail se fait aussi dans le cloud (Claude Code sur le web), qui peut fusionner les PR mais **ni poser
+   d'étiquette, ni supprimer de branche** (refusé par le serveur intermédiaire du cloud, erreur 403). Ce qui reste à
+   faire dans ce dépôt est listé ici ; la liste complète, avec le web (à faire en premier), est dans la section
+   « À faire sur le PC, avant toute chose » du `docs/plan.md` de
+   [deIbine/francle-web](https://github.com/deIbine/francle-web). Toutes les PR du cloud sont déjà fusionnées (#43,
+   #44, #45) ; seule #43 a une étiquette, les deux autres ne sont que des notes. Une fois fait, retirer ce point
+   (petite PR).
 
    ```bash
    git checkout main && git pull --prune
@@ -843,8 +849,9 @@ plus bas. Le web et le Java se font chacun dans sa conversation, sans s'attendre
    git push origin --delete ccr-8009fd8d-mbx5ca
    ```
 
-   Puis `git branch` ne doit plus montrer que `main` (supprimer les branches locales fusionnées avec
-   `git branch -D <nom>`). Chaque PR fusionnée depuis le cloud ajoute ses lignes ici.
+   Puis vérifier : `git tag` montre `phase-12.0`, `git branch -a` ne montre plus `ccr-8009fd8d-mbx5ca`, `git branch`
+   ne montre plus que `main` (supprimer les branches locales fusionnées avec `git branch -D <nom>`), et `mvn test`
+   passe. Chaque PR fusionnée depuis le cloud ajoute ses lignes ici.
 1. Vérifier que `main` est à jour (`git pull`) et que la PR de ce plan est fusionnée.
 2. Lire cette phase, puis `docs/lecons.md`. Les décisions ci-dessous sont **déjà validées** : ne pas les reposer,
    seulement présenter le découpage (une seule PR, 12) et attendre l'accord de l'utilisateur avant de coder.
@@ -861,3 +868,17 @@ plus bas. Le web et le Java se font chacun dans sa conversation, sans s'attendre
 | Quand | Les départements **tant que le bonus est affiché**, même fini (tout grisé, avec « Le bonus est fini »). Les régions de nouveau quand la silhouette revient (bonus passé avant toute réponse, nouvelle partie). |
 | La commande | **La même** (menu Jeu, Ctrl+L), dont le nom change : « Liste des départements » pendant le bonus (`action.liste` et un nouveau texte). |
 | Réglage et aide | La case « Liste des régions » des paramètres (`parametre.liste`, `Reglages.avecListe`) vaut pour les deux listes, son texte le dit ; une phrase dans l'aide. En français et en anglais. |
+| Déjà répondus, précisé | (Décidé au découpage du web, le 19 octobre 2026.) Sont barrés **tous les départements dont la place sur la carte est déjà jouée, trouvés comme manqués** : les donner ailleurs ne peut être que faux (ou refusé, pour un département trouvé), et leur nom est déjà sur la carte. Seuls des départements de la région peuvent donc être barrés. |
+| Après un clic | (Idem.) La liste se ferme, la réponse est donnée, et le **focus revient là où il était** (sur le web, le bouton 📃 ; en Swing, la fenêtre principale, comme à la fermeture de la liste des régions). |
+
+**Ce que le web a fait, utile pour le Java** (PR deIbine/francle-web#36) :
+
+- Une fonction du domaine décide si le bonus a sa liste (`avecListe` : seulement le mode C, donc pas la question du
+  numéro), une autre donne les départements à barrer (`repondus`) : l'équivalent Java irait dans `Bonus`.
+- La fenêtre est gardée par le composant du bonus, qui connaît le département choisi ; la réponse passe par la même
+  méthode que la saisie (mêmes messages, même refus d'un département déjà trouvé).
+- Textes du web, à mettre au vouvoiement : « Liste des départements », « Cliquez d'abord sur un département de la
+  carte. », « Cliquez sur le nom du département choisi sur la carte. », « Le bonus est fini. », « déjà répondu ».
+- Le piège du web (un compteur de demandes partagé entre deux fenêtres) n'existe pas en Swing : l'action du menu
+  regarde l'état du jeu au moment du clic et ouvre la bonne liste. Il faut en revanche **renommer l'action** (et son
+  article de menu) quand le bonus commence et finit, comme le web change le nom du bouton.
