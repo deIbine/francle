@@ -21,6 +21,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 9 | Le bonus des départements | ✅ Fait (PR #34) |
 | 10 | Le bonus revu : dès la victoire, et le mode C | ✅ Fait (PR #36 à #38) |
 | 11 | Les corrections relevées en jouant (avec la version web) | ✅ Fait (PR #40 à #42) |
+| 12 | La liste des départements, pendant le bonus | Décidée le 19 octobre 2026, pas commencée |
 
 ---
 
@@ -815,3 +816,33 @@ Ne concernent que le web : les points 2, 3, 9, 10 et 11 (voir plus bas), et la P
 `textes.pourcentage`), la réponse lisible dans le nom de l'image (propre au navigateur), l'affichage sur téléphone et
 le « survol » au doigt, et le score du bonus dans les résultats d'une partie libre (`messageDeFin()` l'ajoute déjà).
 
+---
+
+## Phase 12 : la liste des départements
+
+**Décidée le 19 octobre 2026, pas commencée.** Le code attend l'accord de l'utilisateur.
+
+**Pourquoi.** Idée de l'utilisateur, le 19 octobre 2026 : le bonus n'a pas de liste, contrairement à la partie (menu
+Jeu, « Liste des régions », Ctrl+L). Pendant le bonus, cette commande ouvrirait donc la **liste des départements**.
+Les décisions ont été prises dans la conversation du web (section « La liste des départements (web.7.12) » du
+`docs/plan.md` de [deIbine/francle-web](https://github.com/deIbine/francle-web)), et valent pour le Java, adaptées
+plus bas. Le web et le Java se font chacun dans sa conversation, sans s'attendre.
+
+### Pour reprendre (conversation du Java)
+
+1. Vérifier que `main` est à jour (`git pull`) et que la PR de ce plan est fusionnée.
+2. Lire cette phase, puis `docs/lecons.md`. Les décisions ci-dessous sont **déjà validées** : ne pas les reposer,
+   seulement présenter le découpage (une seule PR, 12) et attendre l'accord de l'utilisateur avant de coder.
+
+### Les décisions (celles du web, adaptées au Java)
+
+| Sujet | Décision |
+|---|---|
+| Contenu | **Les 101 départements**, pas seulement ceux de la région (choix de l'utilisateur : « ça serait trop simple sinon ») : la liste limitée à la région donnerait toutes les réponses. L'**époque ne joue donc aucun rôle** : les départements sont les mêmes dans les deux. |
+| Affichage | **Nom et numéro** (« Finistère (29) », comme les suggestions, `Departement.nomEtNumero()`), **triés par nom** (`Collator` de la langue, comme la liste des régions). |
+| Un clic | Il **répond pour le département choisi** sur la carte, comme un clic dans la liste des régions propose la région. Tant qu'aucun département n'est choisi, les noms sont **grisés**, avec « Cliquez d'abord sur un département » (vouvoiement). |
+| Déjà répondus | **Barrés et grisés**, comme les régions déjà proposées, sans vert ni rouge (ils sont sur la carte). |
+| Outre-mer | La question y est le numéro : la liste, avec ses numéros, la donnerait. La commande reste donc **celle des régions** pendant un bonus d'outre-mer. |
+| Quand | Les départements **tant que le bonus est affiché**, même fini (tout grisé, avec « Le bonus est fini »). Les régions de nouveau quand la silhouette revient (bonus passé avant toute réponse, nouvelle partie). |
+| La commande | **La même** (menu Jeu, Ctrl+L), dont le nom change : « Liste des départements » pendant le bonus (`action.liste` et un nouveau texte). |
+| Réglage et aide | La case « Liste des régions » des paramètres (`parametre.liste`, `Reglages.avecListe`) vaut pour les deux listes, son texte le dit ; une phrase dans l'aide. En français et en anglais. |
