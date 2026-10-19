@@ -830,6 +830,21 @@ plus bas. Le web et le Java se font chacun dans sa conversation, sans s'attendre
 
 ### Pour reprendre (conversation du Java)
 
+0. **⚠️ Sur le PC, avant toute chose** : depuis le 19 octobre 2026, le travail se fait aussi dans le cloud (Claude
+   Code sur le web), qui peut fusionner les PR mais **ni poser d'étiquette, ni supprimer de branche** (refusé par le
+   serveur intermédiaire du cloud, erreur 403). Ce qui reste à faire est listé ici ; la liste complète, avec le web,
+   est dans la section « À faire sur le PC, avant toute chose » du `docs/plan.md` de
+   [deIbine/francle-web](https://github.com/deIbine/francle-web). Une fois fait, retirer ce point (petite PR).
+
+   ```bash
+   git checkout main && git pull --prune
+   git tag -a phase-12.0 -m "Phase 12.0 : décisions de la liste des départements" f16f013
+   git push origin phase-12.0
+   git push origin --delete ccr-8009fd8d-mbx5ca
+   ```
+
+   Puis `git branch` ne doit plus montrer que `main` (supprimer les branches locales fusionnées avec
+   `git branch -D <nom>`). Chaque PR fusionnée depuis le cloud ajoute ses lignes ici.
 1. Vérifier que `main` est à jour (`git pull`) et que la PR de ce plan est fusionnée.
 2. Lire cette phase, puis `docs/lecons.md`. Les décisions ci-dessous sont **déjà validées** : ne pas les reposer,
    seulement présenter le découpage (une seule PR, 12) et attendre l'accord de l'utilisateur avant de coder.
