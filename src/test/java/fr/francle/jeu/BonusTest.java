@@ -225,6 +225,31 @@ class BonusTest {
     }
 
     @Test
+    @DisplayName("La liste des départements : en mode C seulement, pas pour la question du numéro")
+    void avecListe() {
+        assertTrue(bretagne(Bonus.Question.CHOIX).avecListe());
+        assertFalse(bretagne(Bonus.Question.NOM).avecListe());
+        assertFalse(bretagne(Bonus.Question.CARTE).avecListe());
+        // en outre-mer, la liste et ses numéros donneraient la réponse
+        assertFalse(new Bonus(RegionFr.GUYANE, RegionFr.GUYANE.getDepartements(), Bonus.Question.CHOIX).avecListe());
+    }
+
+    @Test
+    @DisplayName("Les départements répondus : ceux dont la place est jouée, trouvés comme manqués")
+    void repondus() {
+        Bonus bonus = bretagne(Bonus.Question.CHOIX);
+        assertEquals(List.of(), bonus.repondus());
+
+        bonus.repondre(departement("29"), departement("29"));    // trouvé
+        bonus.repondre(departement("56"), departement("35"));    // manqué : c'est le Morbihan qui est joué
+
+        assertEquals(List.of(departement("29"), departement("56")), bonus.repondus());
+        // un refus ne compte pas : le Finistère est déjà trouvé
+        bonus.repondre(departement("22"), departement("29"));
+        assertEquals(2, bonus.repondus().size());
+    }
+
+    @Test
     @DisplayName("Relire une réponse d'un fichier : acceptée si elle est possible, ignorée sinon")
     void relire() {
         Bonus bonus = bretagne(Bonus.Question.CHOIX);

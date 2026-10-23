@@ -2003,6 +2003,84 @@ transparentes, sinon la silhouette paraîtrait plus petite qu'à l'endroit une f
   après une victoire au premier essai, les suggestions « Corse-du-Sud (2A) », la question de La Réunion.
 - Le point 12 (la carte de fin, avec les régions proposées) reste pour plus tard.
 
+## Phase 12 : la liste des départements
+
+### Le domaine décide, la fenêtre affiche
+
+- **Pourquoi** : deux questions de règle se posaient : quand le bonus a-t-il sa liste (pas pour la question du numéro
+  d'outre-mer, où la liste et ses numéros donneraient la réponse) ? quels départements barrer ?
+- **Comment le faire** : deux méthodes de `Bonus`, sans rien d'affichage : `avecListe()` (vrai en mode `CHOIX`
+  seulement) et `repondus()` (le département **joué** de chaque tentative, `Tentative::demande`, trouvé ou manqué).
+  Testées dans `BonusTest` en quelques lignes, sans ouvrir de fenêtre. Les mêmes que le web (`avecListe`, `repondus`).
+- **Comment le penser** : dès qu'une phrase commence par « seulement si » ou « sauf quand », c'est une règle du jeu :
+  elle va dans le domaine, où elle se teste en une ligne. La fenêtre se contente de demander.
+
+### Une action, deux listes
+
+- **Pourquoi** : la même commande (menu Jeu, Ctrl+L) ouvre la liste des régions pendant la partie, celle des
+  départements pendant le bonus. Le web gardait deux compteurs de demandes, partagés entre deux composants : un piège
+  qu'il a fallu déjouer.
+- **Comment le faire** : en Swing, `montrerListe()` regarde l'état du jeu **au moment du clic** (`listeDuBonus()`) et
+  ouvre la bonne liste. Seul le **nom** doit suivre : `nommerListe()` change la valeur `Action.NAME`, et l'article du
+  menu, qui écoute son `Action` (un `PropertyChangeListener` posé par Swing), se renomme tout seul. Appelée aux trois
+  endroits où la réponse peut changer : l'entrée dans le bonus, la sortie, le changement de langue.
+- **Comment le penser** : ce qui peut se **recalculer** au moment voulu n'a pas besoin d'être mémorisé (pas de risque
+  d'oubli). Ce qui doit être **affiché d'avance** (un nom de menu), lui, se met à jour à chaque transition : les
+  compter (ici trois) et y appeler la même méthode.
+
+### Extraire au deuxième usage
+
+- **Pourquoi** : la liste des départements ressemble à celle des régions : un nom par bouton, barré au besoin, une
+  phrase d'aide, Échap pour fermer.
+- **Comment le faire** : deux petites méthodes communes, `nomDeListe(texte, barre, actif, clic)` et
+  `ouvrirListe(fenetre, aide, noms)`, que les deux listes appellent. Ce qui diffère (le titre, la règle du grisé, ce
+  que fait un clic) reste dans chacune, passé en paramètre (`Runnable clic`).
+- **Comment le penser** : copier-coller le premier code aurait été plus rapide, mais une correction (une bordure,
+  l'accessibilité) aurait dû être faite deux fois. Au deuxième usage, chercher ce qui est **pareil** et ce qui
+  **varie** : le pareil devient une méthode, ce qui varie devient ses paramètres.
+
+### Une liste trop longue pour l'écran
+
+- **Pourquoi** : 101 départements sur deux colonnes, c'est 51 lignes : bien plus que les 672 points de haut d'un écran
+  portable à 150 %.
+- **Comment le faire** : les noms dans un `JScrollPane` de hauteur fixe (420, comme l'aide), et
+  `getVerticalScrollBar().setUnitIncrement(16)` : sans cela, un cran de molette ne descend que d'un point.
+- **Comment le penser** : chaque fenêtre se pense à la taille du plus petit écran visé, avec le contenu le plus long
+  (ici, toutes les lignes ; ailleurs, la langue la plus bavarde).
+
+### Ce qui ne se voit pas, se dit
+
+- **Pourquoi** : un nom barré se voit, mais un lecteur d'écran lit seulement « Finistère (29) », sans le trait.
+- **Comment le faire** : `nom.getAccessibleContext().setAccessibleName(nom + ", déjà répondu")`, comme le
+  `aria-label` du web.
+- **Comment le penser** : chaque information portée **seulement** par l'apparence (une couleur, un trait, une icône)
+  a besoin d'un équivalent en mots.
+
+### Vérifier une fenêtre modale par programme
+
+- **Pourquoi** : le harnais de vérification en images (perdu entre deux sessions) a été réécrit. Une liste est modale :
+  `setVisible(true)` ne rend la main qu'à sa fermeture, alors comment la photographier ?
+- **Comment le faire** : un `javax.swing.Timer` lancé **juste avant** l'ouverture : la liste ouverte, Swing continue de
+  traiter les événements (une « boucle secondaire »), le Timer se déclenche, trouve la fenêtre (`Window.getWindows()`),
+  la dessine dans une image (`getRootPane().paint(g)`), puis clique un nom (`doClick()`) ou la ferme. Les méthodes
+  privées de `Fenetre` sont appelées par **réflexion** (`getDeclaredMethod`, `setAccessible(true)`) : permis dans un
+  outil de vérification, jamais dans le jeu.
+- **Comment le penser** : une fenêtre modale n'arrête pas Swing, elle arrête seulement le code qui l'a ouverte. Et la
+  date fixée par l'horloge (`Clock.fixed`) choisit la région : quatre dates d'outre-mer ont d'abord montré le
+  cas du numéro (la liste des régions, toute grisée), puis la Bretagne le cas principal.
+
+## Bilan de la Phase 12
+
+- **Une seule PR** (#48), ménage du retour sur le PC compris, le 23 octobre 2026 : étiquette `phase-12.0` posée par
+  la conversation du web (qui a ouvert #47 pour le noter, en même temps), branches du cloud supprimées dans les deux
+  dépôts par celle du Java. Deux conversations qui font le même ménage en parallèle : vérifier ce qui est **déjà
+  fait** (`git ls-remote`) avant d'agir, et ne pas s'étonner d'un « already exists ».
+- **406 tests** (403 avant) : `avecListe`, `repondus`, le tri des 101 départements.
+- **Vérifié en image** : la liste sans département choisi (grisée), avec un choix, un département trouvé puis un
+  manqué (barrés), en anglais, le bonus fini ; l'outre-mer (Guadeloupe, Guyane : la liste des régions reste) ; le
+  nom de la commande à chaque étape (partie, bonus, anglais, bonus fini, partie libre). Pas vu : le focus après la fermeture (il faut une
+  fenêtre affichée à l'écran).
+
 ---
 
 ## Aide-mémoire

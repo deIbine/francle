@@ -242,6 +242,20 @@ class TextesTest {
     }
 
     @Test
+    @DisplayName("La liste des départements : les 101, triés à la française (Hérault à la lettre H)")
+    void departementsTries() {
+        List<String> noms = FR.departementsTries().stream().map(Departement::nom).toList();
+
+        assertEquals(101, noms.size());
+        assertEquals("Ain", noms.get(0));
+        assertEquals("Yvelines", noms.get(100));
+        assertTrue(noms.indexOf("Hauts-de-Seine") < noms.indexOf("Hérault"));
+        assertTrue(noms.indexOf("Hérault") < noms.indexOf("Ille-et-Vilaine"));
+        // la même liste en anglais : les noms restent en français
+        assertEquals(FR.departementsTries(), EN.departementsTries());
+    }
+
+    @Test
     @DisplayName("Les deux fichiers de textes ont exactement les mêmes clés")
     void memesCles() {
         assertEquals(FR.cles(), EN.cles());
