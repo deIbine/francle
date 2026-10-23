@@ -833,29 +833,13 @@ plus bas. Le web et le Java se font chacun dans sa conversation, sans s'attendre
 
 ### Pour reprendre (conversation du Java)
 
-0. **⚠️ Sur le PC, avant toute chose** (retour prévu le **samedi 24 octobre 2026**) : depuis le 19 octobre 2026, le
-   travail se fait aussi dans le cloud (Claude Code sur le web), qui peut fusionner les PR mais **ni poser
-   d'étiquette, ni supprimer de branche** (refusé par le serveur intermédiaire du cloud, erreur 403). Ce qui reste à
-   faire dans ce dépôt est listé ici ; la liste complète, avec le web (à faire en premier), est dans la section
-   « À faire sur le PC, avant toute chose » du `docs/plan.md` de
-   [deIbine/francle-web](https://github.com/deIbine/francle-web). Toutes les PR du cloud sont déjà fusionnées (#43
-   à #46) ; seule #43 a une étiquette, les autres ne sont que des notes. **L'utilisateur ne lance aucune commande**
-   (décidé le 19 octobre 2026) : c'est **Claude Code sur le PC** (avec `gh`, connecté au compte `deIbine`) qui lance
-   celles-ci, vérifie et explique ; le ménage est déjà autorisé, Claude l'annonce et le fait. En principe, la
-   conversation du web s'en charge en premier ; si ce n'est pas fait (`git tag` ne montre pas `phase-12.0`), la
-   conversation du Java le fait. Une fois fait, retirer ce point (petite PR, fusionnée avec l'accord de
-   l'utilisateur).
-
-   ```bash
-   git checkout main && git pull --prune
-   git tag -a phase-12.0 -m "Phase 12.0 : décisions de la liste des départements" f16f013
-   git push origin phase-12.0
-   git push origin --delete ccr-8009fd8d-mbx5ca
-   ```
-
-   Puis Claude vérifie : `git tag` montre `phase-12.0`, `git branch -a` ne montre plus `ccr-8009fd8d-mbx5ca`, `git branch`
-   ne montre plus que `main` (supprimer les branches locales fusionnées avec `git branch -D <nom>`), et `mvn test`
-   passe. Chaque PR fusionnée depuis le cloud ajoute ses lignes ici.
+0. **Le ménage du retour sur le PC : fait le 23 octobre 2026**, par la conversation du web (compte rendu complet
+   dans « À faire sur le PC » du `docs/plan.md` de [deIbine/francle-web](https://github.com/deIbine/francle-web),
+   PR deIbine/francle-web#39). Ici : étiquette `phase-12.0` posée sur `f16f013` ; la branche du cloud
+   `ccr-8009fd8d-mbx5ca` était déjà supprimée sur GitHub (sans doute par une autre session) ; tests verts,
+   **403 sur 403**, avec `./mvnw -q test` (Maven n'est pas installé : le projet apporte le sien, le Maven Wrapper).
+   Si on retravaille dans le cloud, qui ne peut ni poser d'étiquette ni supprimer de branche, la liste des choses à
+   faire ensuite sur le PC se tient de nouveau dans ce plan web.
 1. Vérifier que `main` est à jour (`git pull`) et que la PR de ce plan est fusionnée.
 2. Lire cette phase, puis `docs/lecons.md`. Les décisions ci-dessous sont **déjà validées** : ne pas les reposer,
    seulement présenter le découpage (une seule PR, 12) et attendre l'accord de l'utilisateur avant de coder.
