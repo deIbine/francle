@@ -841,7 +841,9 @@ phase 11 (la carte de fin), ou une des idées du web (compteur de la partie libr
 
 **Travailler depuis le cloud** (noté le 19 octobre 2026) : Claude Code sur le web peut fusionner les PR, mais **ni
 poser d'étiquette, ni supprimer de branche** (erreur 403 du serveur intermédiaire). Ce qui reste à faire est alors
-noté ici, et fait au retour sur le PC par Claude (l'utilisateur ne lance aucune commande).
+noté dans la section « À faire sur le PC » du `docs/plan.md` de
+[deIbine/francle-web](https://github.com/deIbine/francle-web) (pour les deux dépôts), et fait au retour sur le PC par
+Claude (l'utilisateur ne lance aucune commande).
 
 **Pourquoi.** Idée de l'utilisateur, le 19 octobre 2026 : le bonus n'a pas de liste, contrairement à la partie (menu
 Jeu, « Liste des régions », Ctrl+L). Pendant le bonus, cette commande ouvrirait donc la **liste des départements**.
