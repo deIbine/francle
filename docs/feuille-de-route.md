@@ -22,7 +22,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 10 | Le bonus revu : dès la victoire, et le mode C | ✅ Fait (PR #36 à #38) |
 | 11 | Les corrections relevées en jouant (avec la version web) | ✅ Fait (PR #40 à #42) |
 | 12 | La liste des départements, pendant le bonus | ✅ Fait (PR #48) |
-| 13 | Le bonus simplifié : les départements de la région | 🚧 En relecture (PR #50 et #51) |
+| 13 | Le bonus simplifié : les départements de la région | ✅ Fait (PR #50 et #51) |
 
 ---
 
@@ -855,9 +855,9 @@ Les décisions sont reprises de celles prises pour le web, adaptées au Java plu
 
 ---
 
-## Phase 13 : le bonus simplifié 🚧
+## Phase 13 : le bonus simplifié ✅
 
-**Codée le 23 octobre 2026**, en deux PR empilées : deIbine/francle#50 (13.1, les règles) et #51 (13.2, le réglage et
+**Faite le 23 octobre 2026**, en deux PR empilées : deIbine/francle#50 (13.1, les règles) et #51 (13.2, le réglage et
 l'affichage). Ce qui a été fait, en plus des décisions plus bas :
 
 - **13.1** : `Bonus.proposes()`, `isDifficile()`, `changerVersion()` ; `ReponseBonus.HorsRegion` ;
@@ -866,7 +866,9 @@ l'affichage). Ce qui a été fait, en plus des décisions plus bas :
   `Fenetre.appliquerVersion()` (à la case cochée et à l'affichage du bonus) ; la liste des départements tirée de
   `Bonus.proposes()`, à la taille de son contenu ; `bonus.inconnuRegion` ; 💪 dans le partage ; aide, README.
 
-Les leçons sont dans [lecons.md](lecons.md#phase-13--le-bonus-simplifié). 416 tests (406 avant).
+Les leçons sont dans [lecons.md](lecons.md#phase-13--le-bonus-simplifié). 416 tests (406 avant). Pour la suite, à
+choisir avec l'utilisateur : le point 12 de la phase 11 (la carte de fin en couleur, étudiée puis remise à plus tard),
+un compteur de la partie libre, un repère « voisine », un mode « métropole seulement ».
 
 **Pourquoi.** Idée de l'utilisateur, le 23 octobre 2026 : pendant le bonus, la liste et les suggestions proposent les
 101 départements, ce qui le rend difficile. Elles ne proposeront plus que les **départements de la région jouée**, en
