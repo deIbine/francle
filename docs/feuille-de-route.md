@@ -21,7 +21,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 9 | Le bonus des départements | ✅ Fait (PR #34) |
 | 10 | Le bonus revu : dès la victoire, et le mode C | ✅ Fait (PR #36 à #38) |
 | 11 | Les corrections relevées en jouant (avec la version web) | ✅ Fait (PR #40 à #42) |
-| 12 | La liste des départements, pendant le bonus | ✅ Fait (PR #47) |
+| 12 | La liste des départements, pendant le bonus | ✅ Fait (PR #48) |
 
 ---
 
@@ -820,12 +820,13 @@ le « survol » au doigt, et le score du bonus dans les résultats d'une partie 
 
 ## Phase 12 : la liste des départements ✅
 
-**Faite le 23 octobre 2026**, en une seule PR (deIbine/francle#47, choix de l'utilisateur : le ménage du retour sur
+**Faite le 23 octobre 2026**, en une seule PR (deIbine/francle#48, choix de l'utilisateur : le ménage du retour sur
 le PC et le code ensemble). Ce qui a été fait :
 
-- **Le ménage** : l'étiquette `phase-12.0` (sur `f16f013`) et celles du web (`web-7.12.0`, `web-7.12.0.1`,
-  `web-7.12`) étaient déjà posées le même jour ; Claude a supprimé les branches du cloud (`ccr-8009fd8d-mbx5ca`) dans
-  les deux dépôts, après avoir vérifié que leur contenu était celui de `main` (même arbre).
+- **Le ménage** : la conversation du web a posé l'étiquette `phase-12.0` (sur `f16f013`) et celles du web
+  (`web-7.12.0`, `web-7.12.0.1`, `web-7.12`), le même jour (PR deIbine/francle#47 et deIbine/francle-web#39) ; celle
+  du Java a supprimé les branches du cloud (`ccr-8009fd8d-mbx5ca`) dans les deux dépôts, après avoir vérifié que leur
+  contenu était celui de `main` (même arbre).
 - **Le domaine** : `Bonus.avecListe()` (mode C seulement) et `Bonus.repondus()` (le département joué de chaque
   réponse), comme le web.
 - **La fenêtre** : `montrerListe()` ouvre la liste des départements ou des régions selon l'état du jeu au moment du

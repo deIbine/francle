@@ -2071,8 +2071,10 @@ transparentes, sinon la silhouette paraîtrait plus petite qu'à l'endroit une f
 
 ## Bilan de la Phase 12
 
-- **Une seule PR**, ménage du retour sur le PC compris (étiquette `phase-12.0`, branches du cloud supprimées dans les
-  deux dépôts, par Claude, le 23 octobre 2026).
+- **Une seule PR** (#48), ménage du retour sur le PC compris, le 23 octobre 2026 : étiquette `phase-12.0` posée par
+  la conversation du web (qui a ouvert #47 pour le noter, en même temps), branches du cloud supprimées dans les deux
+  dépôts par celle du Java. Deux conversations qui font le même ménage en parallèle : vérifier ce qui est **déjà
+  fait** (`git ls-remote`) avant d'agir, et ne pas s'étonner d'un « already exists ».
 - **406 tests** (403 avant) : `avecListe`, `repondus`, le tri des 101 départements.
 - **Vérifié en image** : la liste sans département choisi (grisée), avec un choix, un département trouvé puis un
   manqué (barrés), en anglais, le bonus fini ; l'outre-mer (Guadeloupe, Guyane : la liste des régions reste) ; le
