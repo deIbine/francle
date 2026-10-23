@@ -8,7 +8,9 @@ Après chaque essai, le tableau indique :
 
 Chaque essai raté révèle un indice : la superficie, la spécialité culinaire,
 une personnalité, la capitale régionale, puis un monument. Une fois la partie
-finie, tous les indices sont montrés.
+finie, tous les indices sont montrés, et la carte de France colorie vos propositions,
+du jaune (loin) à l'orange (proche) ; la réponse y est en vert si vous l'avez trouvée,
+en bleu sinon. Survolez une région pour lire son nom.
 Proposer deux fois la même région ne coûte pas d'essai.
 
 Partie du jour : la même région pour tout le monde, une seule partie par jour,

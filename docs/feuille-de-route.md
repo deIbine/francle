@@ -23,7 +23,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 11 | Les corrections relevées en jouant (avec la version web) | ✅ Fait (PR #40 à #42) |
 | 12 | La liste des départements, pendant le bonus | ✅ Fait (PR #48) |
 | 13 | Le bonus simplifié : les départements de la région | ✅ Fait (PR #50 et #51) |
-| 14 | La carte de fin en couleur | 🚧 En cours (PR #52 : les contours ; 14.2 : le dessin) |
+| 14 | La carte de fin en couleur | ✅ Fait (PR #52 à #54) |
 
 ---
 
@@ -902,7 +902,21 @@ un retour sur une décision de la phase 12 (« les 101, ça serait trop simple s
 
 ---
 
-## Phase 14 : la carte de fin en couleur 🚧
+## Phase 14 : la carte de fin en couleur ✅
+
+**Faite le 23 octobre 2026**, en trois PR empilées : deIbine/francle#52 (14.1, les contours), #53 (14.2, le dessin)
+et #54 (14.3, le branchement). Ce qui a été fait, en plus des décisions plus bas :
+
+- **14.1** : `france.json` (87 Ko, 9 701 points) écrit par `france()` dans le script, qui partage `traces()` avec les
+  contours des départements (régénérés à l'identique) ; `ContoursFrance` (lu une seule fois, classe « holder »).
+- **14.2** : `CarteFin`, les encarts sur deux colonnes à droite (cadres pointillés), la bulle d'aide ; `couleur`,
+  `degrade` et `melanger`, testés sans affichage.
+- **14.3** : une troisième « carte » dans le `CardLayout` de la fenêtre (`FIN`) ; les 35 images de `cartes/`,
+  `Representation.carte` et la fonction `carte` du script retirées ; une phrase dans l'aide (FR et EN), le README.
+
+Les leçons sont dans [lecons.md](lecons.md#phase-14--la-carte-de-fin-en-couleur). 445 tests (416 avant, dont 3
+retirés avec les anciennes images). Pour la suite, à choisir avec l'utilisateur : un compteur de la partie libre, un
+repère « voisine », un mode « métropole seulement », les idées en réserve.
 
 **Pourquoi.** C'est le point 12 de la phase 11, remis à plus tard. À la fin d'une partie, la carte de France ne
 colorie que la réponse, en bleu : ce sont des images toutes faites (`Representation.carte`), une par région. Une image
