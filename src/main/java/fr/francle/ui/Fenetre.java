@@ -335,7 +335,8 @@ class Fenetre {
         avecListe.addActionListener(e -> {
             reglages.setAvecListe(avecListe.isSelected());
             retenirReglages();
-            // celui-ci compte tout de suite : l'article « Liste des régions » du menu Jeu se grise ou non
+            // celui-ci compte tout de suite : l'article « Liste des régions » (ou « des départements ») du menu Jeu
+            // se grise ou non
             liste.setEnabled(reglages.isAvecListe());
         });
         JCheckBoxMenuItem avecSuggestions = new JCheckBoxMenuItem(textes.texte("parametre.suggestions"), reglages.isAvecSuggestions());
@@ -768,38 +769,103 @@ class Fenetre {
         }
     }
 
-    // la liste des régions du mode joué, sur deux colonnes, comme dans la version web : un clic sur un nom le propose,
-    // comme si on l'avait tapé ; les régions déjà proposées sont barrées et ne se cliquent plus. Chaque nom est un vrai
-    // bouton : il se choisit aussi au clavier (Tab, Espace)
+    // la commande « Liste » (menu Jeu, Ctrl+L) : la liste des départements tant que le bonus est affiché (même fini),
+    // sauf pour la question du numéro en outre-mer ; celle des régions sinon. Elle regarde l'état du jeu au moment où
+    // on l'appelle : une seule action pour les deux listes, sans rien à tenir à jour, à part son nom (nommerListe)
     private void montrerListe() {
-        if (dansLeBonus) {
-            return;
+        if (listeDuBonus()) {
+            montrerListeDepartements();
+        } else {
+            montrerListeRegions();
         }
+    }
+
+    private boolean listeDuBonus() {
+        return dansLeBonus && bonus.avecListe();
+    }
+
+    // le nom de la commande suit la liste qu'elle ouvre : appelé quand le bonus s'affiche ou s'en va, et à chaque
+    // changement de langue. Changer le nom de l'Action renomme aussi l'article du menu, qui l'écoute
+    private void nommerListe() {
+        liste.putValue(Action.NAME, textes.texte(listeDuBonus() ? "action.listeDepartements" : "action.liste"));
+    }
+
+    // la liste des régions du mode joué, sur deux colonnes, comme dans la version web : un clic sur un nom le propose,
+    // comme si on l'avait tapé ; les régions déjà proposées sont barrées et ne se cliquent plus. Pendant un bonus
+    // d'outre-mer, la partie est gagnée : tout y est grisé
+    private void montrerListeRegions() {
         JDialog fenetre = new JDialog(frame, textes.texte("action.liste"), true);
         Set<RegionFr> proposees = new HashSet<>(partie.getEssais().stream().map(Essai::proposition).toList());
         boolean finie = !partie.enCours();
         JPanel noms = new JPanel(new GridLayout(0, 2, 6, 0));
         for (RegionFr region : textes.regionsTriees(partie.getMode())) {
             boolean dejaProposee = proposees.contains(region);
-            // <s> : le nom barré. Swing sait afficher un peu de HTML dans le texte d'un bouton ou d'une étiquette
-            JButton nom = new JButton(dejaProposee ? "<html><s>" + textes.nom(region) + "</s></html>" : textes.nom(region));
-            nom.setHorizontalAlignment(SwingConstants.LEFT);
-            // un bouton sans bordure de FlatLaf : une liste de noms plutôt qu'un mur de boutons
-            nom.putClientProperty("JButton.buttonType", "borderless");
-            nom.setEnabled(!finie && !dejaProposee);
-            nom.addActionListener(e -> {
+            noms.add(nomDeListe(textes.nom(region), dejaProposee, !finie && !dejaProposee, () -> {
                 // la liste se ferme d'abord : si l'essai termine la partie, la suite s'affiche dans la fenêtre du jeu
                 fenetre.dispose();
                 saisie.setText(textes.nom(region));
                 jouer();
+            }));
+        }
+        ouvrirListe(fenetre, textes.texte(finie ? "liste.finie" : "liste.aide"), noms);
+    }
+
+    // pendant le bonus (mode C), les 101 départements, « Finistère (29) », triés par nom. Les 101, et pas seulement
+    // ceux de la région : la liste de la région donnerait toutes les réponses. Un clic répond pour le département
+    // choisi sur la carte, comme si on avait écrit son nom ; tant qu'il n'y en a pas, tout est grisé. Ceux qui ont déjà
+    // leur réponse sont barrés
+    private void montrerListeDepartements() {
+        JDialog fenetre = new JDialog(frame, textes.texte("action.listeDepartements"), true);
+        Set<Departement> repondus = new HashSet<>(bonus.repondus());
+        boolean fini = !bonus.enCours();
+        boolean choisi = carte.getChoisi().isPresent();
+        JPanel noms = new JPanel(new GridLayout(0, 2, 6, 0));
+        for (Departement departement : textes.departementsTries()) {
+            boolean dejaRepondu = repondus.contains(departement);
+            JButton nom = nomDeListe(departement.nomEtNumero(), dejaRepondu, !fini && choisi && !dejaRepondu, () -> {
+                // la liste se ferme d'abord : si c'était la dernière réponse, les résultats s'ouvriront ensuite. Le
+                // focus revient à la fenêtre du jeu, sur la carte, pour choisir le département suivant
+                fenetre.dispose();
+                carte.getChoisi().ifPresent(choix -> repondre(bonus.repondre(choix, departement)));
             });
+            // un lecteur d'écran ne lit pas le trait du nom barré : il le dit avec des mots
+            if (dejaRepondu) {
+                nom.getAccessibleContext().setAccessibleName(
+                        departement.nomEtNumero() + ", " + textes.texte("liste.departements.dejaRepondu"));
+            }
             noms.add(nom);
         }
-        JLabel aide = new JLabel(textes.texte(finie ? "liste.finie" : "liste.aide"));
-        aide.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
+        String aide = fini ? "liste.departements.finie" : choisi ? "liste.departements.aide" : "liste.departements.sansChoix";
+        // 51 lignes : bien plus que la hauteur d'un écran portable (672 points utilisables). Elles défilent dans une
+        // zone de hauteur fixe, comme l'aide
+        JScrollPane defilement = new JScrollPane(noms);
+        defilement.setBorder(BorderFactory.createEmptyBorder());
+        defilement.setPreferredSize(new Dimension(noms.getPreferredSize().width + 30, 420));
+        // la molette : une ligne à la fois (16 points), et non un seul point par cran
+        defilement.getVerticalScrollBar().setUnitIncrement(16);
+        ouvrirListe(fenetre, textes.texte(aide), defilement);
+    }
+
+    // un nom de liste : un vrai bouton, qui se choisit aussi au clavier (Tab, Espace), barré au besoin
+    private static JButton nomDeListe(String texte, boolean barre, boolean actif, Runnable clic) {
+        // <s> : le nom barré. Swing sait afficher un peu de HTML dans le texte d'un bouton ou d'une étiquette
+        JButton nom = new JButton(barre ? "<html><s>" + texte + "</s></html>" : texte);
+        nom.setHorizontalAlignment(SwingConstants.LEFT);
+        // un bouton sans bordure de FlatLaf : une liste de noms plutôt qu'un mur de boutons
+        nom.putClientProperty("JButton.buttonType", "borderless");
+        nom.setEnabled(actif);
+        nom.addActionListener(e -> clic.run());
+        return nom;
+    }
+
+    // la fenêtre d'une liste : une phrase d'aide, puis les noms. Modale : setVisible ne rend la main qu'une fois la
+    // liste fermée (un clic sur un nom, Échap, ou la croix)
+    private void ouvrirListe(JDialog fenetre, String aide, JComponent noms) {
+        JLabel phrase = new JLabel(aide);
+        phrase.setBorder(BorderFactory.createEmptyBorder(0, 0, 8, 0));
         JPanel contenu = new JPanel(new BorderLayout());
         contenu.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
-        contenu.add(aide, BorderLayout.NORTH);
+        contenu.add(phrase, BorderLayout.NORTH);
         contenu.add(noms, BorderLayout.CENTER);
         fenetre.setContentPane(contenu);
         // Échap ferme la liste, comme une boîte de dialogue ordinaire
@@ -845,6 +911,8 @@ class Fenetre {
     private void appliquerLangue() {
         textes = new Textes(reglages.langue());
         nomsDesActions.forEach((action, cle) -> action.putValue(Action.NAME, textes.texte(cle)));
+        // (sauf la liste, dont le nom dépend aussi du bonus)
+        nommerListe();
         frame.setJMenuBar(menus());
         frame.getRootPane().revalidate();
         valider.setText(textes.texte("valider"));
@@ -902,6 +970,7 @@ class Fenetre {
             }
         }
         dansLeBonus = true;
+        nommerListe();
         carte.montrer(bonus);
         cartes.show(cadre, DEPARTEMENTS);
         saisie.setText("");
@@ -975,6 +1044,7 @@ class Fenetre {
             // (rien de nouveau à enregistrer : les réponses le sont déjà, et un bonus relu est toujours fini)
         }
         dansLeBonus = false;
+        nommerListe();
         saisie.putClientProperty(TEXTE_FANTOME, null);
         cartes.show(cadre, IMAGE);
     }

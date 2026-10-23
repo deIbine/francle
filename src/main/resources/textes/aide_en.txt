@@ -29,6 +29,8 @@ and so are the French names (“Bretagne”). While you type, suggestions appear
 ↓ and ↑ to pick one, Enter to take it, then Enter again to guess.
 Enter on the start of a name (“brit”) plays the only region it matches.
 The list of regions (Game menu) also lets you guess a region with one click.
+During the bonus, it becomes the list of the 101 départements: click a name
+to answer for the département chosen on the map.
 
 The Settings menu offers a dark theme, distances in miles, the language,
 and two hard modes: a rotated 🌀 or hidden 🙈 silhouette. They are set at

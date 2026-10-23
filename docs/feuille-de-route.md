@@ -21,7 +21,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 9 | Le bonus des départements | ✅ Fait (PR #34) |
 | 10 | Le bonus revu : dès la victoire, et le mode C | ✅ Fait (PR #36 à #38) |
 | 11 | Les corrections relevées en jouant (avec la version web) | ✅ Fait (PR #40 à #42) |
-| 12 | La liste des départements, pendant le bonus | Décidée le 19 octobre 2026, pas commencée |
+| 12 | La liste des départements, pendant le bonus | ✅ Fait (PR #47) |
 
 ---
 
@@ -818,47 +818,35 @@ le « survol » au doigt, et le score du bonus dans les résultats d'une partie 
 
 ---
 
-## Phase 12 : la liste des départements
+## Phase 12 : la liste des départements ✅
 
-**Décidée le 19 octobre 2026, pas commencée** ; à faire **plus tard** (décidé le 19 octobre 2026), dans la
-conversation du Java. Le code attend l'accord de l'utilisateur. **Le web l'a déjà faite** le 19 octobre 2026
-(web.7.12, PR deIbine/francle-web#36) : son code et ses leçons (`docs/lecons.md` du web, section web.7.12) peuvent
-servir de modèle.
+**Faite le 23 octobre 2026**, en une seule PR (deIbine/francle#47, choix de l'utilisateur : le ménage du retour sur
+le PC et le code ensemble). Ce qui a été fait :
+
+- **Le ménage** : l'étiquette `phase-12.0` (sur `f16f013`) et celles du web (`web-7.12.0`, `web-7.12.0.1`,
+  `web-7.12`) étaient déjà posées le même jour ; Claude a supprimé les branches du cloud (`ccr-8009fd8d-mbx5ca`) dans
+  les deux dépôts, après avoir vérifié que leur contenu était celui de `main` (même arbre).
+- **Le domaine** : `Bonus.avecListe()` (mode C seulement) et `Bonus.repondus()` (le département joué de chaque
+  réponse), comme le web.
+- **La fenêtre** : `montrerListe()` ouvre la liste des départements ou des régions selon l'état du jeu au moment du
+  clic ; `nommerListe()` renomme la commande à l'entrée et à la sortie du bonus, et au changement de langue. Les deux
+  listes partagent `nomDeListe` et `ouvrirListe` ; celle des départements défile (51 lignes).
+- **Les textes** : `action.listeDepartements`, `liste.departements.*` (au vouvoiement), la case des paramètres
+  (« Liste des régions et des départements ») et une phrase dans l'aide, en français et en anglais.
+
+Les leçons sont dans [lecons.md](lecons.md#phase-12--la-liste-des-départements). Pour la suite : le point 12 de la
+phase 11 (la carte de fin), ou une des idées du web (compteur de la partie libre, repère « voisine », mode
+« métropole seulement »), à choisir avec l'utilisateur.
+
+**Travailler depuis le cloud** (noté le 19 octobre 2026) : Claude Code sur le web peut fusionner les PR, mais **ni
+poser d'étiquette, ni supprimer de branche** (erreur 403 du serveur intermédiaire). Ce qui reste à faire est alors
+noté ici, et fait au retour sur le PC par Claude (l'utilisateur ne lance aucune commande).
 
 **Pourquoi.** Idée de l'utilisateur, le 19 octobre 2026 : le bonus n'a pas de liste, contrairement à la partie (menu
 Jeu, « Liste des régions », Ctrl+L). Pendant le bonus, cette commande ouvrirait donc la **liste des départements**.
 Les décisions ont été prises dans la conversation du web (section « La liste des départements (web.7.12) » du
 `docs/plan.md` de [deIbine/francle-web](https://github.com/deIbine/francle-web)), et valent pour le Java, adaptées
 plus bas. Le web et le Java se font chacun dans sa conversation, sans s'attendre.
-
-### Pour reprendre (conversation du Java)
-
-0. **⚠️ Sur le PC, avant toute chose** (retour prévu le **samedi 24 octobre 2026**) : depuis le 19 octobre 2026, le
-   travail se fait aussi dans le cloud (Claude Code sur le web), qui peut fusionner les PR mais **ni poser
-   d'étiquette, ni supprimer de branche** (refusé par le serveur intermédiaire du cloud, erreur 403). Ce qui reste à
-   faire dans ce dépôt est listé ici ; la liste complète, avec le web (à faire en premier), est dans la section
-   « À faire sur le PC, avant toute chose » du `docs/plan.md` de
-   [deIbine/francle-web](https://github.com/deIbine/francle-web). Toutes les PR du cloud sont déjà fusionnées (#43
-   à #46) ; seule #43 a une étiquette, les autres ne sont que des notes. **L'utilisateur ne lance aucune commande**
-   (décidé le 19 octobre 2026) : c'est **Claude Code sur le PC** (avec `gh`, connecté au compte `deIbine`) qui lance
-   celles-ci, vérifie et explique ; le ménage est déjà autorisé, Claude l'annonce et le fait. En principe, la
-   conversation du web s'en charge en premier ; si ce n'est pas fait (`git tag` ne montre pas `phase-12.0`), la
-   conversation du Java le fait. Une fois fait, retirer ce point (petite PR, fusionnée avec l'accord de
-   l'utilisateur).
-
-   ```bash
-   git checkout main && git pull --prune
-   git tag -a phase-12.0 -m "Phase 12.0 : décisions de la liste des départements" f16f013
-   git push origin phase-12.0
-   git push origin --delete ccr-8009fd8d-mbx5ca
-   ```
-
-   Puis Claude vérifie : `git tag` montre `phase-12.0`, `git branch -a` ne montre plus `ccr-8009fd8d-mbx5ca`, `git branch`
-   ne montre plus que `main` (supprimer les branches locales fusionnées avec `git branch -D <nom>`), et `mvn test`
-   passe. Chaque PR fusionnée depuis le cloud ajoute ses lignes ici.
-1. Vérifier que `main` est à jour (`git pull`) et que la PR de ce plan est fusionnée.
-2. Lire cette phase, puis `docs/lecons.md`. Les décisions ci-dessous sont **déjà validées** : ne pas les reposer,
-   seulement présenter le découpage (une seule PR, 12) et attendre l'accord de l'utilisateur avant de coder.
 
 ### Les décisions (celles du web, adaptées au Java)
 

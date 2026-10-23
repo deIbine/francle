@@ -257,6 +257,14 @@ final class Textes {
         return regions;
     }
 
+    // les 101 départements, dans l'ordre alphabétique de la langue (Hérault à la lettre H). Les noms, eux, restent en
+    // français dans les deux langues, comme sur les cartes
+    List<Departement> departementsTries() {
+        List<Departement> departements = new ArrayList<>(Departement.tous());
+        departements.sort(Comparator.comparing(Departement::nom, Collator.getInstance(langue.getLocale())));
+        return departements;
+    }
+
     // un fichier texte rangé dans le .jar, lu en entier
     private static String lire(String chemin) {
         try (InputStream flux = Textes.class.getResourceAsStream(chemin)) {

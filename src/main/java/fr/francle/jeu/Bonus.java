@@ -164,6 +164,19 @@ public class Bonus {
         return ordre.stream().filter(departement -> tentative(departement).isEmpty()).toList();
     }
 
+    // vrai si ce bonus a sa liste des départements (menu Jeu, Ctrl+L) : en mode CHOIX seulement, où l'on choisit sur
+    // la carte, puis on nomme. Pas pour la question du numéro, en outre-mer : la liste, qui montre les numéros, donnerait
+    // la réponse ; la commande y reste celle des régions
+    public boolean avecListe() {
+        return question == Question.CHOIX;
+    }
+
+    // les départements de la région qui ont déjà leur réponse, juste ou fausse : dans la liste, ils sont barrés. Les
+    // donner ailleurs ne peut être que faux (ou refusé, pour un département trouvé), et leur nom est déjà sur la carte
+    public List<Departement> repondus() {
+        return tentatives.stream().map(Tentative::demande).toList();
+    }
+
     // vrai si ce département a déjà été trouvé (donné au bon endroit)
     public boolean trouve(Departement departement) {
         return tentatives.stream().anyMatch(tentative -> tentative.juste() && tentative.donne().equals(departement));

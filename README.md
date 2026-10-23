@@ -33,7 +33,8 @@ Une silhouette de région s'affiche : à toi de la reconnaître en 6 essais maxi
 - **Bonus des départements** : dès chaque victoire, on clique sur chacun des départements de la région, puis on
   écrit son nom ou son numéro (une réponse par département ; un zoom sur Paris pour l'Île-de-France ; au clavier,
   les flèches et Entrée). Pour une région d'un seul département (outre-mer), on donne son numéro. Le score moyen du
-  bonus du jour s'ajoute aux statistiques.
+  bonus du jour s'ajoute aux statistiques. Pendant le bonus, la liste du menu *Jeu* (Ctrl+L) montre les 101
+  départements : un clic sur un nom répond pour le département choisi.
 - **Partager** (menu *Jeu* ou fenêtre des statistiques) : le résultat du jour en carrés 🟩🟨⬜, copié dans le
   presse-papiers, sans dévoiler la réponse.
 - **Partie libre** : autant que tu veux, avec les régions actuelles ou les anciennes régions (avant 2016).
@@ -45,7 +46,7 @@ Une silhouette de région s'affiche : à toi de la reconnaître en 6 essais maxi
 | Régions de la partie libre | Nouvelles (depuis 2016) ou anciennes (avant 2016) |
 | Silhouette de la région | Affichée ou cachée (plus difficile) |
 | Silhouette tournée au hasard | Un angle au hasard, le même pour tous dans la partie du jour |
-| Liste des régions, suggestions | Activées ou non |
+| Liste des régions (et des départements pendant le bonus), suggestions | Activées ou non |
 | Thème sombre | Clair ou sombre |
 | Unités anglo-saxonnes | Kilomètres ou miles (miles par défaut en anglais) |
 | Langue | Français ou anglais (par défaut, celle du système) |
@@ -120,6 +121,7 @@ et ce qu'elle a permis d'apprendre dans [docs/lecons.md](docs/lecons.md).
 - [x] **Phase 9** : le bonus des départements (carte cliquable, zoom sur Paris, score moyen)
 - [x] **Phase 10** : le bonus revu, repris du web (dès la victoire ; choisir un département, puis le nommer)
 - [x] **Phase 11** : les corrections relevées en jouant (autre époque expliquée, indices montrés en fin de partie…)
+- [x] **Phase 12** : la liste des départements pendant le bonus, reprise du web
 
 ## Historique
 
