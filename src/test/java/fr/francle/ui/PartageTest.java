@@ -16,6 +16,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import java.time.Duration;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -57,6 +58,29 @@ class PartageTest {
         assertEquals("#Francle n° 12 2/6 🌀\n" + normandie + "\n🟩🟩🟩🟩🟩🎉\n🗺️ 1/4\n" + Partage.ADRESSE, texte);
         assertFalse(texte.contains("Bretagne"));
         assertFalse(texte.contains("Normandie"));
+    }
+
+    @Test
+    @DisplayName("Le bonus dans sa version difficile : 💪 ; la simple, et l'outre-mer (rien n'y change), sans repère")
+    void bonusDifficile() {
+        Partie partie = new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES);
+        partie.proposer("Bretagne");
+        Departement morbihan = Departement.parCode("56").orElseThrow();
+        for (boolean difficile : List.of(true, false)) {
+            Bonus bonus = new Bonus(RegionFr.BRETAGNE, RegionFr.BRETAGNE.getDepartements(), Bonus.Question.CHOIX,
+                    difficile);
+            bonus.repondre(morbihan, morbihan);
+            bonus.passer();
+
+            String derniere = Partage.texte(partie, 12, ModesDifficiles.AUCUN, bonus, FR).split("\n")[2];
+
+            assertEquals(difficile ? "🗺️ 1/4 💪" : "🗺️ 1/4", derniere);
+        }
+        Partie guyane = new Partie(RegionFr.GUYANE, ModeRegions.NOUVELLES);
+        guyane.proposer("Guyane");
+        Bonus numero = new Bonus(RegionFr.GUYANE, RegionFr.GUYANE.getDepartements(), Bonus.Question.CHOIX, true);
+        numero.repondre("973");
+        assertTrue(Partage.texte(guyane, 12, ModesDifficiles.AUCUN, numero, FR).contains("🗺️ 1/1\n"));
     }
 
     @Test
