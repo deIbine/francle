@@ -18,4 +18,7 @@ public sealed interface ReponseBonus {
 
     // mode CHOIX : ce département a déjà été trouvé ailleurs sur la carte. Refusé sans rien coûter
     record DejaTrouve(Departement departement) implements ReponseBonus {}
+
+    // mode CHOIX, version simple : ce département n'est pas dans la région. Refusé sans rien coûter
+    record HorsRegion(Departement departement) implements ReponseBonus {}
 }

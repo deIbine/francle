@@ -584,15 +584,9 @@ class Fenetre {
             return List.of();
         }
         if (dansLeBonus) {
-            // mode C : parmi les 101 départements (limitées à la région, les suggestions donneraient la réponse) ;
-            // mode B : les départements de la région ; pour un numéro, rien à suggérer. Chacun avec son numéro
-            // (« Finistère (29) »), que la réponse accepte (Departement.chercher)
-            List<Departement> parmi = switch (bonus.getQuestion()) {
-                case CHOIX -> Departement.tous();
-                case NOM -> bonus.getRegion().getDepartements();
-                case CARTE, NUMERO -> List.of();
-            };
-            return Departement.suggestions(debut, parmi, textes.getLangue()).stream()
+            // ceux que le bonus propose (Bonus.proposes : la région ou les 101 selon la version ; rien pour un
+            // numéro), chacun avec son numéro (« Finistère (29) »), que la réponse accepte (Departement.chercher)
+            return Departement.suggestions(debut, bonus.proposes(), textes.getLangue()).stream()
                     .map(Departement::nomEtNumero).toList();
         }
         return RegionFr.suggestions(debut, partie.getMode(), textes.getLangue()).stream().map(textes::nom).toList();
@@ -961,12 +955,13 @@ class Fenetre {
             return;
         }
         if (bonus == null) {
-            // la partie du jour : le même ordre pour tous, retrouvé après une relance ; une partie libre : au hasard
+            // la partie du jour : le même ordre pour tous, retrouvé après une relance ; une partie libre : au hasard.
+            // Toujours la version difficile, celle d'avant la phase 13, tant que le réglage n'existe pas
             if (partie == duJour) {
-                bonus = Bonus.duJour(duJour.getCible(), dateDuJour);
+                bonus = Bonus.duJour(duJour.getCible(), dateDuJour, true);
                 bonusDuJour = bonus;
             } else {
-                bonus = Bonus.auHasard(partie.getCible(), HASARD);
+                bonus = Bonus.auHasard(partie.getCible(), HASARD, true);
             }
         }
         dansLeBonus = true;
@@ -998,6 +993,8 @@ class Fenetre {
             case ReponseBonus.Plusieurs() -> refuser(textes.texte("bonus.plusieurs", saisie.getText().strip()));
             case ReponseBonus.DejaTrouve(Departement departement) ->
                     refuser(textes.texte("bonus.dejaTrouve", departement.nom()));
+            case ReponseBonus.HorsRegion(Departement departement) ->
+                    refuser(textes.texte("bonus.horsRegion", departement.nom()));
             case ReponseBonus.Jouee(Tentative tentative) -> {
                 retenirBonus();
                 saisie.setText("");
