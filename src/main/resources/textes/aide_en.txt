@@ -8,7 +8,9 @@ After each guess, the table shows:
 
 Each wrong guess reveals a clue: the area, a food specialty,
 a famous person, the regional capital, then a landmark. Once the game is
-over, all the clues are shown.
+over, all the clues are shown, and the map of France colours your guesses, from
+yellow (far) to orange (close); the answer is green if you found it, blue otherwise.
+Hover over a region to read its name.
 Guessing the same region twice does not cost a guess.
 
 Daily game: the same region for everyone, one game per day,

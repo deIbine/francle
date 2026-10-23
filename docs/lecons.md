@@ -2178,6 +2178,120 @@ transparentes, sinon la silhouette paraîtrait plus petite qu'à l'endroit une f
   sous-menu, le fichier d'historique (`bonusSimple`) et le texte du partage (`🗺️ 1/4 💪`). Pas vu : la bulle d'aide
   (il faut survoler un menu affiché à l'écran ; son texte a été lu par programme).
 
+## Phase 14 : la carte de fin en couleur
+
+### Une image toute faite ne connaît pas la partie
+
+- **Pourquoi** : la carte de fin était une image PNG par région (35 en tout), préparée une fois pour toutes par le
+  script Python. Une image fixe ne peut montrer que ce qu'on savait en la fabriquant : la réponse. Les propositions du
+  joueur changent à chaque partie ; il y a bien trop de combinaisons pour les préparer toutes.
+- **Comment le faire** : garder les **données** (les contours des régions) et laisser le jeu **dessiner** au moment
+  voulu, comme la carte des départements du bonus. `CarteFin` reçoit la partie finie et colorie chaque région
+  d'après elle. Les 35 images et `Representation.carte` ont disparu.
+- **Comment le penser** : précalculer, c'est figer une réponse. C'est bien quand la réponse ne change jamais (une
+  silhouette). Dès qu'elle dépend de ce que fait l'utilisateur, il faut conserver la matière première et calculer
+  le résultat à la demande.
+
+### Un repère commun, et des encarts
+
+- **Pourquoi** : les fichiers des départements avaient chacun **leur propre repère** (chaque région remplit son
+  carré de 2000 unités). Mis côte à côte, ils ne se raccorderaient pas : la Bretagne serait aussi grande que la
+  Nouvelle-Aquitaine.
+- **Comment le faire** : un nouveau fichier, `france.json`, met toutes les régions de métropole dans **un seul
+  repère**, avec la même projection que les anciennes images (`LATITUDE_FRANCE`, la Corse rapprochée). Les régions
+  d'outre-mer gardent chacune le leur : ce sont des **encarts**, comme sur les cartes de l'INSEE. Un encart n'est
+  ni à sa place ni à l'échelle, d'où le cadre en pointillés qui le dit.
+- **Comment le penser** : avant d'assembler des données, se demander « dans quel repère est chacune ? ». Deux
+  mesures ne se comparent que dans la même unité, deux formes ne se juxtaposent que dans le même repère.
+
+### Tester des données qu'on ne peut pas relire à la main
+
+- **Pourquoi** : `france.json` fait 87 Ko de nombres. Personne ne le relira, et une erreur (une région oubliée,
+  deux régions qui se chevauchent, une ancienne région rangée dans la mauvaise nouvelle) ne se verrait qu'en jouant,
+  dans le bon mode.
+- **Comment le faire** : des tests qui **balayent** la carte, un point toutes les 8 unités. Chaque point doit tomber
+  dans une seule région du mode (à quelques points près, sur les bords). Chaque point d'une ancienne région doit
+  aussi tomber dans sa nouvelle région. Celle-ci n'est pas lue dans les contours : elle est **déduite des
+  départements** (`RegionFr.autreEpoque`). Deux sources indépendantes doivent dire la même chose.
+- **Comment le penser** : pour des données produites par un programme, on ne teste pas chaque valeur. On teste les
+  **propriétés** qu'elles doivent respecter (pas de trou, pas de chevauchement, l'inclusion), et on les recoupe avec
+  une autre source quand il en existe une.
+
+### Un dégradé, c'est un mélange calculé
+
+- **Pourquoi** : « du jaune pâle à l'orange foncé selon la proximité » : il faut une couleur pour chaque pourcentage,
+  de 0 à 100, sans palier visible.
+- **Comment le faire** : `melanger(a, b, t)` calcule chaque composante (rouge, vert, bleu) à la part `t` du chemin de
+  `a` vers `b` : `a + (b − a) × t`. C'est une **interpolation linéaire**. `degrade` passe par **trois** couleurs : le
+  mélange direct de deux couleurs éloignées traverse des teintes ternes. Ce sont des fonctions sans affichage,
+  testées à part. Les tests vérifient les bouts, le milieu, et qu'en avançant d'un pour cent la couleur ne
+  s'éclaircit jamais et ne saute pas.
+- **Comment le penser** : une règle visuelle (« plus foncé quand plus proche ») se traduit en propriété testable
+  (« aucune composante ne remonte »). Ce qui est vrai à l'œil doit pouvoir s'écrire comme une inégalité.
+
+### Remplir d'abord, tracer ensuite
+
+- **Pourquoi** : en dessinant région par région (remplir puis tracer le bord), le remplissage de la voisine recouvre
+  la moitié du bord déjà tracé. Selon l'ordre du fichier, certaines frontières sont fines et d'autres épaisses.
+- **Comment le faire** : deux boucles. D'abord toutes les couleurs, puis tous les bords par-dessus.
+- **Comment le penser** : un dessin se fait par **couches**, comme en peinture : le fond, puis les aplats, puis les
+  traits. L'ordre des couches compte plus que l'ordre des objets.
+
+### Un champ initialisé, une lambda, et l'ordre de la classe
+
+- **Pourquoi** : la bulle d'aide de la carte nomme la région dans la langue du joueur. Le champ `carteFin` reçoit donc
+  de quoi nommer, mais les textes (`textes`) sont lus plus tard, dans le constructeur.
+- **Comment le faire** : une **lambda**, `region -> this.textes.nom(region)`, et non une référence de méthode
+  `textes::nom`. La référence évalue `textes` **tout de suite**, à la création du champ, alors qu'il vaut encore
+  `null` : NullPointerException. La lambda, elle, ne lit le champ qu'au moment du survol. Et `this.textes` plutôt que
+  `textes` : Java refuse de lire par son nom seul un champ déclaré plus bas (« illegal forward reference »), même
+  dans une lambda.
+- **Comment le penser** : `objet::methode` fixe l'objet **maintenant** ; `x -> objet.methode(x)` le relit **à chaque
+  appel**. Choisir selon que l'objet peut changer (ici, la langue) ou pas encore exister.
+
+### Charger une seule fois, au premier besoin
+
+- **Pourquoi** : la carte de France est la même pour toutes les parties. La relire à chaque fin de partie serait
+  inutile. La lire au lancement ralentirait le démarrage pour rien, si le joueur ne finit jamais de partie.
+- **Comment le faire** : une petite classe imbriquée, `ContoursFrance.Lu`, qui contient le champ `static final`.
+  Java ne charge une classe qu'à sa première utilisation, et une seule fois, même depuis deux threads. Le fichier est
+  donc lu au premier appel de `de()`, puis gardé. C'est l'idiome du **« holder »**.
+- **Comment le penser** : c'est le lazy loading (chargement paresseux) sans `synchronized` ni test de `null`. La
+  garantie vient de la JVM, pas de notre code.
+
+### Faire le ménage sans rien changer d'autre
+
+- **Pourquoi** : en 14.1, la simplification des contours servait à deux endroits (les départements, la France). En
+  14.3, le script ne devait plus produire les 35 images. Toucher un script qui régénère 70 fichiers, c'est risquer
+  de les changer sans le vouloir.
+- **Comment le faire** : la boucle commune est devenue une fonction, `traces()`. On a vérifié ensuite que les
+  fichiers des départements sortaient **identiques**, à la fin de ligne près (`git diff --ignore-cr-at-eol` vide).
+  Après le ménage de 14.3, seule la fonction `france()` a été relancée, et son fichier a été comparé à celui de 14.1.
+- **Comment le penser** : un *refactoring* ne change pas le résultat. Pour un script, la preuve est simple : on le
+  relance et on compare les fichiers produits.
+
+### Trois PR empilées : données, dessin, branchement
+
+- **Pourquoi** : chaque étape se relit seule, et le jeu ne change pas avant la dernière.
+- **Comment le faire** : 14.1 ajoute un fichier et sa lecture (rien ne s'en sert encore), 14.2 un composant (rien ne
+  l'affiche encore), 14.3 le branche et retire l'ancien. Chaque PR a pour base la précédente.
+- **Comment le penser** : construire de bas en haut (les données, puis ce qui les dessine, puis ce qui l'affiche). À
+  chaque étape, le jeu se lance et les tests passent.
+
+## Bilan de la Phase 14
+
+- **Trois PR empilées** : 14.1 les contours de la France (`france.json`, `ContoursFrance`, `traces()`), 14.2 le
+  dessin (`CarteFin`, le dégradé), 14.3 le branchement (une troisième « carte » du `CardLayout` de la fenêtre, les
+  35 images et `Representation.carte` retirées, l'aide, le README).
+- **Nouveau pour le joueur** : les régions proposées en couleur, la réponse en vert quand elle est trouvée, l'outre-mer
+  en encarts (une réponse en outre-mer a enfin sa carte), le nom de la région au survol.
+- **445 tests** (416 avant ; 3 tests des anciennes images retirés) : le contenu du fichier, les chevauchements,
+  l'inclusion des anciennes régions, le dégradé, les couleurs d'une partie, la position de chaque région, la bulle
+  d'aide, un vrai dessin.
+- **Vérifié en images** : la carte seule (gagnée, perdue en thème sombre, anciennes régions, réponse en outre-mer)
+  puis la fenêtre entière après une victoire (Mayotte) et une défaite (Martinique, thème sombre). Pas vu : la bulle
+  d'aide à l'écran (il faut survoler une fenêtre affichée ; son texte est vérifié par un test).
+
 ---
 
 ## Aide-mémoire
@@ -2242,6 +2356,6 @@ Sous Git Bash, macOS ou Linux : `./mvnw test`.
 | Commande | Usage |
 |---|---|
 | `pip install matplotlib pillow` | Installer ce dont le script a besoin (une fois) |
-| `python outils/generer_images.py <dossier des contours> src/main/resources` | Régénérer silhouettes, cartes et contours des départements |
+| `python outils/generer_images.py <dossier des contours> src/main/resources` | Régénérer silhouettes, contours des départements et carte de France (une douzaine de minutes) |
 
 Les contours (fichiers GeoJSON) se téléchargent depuis le dépôt indiqué en tête du script.

@@ -4,8 +4,6 @@ Les images sont sur fond transparent : elles s'affichent aussi bien en thème cl
 
     regions/<image>             la silhouette de chaque région, départements tracés, montrée pendant la partie
     regions/defaut.png          la France métropolitaine et un point d'interrogation, quand la silhouette est désactivée
-    cartes/nouvelles/<image>    la France des régions de 2016, la réponse en bleu (fin de partie, mode « nouvelles »)
-    cartes/anciennes/<image>    la France d'avant 2016, la réponse en bleu (fin de partie, mode « anciennes »)
     departements/<région>.json  les contours de chaque département de la région, pour le bonus des départements
     france.json                 les contours de chaque région (métropole, et l'outre-mer en encarts), pour la carte
                                 de fin de partie que le jeu dessine lui-même
@@ -36,53 +34,51 @@ from PIL import Image, ImageFilter
 # la liste des départements et ceux de chaque région : le même fichier que celui du jeu (Decoupage.java)
 LISTE = Path(__file__).parent.parent / "src" / "main" / "resources" / "departements" / "departements.json"
 
-# le nom de l'image -> le nom de la région dans les fichiers de contours, pour les cartes de fin de partie
-CARTES_NOUVELLES = {
-    "hauts-de-france.png": "Hauts-de-France",
-    "normandie.png": "Normandie",
-    "grand-est.png": "Grand Est",
-    "bourgogne-franche-comte.png": "Bourgogne-Franche-Comté",
-    "auvergne-rhone-alpes.png": "Auvergne-Rhône-Alpes",
-    "nouvelle-aquitaine.png": "Nouvelle-Aquitaine",
-    "occitanie.png": "Occitanie",
-    "centre-val-de-loire.png": "Centre-Val de Loire",
-    "bretagne.png": "Bretagne",
-    "pays-de-la-loire.png": "Pays de la Loire",
-    "ile-de-france.png": "Île-de-France",
-    "provence-alpes-cote-dazur.png": "Provence-Alpes-Côte d'Azur",
-    "corse.png": "Corse",
+# le nom de fichier de la région dans le jeu (RegionFr.getFichier) -> son nom dans les fichiers de contours, pour la
+# carte de France de la fin de partie
+REGIONS_NOUVELLES = {
+    "hauts-de-france": "Hauts-de-France",
+    "normandie": "Normandie",
+    "grand-est": "Grand Est",
+    "bourgogne-franche-comte": "Bourgogne-Franche-Comté",
+    "auvergne-rhone-alpes": "Auvergne-Rhône-Alpes",
+    "nouvelle-aquitaine": "Nouvelle-Aquitaine",
+    "occitanie": "Occitanie",
+    "centre-val-de-loire": "Centre-Val de Loire",
+    "bretagne": "Bretagne",
+    "pays-de-la-loire": "Pays de la Loire",
+    "ile-de-france": "Île-de-France",
+    "provence-alpes-cote-dazur": "Provence-Alpes-Côte d'Azur",
+    "corse": "Corse",
 }
-CARTES_ANCIENNES = {
-    "nord-pas-de-calais.png": "Nord-Pas-de-Calais",
-    "picardie.png": "Picardie",
-    "haute-normandie.png": "Haute-Normandie",
-    "basse-normandie.png": "Basse-Normandie",
-    "poitou-charentes.png": "Poitou-Charentes",
-    "centre.png": "Centre",
-    "champagne-ardenne.png": "Champagne-Ardenne",
-    "lorraine.png": "Lorraine",
-    "alsace.png": "Alsace",
-    "bourgogne.png": "Bourgogne",
-    "franche-comte.png": "Franche-Comté",
-    "rhone-alpes.png": "Rhône-Alpes",
-    "auvergne.png": "Auvergne",
-    "limousin.png": "Limousin",
-    "aquitaine.png": "Aquitaine",
-    "midi-pyrenees.png": "Midi-Pyrénées",
-    "languedoc-roussillon.png": "Languedoc-Roussillon",
-    # les régions inchangées ont une carte dans chaque époque
-    "bretagne.png": "Bretagne",
-    "pays-de-la-loire.png": "Pays de la Loire",
-    "ile-de-france.png": "Île-de-France",
-    "provence-alpes-cote-dazur.png": "Provence-Alpes-Côte d'Azur",
-    "corse.png": "Corse",
+REGIONS_ANCIENNES = {
+    "nord-pas-de-calais": "Nord-Pas-de-Calais",
+    "picardie": "Picardie",
+    "haute-normandie": "Haute-Normandie",
+    "basse-normandie": "Basse-Normandie",
+    "poitou-charentes": "Poitou-Charentes",
+    "centre": "Centre",
+    "champagne-ardenne": "Champagne-Ardenne",
+    "lorraine": "Lorraine",
+    "alsace": "Alsace",
+    "bourgogne": "Bourgogne",
+    "franche-comte": "Franche-Comté",
+    "rhone-alpes": "Rhône-Alpes",
+    "auvergne": "Auvergne",
+    "limousin": "Limousin",
+    "aquitaine": "Aquitaine",
+    "midi-pyrenees": "Midi-Pyrénées",
+    "languedoc-roussillon": "Languedoc-Roussillon",
+    # les régions inchangées sont dans les deux époques
+    "bretagne": "Bretagne",
+    "pays-de-la-loire": "Pays de la Loire",
+    "ile-de-france": "Île-de-France",
+    "provence-alpes-cote-dazur": "Provence-Alpes-Côte d'Azur",
+    "corse": "Corse",
 }
 
-# les couleurs des images d'origine du projet
+# les couleurs des images d'origine du projet (celles de la carte de fin sont dans CarteFin.java)
 BLEU_CLAIR = "#a2d1fb"
-BLEU_FONCE = "#3a4bc4"
-FOND_CARTE = "#fbf9f6"
-TRAIT_CARTE = "#8c98b8"
 TRAIT_DEPARTEMENT = "#7f97ad"
 GRIS_DEFAUT = "#b7c3cf"
 
@@ -252,24 +248,6 @@ def decalage(region):
     return DECALAGE_CORSE if region["properties"]["nom"] == "Corse" else (0, 0)
 
 
-def carte(chemin, regions, nom_cible):
-    formes = {}
-    for region in regions:
-        nom = region["properties"]["nom"]
-        formes[nom] = [projeter(anneau, LATITUDE_FRANCE, decalage(region)) for anneau in anneaux(region["geometry"])]
-    if nom_cible not in formes:
-        raise ValueError(f"région inconnue dans les contours : {nom_cible}")
-    # 600 pixels : l'image est affichée dans un cadre de 400 × 220 points, plus grand ne servirait à rien
-    fig, ax = figure([forme for liste in formes.values() for forme in liste], 600, 0.05)
-    for nom, liste in formes.items():
-        cible = nom == nom_cible
-        for forme in liste:
-            ax.add_patch(Polygon(forme, closed=True, facecolor=BLEU_FONCE if cible else FOND_CARTE,
-                                 edgecolor="white" if cible else TRAIT_CARTE, linewidth=1.6 if cible else 1.3,
-                                 zorder=2 if cible else 1))
-    enregistrer(fig, chemin, 0.6)
-
-
 # la carte de France de la fin de partie, que le jeu dessine lui-même (CarteFin) pour colorier chaque région
 # proposée : toutes les régions de métropole, nouvelles et anciennes, dans un même repère de 2000 unités sur le plus
 # grand côté (une France que le jeu dessine sur 220 pixels : une unité y fait un dixième de pixel, d'où une tolérance
@@ -285,10 +263,9 @@ def france(chemin, nouvelles, anciennes, departements):
     # chaque région une seule fois, sous le nom de fichier du jeu (RegionFr.getFichier) : les régions inchangées en
     # 2016 sont prises dans les contours des nouvelles
     projetes = {}
-    for images, liste in ((CARTES_NOUVELLES, nouvelles), (CARTES_ANCIENNES, anciennes)):
+    for noms, liste in ((REGIONS_NOUVELLES, nouvelles), (REGIONS_ANCIENNES, anciennes)):
         par_nom = {region["properties"]["nom"]: region for region in liste}
-        for image, nom in images.items():
-            fichier = image.removesuffix(".png")
+        for fichier, nom in noms.items():
             if fichier not in projetes:
                 region = par_nom[nom]
                 projetes[fichier] = [projeter(anneau, LATITUDE_FRANCE, decalage(region))
@@ -364,12 +341,8 @@ def main():
         silhouette(ressources / "regions" / f"{region}.png", choisis)
         points += contours(ressources / "departements" / f"{region}.json", choisis, ZOOM.get(region))
     defaut(ressources / "regions" / "defaut.png", nouvelles)
-    for image, nom in CARTES_NOUVELLES.items():
-        carte(ressources / "cartes" / "nouvelles" / image, nouvelles, nom)
-    for image, nom in CARTES_ANCIENNES.items():
-        carte(ressources / "cartes" / "anciennes" / image, anciennes, nom)
     points_france = france(ressources / "france.json", nouvelles, anciennes, departements)
-    print(f"{len(liste['regions']) + 1} silhouettes, {len(CARTES_NOUVELLES) + len(CARTES_ANCIENNES)} cartes, "
+    print(f"{len(liste['regions']) + 1} silhouettes, "
           f"{len(liste['regions'])} fichiers de contours ({points} points), la carte de France ({points_france} points)")
 
 

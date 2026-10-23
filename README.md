@@ -22,6 +22,8 @@ Une silhouette de région s'affiche : à toi de la reconnaître en 6 essais maxi
 - Après chaque essai raté, un **indice** se dévoile : superficie, spécialité culinaire, personnalité,
   capitale régionale, puis monument ([liste des indices](docs/indices.md)).
 - Proposer deux fois la même région ne coûte pas d'essai.
+- À la fin, la **carte de France** colorie tes propositions, du jaune (loin) à l'orange (proche), et la réponse en
+  vert si tu l'as trouvée (en bleu sinon) ; l'outre-mer est en encarts. Survoler une région donne son nom.
 - La saisie est tolérante : majuscules, accents, espaces et tirets sont ignorés
   (`ile de france` = `Île-de-France`), et les noms anglais sont acceptés (`Brittany`).
   Des suggestions s'affichent pendant la frappe.
@@ -92,8 +94,9 @@ francle/
 │   │   ├── jeu/               les règles, sans affichage (Partie, Bonus, Reponse, Indice, RegionDuJour…)
 │   │   ├── stats/             l'historique des parties du jour et les statistiques, enregistrés en JSON
 │   │   └── ui/                la fenêtre Swing (Francle, la classe à lancer)
-│   ├── main/resources/        Silhouettes (regions/), cartes de fin de partie (cartes/), textes en deux langues
-│   │                          (textes/), départements de chaque région et leurs contours (departements/)
+│   ├── main/resources/        Silhouettes (regions/), textes en deux langues (textes/), départements de chaque
+│   │                          région et leurs contours (departements/), contours de la France pour la carte de
+│   │                          fin de partie (france.json)
 │   └── test/java/fr/francle/  Tests JUnit, rangés dans les mêmes packages que les classes testées
 ├── outils/                    Le script Python qui produit les images et les contours des départements
 ├── .github/workflows/         Intégration continue : compilation et tests à chaque PR
@@ -125,6 +128,7 @@ et ce qu'elle a permis d'apprendre dans [docs/lecons.md](docs/lecons.md).
 - [x] **Phase 11** : les corrections relevées en jouant (autre époque expliquée, indices montrés en fin de partie…)
 - [x] **Phase 12** : la liste des départements pendant le bonus, reprise du web
 - [x] **Phase 13** : le bonus simplifié (les départements de la région), et sa version difficile en option
+- [x] **Phase 14** : la carte de fin en couleur (les propositions selon leur proximité, l'outre-mer en encarts)
 
 ## Historique
 

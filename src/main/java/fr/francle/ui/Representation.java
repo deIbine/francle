@@ -1,8 +1,6 @@
 package fr.francle.ui;
 
-import fr.francle.donnees.ModeRegions;
 import fr.francle.donnees.RegionFr;
-import fr.francle.donnees.Zone;
 
 import java.awt.Dimension;
 import java.awt.Graphics2D;
@@ -11,21 +9,18 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Optional;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 
 /*
-Les images du jeu : la silhouette de la région à deviner, et la carte de France qui révèle la réponse.
-Les images sont des ressources : Maven les copie depuis src/main/resources à côté des classes compilées
+Les images du jeu : la silhouette de la région à deviner (la carte de France de la fin, elle, est dessinée par
+CarteFin). Les images sont des ressources : Maven les copie depuis src/main/resources à côté des classes compilées
 (et dans le .jar). On les cherche donc dans le classpath, quel que soit le dossier d'où le jeu est lancé.
  */
 final class Representation {
 
     // toutes ces images sont produites par outils/generer_images.py, sur fond transparent (thème clair comme sombre)
     static final String SILHOUETTES = "regions/";
-    static final String CARTES_NOUVELLES = "cartes/nouvelles/";
-    static final String CARTES_ANCIENNES = "cartes/anciennes/";
     static final String DEFAUT = SILHOUETTES + "defaut.png";
 
     private Representation() {}
@@ -48,15 +43,6 @@ final class Representation {
     // quand le joueur a désactivé la silhouette
     static String silhouette(RegionFr cible, boolean avecImages) {
         return avecImages ? SILHOUETTES + cible.getImage() : DEFAUT;
-    }
-
-    // la carte de France où la région est coloriée, pour la fin de partie : seulement en métropole. La France
-    // dessinée est celle du mode joué : la Bretagne n'est pas entourée des mêmes voisines avant et après 2016
-    static Optional<String> carte(RegionFr cible, ModeRegions mode) {
-        if (cible.getZone() != Zone.METROPOLE) {
-            return Optional.empty();
-        }
-        return Optional.of((mode == ModeRegions.ANCIENNES ? CARTES_ANCIENNES : CARTES_NOUVELLES) + cible.getImage());
     }
 
     // la taille d'une image agrandie ou réduite pour tenir dans le cadre, sans la déformer :

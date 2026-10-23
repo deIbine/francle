@@ -72,8 +72,8 @@ La fenêtre du jeu. Elle ne contient aucune règle : elle transmet les actions d
 puis affiche ce qu'ils répondent. Tout ici s'exécute sur l'Event Dispatch Thread (voir Francle.main).
 
 Disposition : la barre de menus (Jeu, Paramètres, Aide), puis le contenu en BorderLayout imbriqués :
-    CENTER  l'image, ou la carte des départements pendant le bonus (un CardLayout : deux « cartes » empilées au
-            même endroit, dont une seule est visible)
+    CENTER  la silhouette pendant la partie, la carte de France à la fin, ou la carte des départements pendant le
+            bonus (un CardLayout : trois « cartes » empilées au même endroit, dont une seule est visible)
     SOUTH   la saisie et le message, le tableau des essais, les indices
  */
 class Fenetre {
@@ -113,12 +113,19 @@ class Fenetre {
             KeyStroke.getKeyStroke(KeyEvent.VK_C, RACCOURCI | KeyEvent.SHIFT_DOWN_MASK), this::partager);
 
     private final JFrame frame = new JFrame("Francle");
-    // les deux « cartes » du CardLayout, et leurs noms
+    // les trois « cartes » du CardLayout, et leurs noms
     private static final String IMAGE = "image";
+    private static final String FIN = "fin";
     private static final String DEPARTEMENTS = "departements";
     private final CardLayout cartes = new CardLayout();
     private final JPanel cadre = new JPanel(cartes);
     private final JLabel image = new JLabel();
+    // la bulle d'aide nomme la région dans la langue du moment : la lambda relit le champ textes à chaque survol.
+    // Une référence textes::nom serait liée aux textes du moment de sa création : null ici (le constructeur ne les
+    // a pas encore lus), d'où une NullPointerException dès la création de la fenêtre. « this.textes » et non
+    // « textes » : le champ est déclaré plus bas, et Java refuse d'en lire le nom seul avant sa déclaration
+    // (« illegal forward reference »), même dans une lambda qui ne s'exécutera que plus tard
+    private final CarteFin carteFin = new CarteFin(region -> this.textes.nom(region));
     private final CarteDepartements carte = new CarteDepartements(this::cliquer);
     private final JTextField saisie = new JTextField(20);
     private final JButton valider = new JButton();
@@ -280,6 +287,7 @@ class Fenetre {
         image.setHorizontalAlignment(SwingConstants.CENTER);
         cadre.setPreferredSize(new Dimension(LARGEUR_IMAGE, HAUTEUR_IMAGE));
         cadre.add(image, IMAGE);
+        cadre.add(carteFin, FIN);
         cadre.add(carte, DEPARTEMENTS);
         contenu.add(cadre, BorderLayout.CENTER);
         contenu.add(bas(), BorderLayout.SOUTH);
@@ -764,8 +772,10 @@ class Fenetre {
         // tous les indices, maintenant que la partie est finie (après un abandon aussi)
         afficherIndices();
         activerSaisie(false);
-        // la réponse sur la carte de France (métropole) ; pour l'outre-mer, on garde l'image affichée
-        Representation.carte(partie.getCible(), partie.getMode()).ifPresent(this::montrer);
+        // la carte de France à la place de la silhouette : la réponse, et les régions proposées en couleur. La
+        // silhouette reviendra avec la partie suivante (montrerPartie repasse par quitterBonus, qui montre l'image)
+        carteFin.montrer(partie);
+        cartes.show(cadre, FIN);
         boutonRejouer.requestFocusInWindow();
     }
 

@@ -1,8 +1,6 @@
 package fr.francle.ui;
 
-import fr.francle.donnees.ModeRegions;
 import fr.francle.donnees.RegionFr;
-import fr.francle.donnees.Zone;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,7 +9,6 @@ import org.junit.jupiter.params.provider.EnumSource;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -45,26 +42,6 @@ class RepresentationTest {
         assertEquals("regions/bretagne.png", Representation.silhouette(RegionFr.BRETAGNE, true));
         assertEquals("regions/alsace.png", Representation.silhouette(RegionFr.ALSACE, true));
         assertEquals(Representation.DEFAUT, Representation.silhouette(RegionFr.BRETAGNE, false));
-    }
-
-    @ParameterizedTest
-    @EnumSource(ModeRegions.class)
-    @DisplayName("Carte de fin de partie : pour chaque région de métropole du mode, et elle existe")
-    void carte(ModeRegions mode) {
-        for (RegionFr region : RegionFr.tirables(mode)) {
-            Optional<String> carte = Representation.carte(region, mode);
-
-            assertEquals(region.getZone() == Zone.METROPOLE, carte.isPresent(), region.name());
-            carte.ifPresent(chemin -> assertNotNull(Representation.charger(chemin), chemin));
-        }
-    }
-
-    @Test
-    @DisplayName("Une région inchangée en 2016 a une carte de chaque époque")
-    void carteSelonLEpoque() {
-        assertEquals(Optional.of("cartes/nouvelles/bretagne.png"), Representation.carte(RegionFr.BRETAGNE, ModeRegions.NOUVELLES));
-        assertEquals(Optional.of("cartes/anciennes/bretagne.png"), Representation.carte(RegionFr.BRETAGNE, ModeRegions.ANCIENNES));
-        assertEquals(Optional.empty(), Representation.carte(RegionFr.GUYANE, ModeRegions.NOUVELLES));
     }
 
     @Test
@@ -139,7 +116,7 @@ class RepresentationTest {
     @Test
     @DisplayName("L'icône d'une vraie image tient dans le cadre")
     void icone() {
-        var icone = Representation.icone("cartes/nouvelles/bretagne.png", 420, 320);
+        var icone = Representation.icone("regions/bretagne.png", 420, 320);
 
         assertTrue(icone.getIconWidth() <= 420 && icone.getIconHeight() <= 320);
         assertTrue(icone.getIconWidth() == 420 || icone.getIconHeight() == 320);
