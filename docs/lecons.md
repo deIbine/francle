@@ -2093,6 +2093,91 @@ transparentes, sinon la silhouette paraîtrait plus petite qu'à l'endroit une f
   nom de la commande à chaque étape (partie, bonus, anglais, bonus fini, partie libre). Pas vu : le focus après la fermeture (il faut une
   fenêtre affichée à l'écran).
 
+## Phase 13 : le bonus simplifié
+
+### Revenir sur une décision sans la perdre
+
+- **Pourquoi** : à la phase 12, la liste du bonus montrait les 101 départements (« ça serait trop simple sinon »).
+  En jouant, le bonus s'est révélé trop difficile pour être le bonus de tout le monde. Supprimer l'ancien choix aurait
+  déçu ceux qui l'aimaient.
+- **Comment le faire** : l'ancien comportement devient une **option** (« Départements : version difficile »), et le
+  nouveau est celui par défaut. Le code ne garde qu'une règle, avec un paramètre : `Bonus.proposes()` donne la région
+  ou les 101.
+- **Comment le penser** : une décision de *game design* se teste en jouant. Quand elle change, se demander si l'ancienne
+  est fausse (on la remplace) ou seulement moins bonne pour la plupart (elle devient une option).
+
+### Le domaine répond, la fenêtre demande (encore)
+
+- **Pourquoi** : la liste **et** les suggestions doivent proposer les mêmes départements. Écrire la règle deux fois,
+  c'était risquer qu'elles se contredisent un jour.
+- **Comment le faire** : `Bonus.proposes()` décide (selon la question et la version) ; `Fenetre.suggestions` et
+  `montrerListeDepartements` se contentent de demander. Le `switch` qui vivait dans la fenêtre a disparu. La règle de
+  saisie (`repondre`) cherche ses débuts de nom dans la même liste : ce qu'on suggère est ce qui est joué.
+- **Comment le penser** : quand deux affichages doivent montrer la même chose, ils doivent la demander au même endroit.
+
+### Nommer un champ pour que son absence dise vrai
+
+- **Pourquoi** : Jackson donne `false` à un `boolean` absent du fichier. Deux règles demandées : un ancien **bonus**
+  se relit « difficile », un ancien **réglage** vaut « simple ».
+- **Comment le faire** : dans `Resultat`, le champ s'appelle `bonusSimple` (absent : `false`, donc difficile) ; dans
+  `Reglages`, `departementsDifficiles` (absent : `false`, donc simple). Le même mécanisme, deux noms opposés, et
+  chacun dit vrai pour les fichiers d'hier. Deux tests lisent un fichier écrit à la main au format d'avant.
+- **Comment le penser** : avant d'ajouter un champ enregistré, se demander « que vaut-il dans un fichier qui ne le
+  connaît pas ? », puis choisir le nom (ou le type, `Boolean` et `null`) qui donne cette valeur sans conversion.
+
+### Fixer une valeur à la première réponse
+
+- **Pourquoi** : le partage affiche 💪 pour la version difficile. Si l'on pouvait la cocher juste avant de partager,
+  le repère mentirait.
+- **Comment le faire** : `Bonus.changerVersion` est permis tant que le bonus n'a **aucune réponse**, puis lève une
+  `IllegalStateException`. La fenêtre l'appelle par `appliquerVersion()` à deux moments : quand la case change, et
+  quand le bonus s'affiche (un bonus passé avant toute réponse peut être repris après un changement). Un refus
+  (« pas dans la région ») ne fixe rien : il ne coûte rien.
+- **Comment le penser** : c'est la règle des modes difficiles (phase 9), qui sépare le **réglage** de **l'état de la
+  partie**. Le second suit le premier jusqu'à un moment précis, puis plus du tout.
+
+### L'ordre des règles, encore
+
+- **Pourquoi** : dans les Pays de la Loire, en version simple, « Loire » est à la fois le nom complet d'un département
+  d'une autre région (42) et un mot de Loire-Atlantique et de Maine-et-Loire.
+- **Comment le faire** : chercher le nom complet parmi les 101 **avant** les débuts de nom parmi la région : « Loire »
+  est refusé (« pas dans la région »), « loire a » joue Loire-Atlantique. Un test pour ce croisement
+  (`nomCompletAvantDebut`).
+- **Comment le penser** : la leçon de la phase 11 (« la règle la plus précise passe en premier ») se retrouve à chaque
+  nouvelle règle de saisie. Chercher dans les données l'exemple où deux règles se croisent, et l'écrire en test.
+
+### Adapter une demande au composant
+
+- **Pourquoi** : la demande parlait d'une rubrique avec une phrase d'aide. Les réglages du Java sont un menu Swing, où
+  un article n'a qu'une ligne.
+- **Comment le faire** : un **sous-menu** (`JMenu` dans un `JMenu`) fait la rubrique « Bonus 🗺️ » ; la phrase va dans
+  la bulle d'aide (`setToolTipText`) et dans « Comment jouer ». La liste, elle, prend la taille de son contenu : 4
+  noms en Bretagne, 13 en Occitanie, et le défilement seulement pour les 101 (`Math.min` avec `HAUTEUR_LISTE`).
+- **Comment le penser** : une demande décrit une intention ; chaque interface a sa façon de la tenir. Dire l'écart
+  avant de coder, puis choisir l'équivalent le plus proche.
+
+### Deux PR empilées, un jeu jouable à chaque étape
+
+- **Pourquoi** : 13.1 ajoute les règles sans le réglage. Si la fenêtre avait suivi la version par défaut (simple), les
+  joueurs auraient changé de bonus sans pouvoir revenir en arrière.
+- **Comment le faire** : en 13.1, la fenêtre crée ses bonus en version difficile, explicitement (`true`) ; en 13.2,
+  elle lit le réglage. La seconde PR a pour base la branche de la première.
+- **Comment le penser** : comme à la phase 10, chaque commit doit pouvoir être lancé, et rien ne doit changer pour le
+  joueur avant que tout soit prêt.
+
+## Bilan de la Phase 13
+
+- **Deux PR empilées** : 13.1 les règles (`Bonus.proposes`, `changerVersion`, `ReponseBonus.HorsRegion`,
+  `Resultat.bonusSimple`), 13.2 le réglage et l'affichage (sous-menu « Bonus 🗺️ », liste et suggestions tirées du
+  bonus, message « aucun département de la région », 💪 dans le partage, aide et README).
+- **416 tests** (406 avant) : les deux versions, le cas « Loire », la version fixée à la première réponse, la
+  relecture des anciens fichiers (historique et réglages), le partage.
+- **Vérifié en images** : suggestions « c » en Bretagne (Côtes-d'Armor seul ; 13 noms en difficile), les refus
+  « cant » et « Cantal » en français et en anglais, la liste de Bretagne (4 noms), d'Occitanie (13) et la difficile
+  (101, défilante), le changement de version avant la première réponse puis sa fixation, le menu Paramètres et son
+  sous-menu, le fichier d'historique (`bonusSimple`) et le texte du partage (`🗺️ 1/4 💪`). Pas vu : la bulle d'aide
+  (il faut survoler un menu affiché à l'écran ; son texte a été lu par programme).
+
 ---
 
 ## Aide-mémoire

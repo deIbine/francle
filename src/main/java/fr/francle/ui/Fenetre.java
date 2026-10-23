@@ -361,6 +361,19 @@ class Fenetre {
             tableau.setUnitesAnglaises(reglages.unitesAnglaises());
             afficherIndices();
         });
+        // le bonus : un sous-menu à lui, « Bonus 🗺️ », pour sa version difficile. Un menu n'a pas de place pour une
+        // phrase d'aide sous la case : elle est dans la bulle d'aide, et dans « Comment jouer »
+        JMenu menuBonus = new JMenu(textes.texte("parametre.bonus"));
+        JCheckBoxMenuItem difficile = new JCheckBoxMenuItem(textes.texte("parametre.departementsDifficiles"),
+                reglages.isDepartementsDifficiles());
+        difficile.setToolTipText(textes.texte("parametre.departementsDifficiles.aide"));
+        // tout de suite pour un bonus sans réponse ; pour le suivant, si le bonus affiché a déjà commencé
+        difficile.addActionListener(e -> {
+            reglages.setDepartementsDifficiles(difficile.isSelected());
+            retenirReglages();
+            appliquerVersion();
+        });
+        menuBonus.add(difficile);
         // la langue : un sous-menu, avec le nom de chaque langue écrit dans cette langue
         JMenu langues = new JMenu(textes.texte("menu.langue"));
         ButtonGroup groupeLangues = new ButtonGroup();
@@ -374,6 +387,7 @@ class Fenetre {
         parametres.add(tournee);
         parametres.add(avecListe);
         parametres.add(avecSuggestions);
+        parametres.add(menuBonus);
         parametres.addSeparator();
         parametres.add(themeSombre);
         parametres.add(miles);
@@ -804,8 +818,8 @@ class Fenetre {
         ouvrirListe(fenetre, textes.texte(finie ? "liste.finie" : "liste.aide"), noms);
     }
 
-    // pendant le bonus (mode C), les 101 départements, « Finistère (29) », triés par nom. Les 101, et pas seulement
-    // ceux de la région : la liste de la région donnerait toutes les réponses. Un clic répond pour le département
+    // pendant le bonus (mode C), les départements que le bonus propose, « Finistère (29) », triés par nom : ceux de la
+    // région dans la version simple, les 101 dans la difficile (Bonus.proposes). Un clic répond pour le département
     // choisi sur la carte, comme si on avait écrit son nom ; tant qu'il n'y en a pas, tout est grisé. Ceux qui ont déjà
     // leur réponse sont barrés
     private void montrerListeDepartements() {
@@ -814,7 +828,7 @@ class Fenetre {
         boolean fini = !bonus.enCours();
         boolean choisi = carte.getChoisi().isPresent();
         JPanel noms = new JPanel(new GridLayout(0, 2, 6, 0));
-        for (Departement departement : textes.departementsTries()) {
+        for (Departement departement : textes.departementsTries(bonus.proposes())) {
             boolean dejaRepondu = repondus.contains(departement);
             JButton nom = nomDeListe(departement.nomEtNumero(), dejaRepondu, !fini && choisi && !dejaRepondu, () -> {
                 // la liste se ferme d'abord : si c'était la dernière réponse, les résultats s'ouvriront ensuite. Le
@@ -830,15 +844,20 @@ class Fenetre {
             noms.add(nom);
         }
         String aide = fini ? "liste.departements.finie" : choisi ? "liste.departements.aide" : "liste.departements.sansChoix";
-        // 51 lignes : bien plus que la hauteur d'un écran portable (672 points utilisables). Elles défilent dans une
-        // zone de hauteur fixe, comme l'aide
+        // les 101 (version difficile), c'est 51 lignes : bien plus que la hauteur d'un écran portable (672 points
+        // utilisables). Elles défilent dans une zone de 420 points au plus, comme l'aide, avec 30 points pour la barre
+        // de défilement. Ceux d'une région (13 au plus, en Occitanie) tiennent sans défiler : la fenêtre se fait petite
         JScrollPane defilement = new JScrollPane(noms);
         defilement.setBorder(BorderFactory.createEmptyBorder());
-        defilement.setPreferredSize(new Dimension(noms.getPreferredSize().width + 30, 420));
+        Dimension taille = noms.getPreferredSize();
+        boolean defile = taille.height > HAUTEUR_LISTE;
+        defilement.setPreferredSize(new Dimension(taille.width + (defile ? 30 : 0), Math.min(taille.height, HAUTEUR_LISTE)));
         // la molette : une ligne à la fois (16 points), et non un seul point par cran
         defilement.getVerticalScrollBar().setUnitIncrement(16);
         ouvrirListe(fenetre, textes.texte(aide), defilement);
     }
+
+    private static final int HAUTEUR_LISTE = 420;
 
     // un nom de liste : un vrai bouton, qui se choisit aussi au clavier (Tab, Espace), barré au besoin
     private static JButton nomDeListe(String texte, boolean barre, boolean actif, Runnable clic) {
@@ -956,14 +975,17 @@ class Fenetre {
         }
         if (bonus == null) {
             // la partie du jour : le même ordre pour tous, retrouvé après une relance ; une partie libre : au hasard.
-            // Toujours la version difficile, celle d'avant la phase 13, tant que le réglage n'existe pas
+            // Dans la version des réglages
+            boolean difficile = reglages.isDepartementsDifficiles();
             if (partie == duJour) {
-                bonus = Bonus.duJour(duJour.getCible(), dateDuJour, true);
+                bonus = Bonus.duJour(duJour.getCible(), dateDuJour, difficile);
                 bonusDuJour = bonus;
             } else {
-                bonus = Bonus.auHasard(partie.getCible(), HASARD, true);
+                bonus = Bonus.auHasard(partie.getCible(), HASARD, difficile);
             }
         }
+        // un bonus passé avant toute réponse, puis repris : la version a pu changer entre-temps
+        appliquerVersion();
         dansLeBonus = true;
         nommerListe();
         carte.montrer(bonus);
@@ -972,6 +994,15 @@ class Fenetre {
         // (afficherBonus donne aussi le focus du clavier à la carte : la saisie de la région, ou le bouton « Bonus »,
         // vient d'être grisée ou cachée, et le focus y resterait sinon, Tab repartant d'on ne sait où)
         afficherBonus();
+    }
+
+    // la version du réglage (simple ou difficile) vaut pour le bonus de la partie affichée tant qu'il n'a aucune
+    // réponse ; à la première, elle est fixée (Bonus.changerVersion), et un changement attend le bonus suivant. Rien à
+    // redessiner : les suggestions et la liste demandent au bonus ce qu'il propose à chaque fois
+    private void appliquerVersion() {
+        if (bonus != null && bonus.enCours() && bonus.getTentatives().isEmpty()) {
+            bonus.changerVersion(reglages.isDepartementsDifficiles());
+        }
     }
 
     // un clic sur un département de la carte, ou Entrée au clavier (la carte ne le transmet que quand on peut le

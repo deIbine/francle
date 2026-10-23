@@ -16,7 +16,8 @@ Le résultat de la partie du jour à partager, repris de la version web (domaine
     🟩🟩🟨⬜⬜↗️
     🟩🟩🟩🟩🟨⬅️
     🟩🟩🟩🟩🟩🎉
-    🗺️ 3/4                         (le score du bonus des départements, s'il a été joué)
+    🗺️ 3/4                         (le score du bonus des départements, s'il a été joué ; « 🗺️ 3/4 💪 » dans sa
+                                   version difficile)
     https://deibine.github.io/francle-web/
 
 Ni les noms des régions, ni les indices : on ne gâche pas la réponse à ceux qui n'ont pas encore joué. Les carrés
@@ -43,10 +44,16 @@ final class Partage {
             lignes.add(carres(essai.pourcentage()) + emoji(essai.direction()));
         }
         if (bonus != null && !bonus.enCours()) {
-            lignes.add("🗺️ " + bonus.score() + "/" + bonus.total());
+            lignes.add("🗺️ " + bonus.score() + "/" + bonus.total() + (versionDifficile(bonus) ? " 💪" : ""));
         }
         lignes.add(ADRESSE);
         return String.join("\n", lignes);
+    }
+
+    // 💪 : le bonus a été joué dans la version difficile (les 101 départements), comme 🌀 et 🙈 pour la partie. Pas
+    // pour la question du numéro, en outre-mer : la version n'y change rien
+    private static boolean versionDifficile(Bonus bonus) {
+        return bonus.isDifficile() && bonus.getQuestion() == Bonus.Question.CHOIX;
     }
 
     // 87 % -> 🟩🟩🟩🟩⬜ (4 × 20 = 80, il reste 7 : moins de 10, pas de jaune)
