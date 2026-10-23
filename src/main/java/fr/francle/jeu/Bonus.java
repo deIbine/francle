@@ -26,6 +26,15 @@ Quatre sortes de questions :
             Tentative y garde le département choisi (demande) et celui qui a été écrit (donne)
     NUMERO  « Quel est le numéro de la Guadeloupe ? » : pour une région d'un seul département, où cliquer sur le
             seul département de la carte serait gratuit (comme le choisir, puis recopier le nom de la région)
+
+Deux versions du mode C (depuis la phase 13) :
+    simple     (celle par défaut) la liste et les suggestions ne proposent que les départements de la région ; un
+               département d'une autre région est refusé sans coûter de réponse
+    difficile  (une option des réglages) les 101 départements partout ; un département d'une autre région est une
+               réponse fausse, qui compte
+La version est fixée à la première réponse, comme les modes difficiles de la partie au premier essai : avant, un
+changement de réglage compte tout de suite ; après, il attend le bonus suivant. Elle ne change rien aux autres
+questions (A et B, cachés, et le numéro d'outre-mer).
  */
 public class Bonus {
 
@@ -44,11 +53,17 @@ public class Bonus {
     private final List<Departement> ordre;
     private final List<Tentative> tentatives = new ArrayList<>();
     private Etat etat = Etat.EN_COURS;
+    // la version difficile (les 101 départements) plutôt que la simple (ceux de la région)
+    private boolean difficile;
 
     // ordre : les départements de la région, dans l'ordre des questions (en mode CHOIX, le joueur choisit le sien :
     // celui-ci ne sert plus qu'à relire les fichiers d'avant la phase 10). mode : CARTE, NOM ou CHOIX, remplacé par
-    // NUMERO pour une région d'un seul département
+    // NUMERO pour une région d'un seul département. La version simple, celle par défaut
     public Bonus(RegionFr region, List<Departement> ordre, Question mode) {
+        this(region, ordre, mode, false);
+    }
+
+    public Bonus(RegionFr region, List<Departement> ordre, Question mode, boolean difficile) {
         if (ordre.size() != region.getDepartements().size()
                 || !new HashSet<>(ordre).equals(new HashSet<>(region.getDepartements()))) {
             throw new IllegalArgumentException("L'ordre doit contenir chaque département de " + region + " une fois");
@@ -59,18 +74,45 @@ public class Bonus {
         this.region = region;
         this.ordre = List.copyOf(ordre);
         this.question = ordre.size() == 1 ? Question.NUMERO : mode;
+        this.difficile = difficile;
     }
 
     // le bonus de la partie du jour : le même ordre pour tout le monde, et le même après une relance du jeu
     public static Bonus duJour(RegionFr region, LocalDate date) {
-        return new Bonus(region, ordre(region, date), MODE);
+        return duJour(region, date, false);
+    }
+
+    public static Bonus duJour(RegionFr region, LocalDate date, boolean difficile) {
+        return new Bonus(region, ordre(region, date), MODE, difficile);
     }
 
     // le bonus d'une partie libre : un ordre au hasard, à chaque fois différent (rien n'est enregistré)
-    public static Bonus auHasard(RegionFr region, Random hasard) {
+    public static Bonus auHasard(RegionFr region, Random hasard, boolean difficile) {
         List<Departement> ordre = new ArrayList<>(region.getDepartements());
         Collections.shuffle(ordre, hasard);
-        return new Bonus(region, ordre, MODE);
+        return new Bonus(region, ordre, MODE, difficile);
+    }
+
+    // le joueur change de version dans les réglages : elle compte tout de suite tant que le bonus n'a pas de réponse.
+    // Après, elle est fixée (le partage dit avec quelle version le bonus a été joué) : la fenêtre ne doit plus
+    // l'appeler, c'est une erreur de programmation
+    public void changerVersion(boolean difficile) {
+        verifierEnCours();
+        if (!tentatives.isEmpty()) {
+            throw new IllegalStateException("La version est fixée à la première réponse");
+        }
+        this.difficile = difficile;
+    }
+
+    // les départements que les suggestions (et, en mode CHOIX, la liste) proposent. Mode CHOIX : ceux de la région
+    // dans la version simple, les 101 dans la difficile. Mode B : ceux de la région (un département y est déjà
+    // colorié : rien n'est donné). Pour un clic ou un numéro, rien à proposer
+    public List<Departement> proposes() {
+        return switch (question) {
+            case CHOIX -> difficile ? Departement.tous() : region.getDepartements();
+            case NOM -> region.getDepartements();
+            case CARTE, NUMERO -> List.of();
+        };
     }
 
     // les départements mélangés avec une graine tirée de la date, comme l'angle de la silhouette (RegionDuJour.angle).
@@ -111,7 +153,8 @@ public class Bonus {
     // mode CHOIX : le joueur a choisi un département sur la carte, et donne un nom. Un département déjà trouvé
     // ailleurs est refusé sans coûter de réponse (le joueur s'est sûrement trompé de département sur la carte), comme
     // une région déjà proposée dans la partie ; un nom déjà donné à tort, lui, reste possible. Un département d'une
-    // autre région est une réponse fausse, qui compte
+    // autre région est refusé lui aussi dans la version simple (les suggestions ne le proposent pas) ; dans la
+    // difficile, c'est une réponse fausse, qui compte
     public ReponseBonus repondre(Departement choisi, Departement donne) {
         verifierEnCours();
         if (question != Question.CHOIX) {
@@ -122,6 +165,9 @@ public class Bonus {
         if (!restants().contains(choisi)) {
             throw new IllegalArgumentException(choisi.code() + " ne peut pas être choisi");
         }
+        if (!difficile && !region.getDepartements().contains(donne)) {
+            return new ReponseBonus.HorsRegion(donne);
+        }
         if (trouve(donne)) {
             return new ReponseBonus.DejaTrouve(donne);
         }
@@ -129,14 +175,16 @@ public class Bonus {
     }
 
     // mode CHOIX, la réponse écrite : le nom ou le numéro d'un des 101 départements, ou, comme pour les régions, le
-    // début d'un nom qui n'en évoque qu'un (« fin » joue le Finistère). Parmi les 101, et pas seulement ceux de la
-    // région : sinon, la liste des suggestions donnerait la réponse. Une saisie qui n'est pas un département, ou qui
-    // en évoque plusieurs, ne coûte rien
+    // début d'un nom qui n'évoque qu'un seul des départements proposés (« fin » joue le Finistère) : ceux de la région
+    // dans la version simple, les 101 dans la difficile, comme les suggestions. Un nom ou un numéro complet est cherché
+    // d'abord parmi les 101 : dans les Pays de la Loire, version simple, « Loire » est le département 42, refusé, et
+    // pas un début de Loire-Atlantique. Une saisie qui n'est pas un département, ou qui en évoque plusieurs, ne coûte
+    // rien
     public ReponseBonus repondre(Departement choisi, String saisie) {
         Optional<Departement> departement = Departement.chercher(saisie);
         if (departement.isEmpty()) {
             // (la langue ne sert qu'à ranger les suggestions : ici, seul leur nombre compte)
-            List<Departement> evoques = Departement.suggestions(saisie, Departement.tous(), Langue.FR);
+            List<Departement> evoques = Departement.suggestions(saisie, proposes(), Langue.FR);
             if (evoques.size() > 1) {
                 return new ReponseBonus.Plusieurs();
             }
@@ -229,6 +277,7 @@ public class Bonus {
     public Question getQuestion() { return question; }
     public Etat getEtat() { return etat; }
     public boolean enCours() { return etat == Etat.EN_COURS; }
+    public boolean isDifficile() { return difficile; }
     public List<Departement> getOrdre() { return ordre; }
     public List<Tentative> getTentatives() { return Collections.unmodifiableList(tentatives); }
 }

@@ -22,9 +22,14 @@ class BonusTest {
         return Departement.parCode(code).orElseThrow();
     }
 
-    // la Bretagne dans l'ordre des numéros : 22, 29, 35, 56
+    // la Bretagne dans l'ordre des numéros : 22, 29, 35, 56 (la version simple, celle par défaut)
     private static Bonus bretagne(Bonus.Question mode) {
         return new Bonus(RegionFr.BRETAGNE, RegionFr.BRETAGNE.getDepartements(), mode);
+    }
+
+    // la même, dans la version difficile (les 101 départements)
+    private static Bonus bretagneDifficile() {
+        return new Bonus(RegionFr.BRETAGNE, RegionFr.BRETAGNE.getDepartements(), Bonus.Question.CHOIX, true);
     }
 
     @Test
@@ -52,12 +57,14 @@ class BonusTest {
     @Test
     @DisplayName("Partie libre : un ordre au hasard, avec tous les départements (anciennes régions comprises)")
     void auHasard() {
-        Bonus bonus = Bonus.auHasard(RegionFr.LANGUEDOC_ROUSSILLON, new java.util.Random(1));
+        Bonus bonus = Bonus.auHasard(RegionFr.LANGUEDOC_ROUSSILLON, new java.util.Random(1), true);
 
         assertEquals(new HashSet<>(RegionFr.LANGUEDOC_ROUSSILLON.getDepartements()), new HashSet<>(bonus.getOrdre()));
         assertEquals(Bonus.MODE, bonus.getQuestion());
+        assertTrue(bonus.isDifficile());
         // la même graine donne le même ordre : le hasard est reproductible quand on le veut (ici, pour le test)
-        assertEquals(bonus.getOrdre(), Bonus.auHasard(RegionFr.LANGUEDOC_ROUSSILLON, new java.util.Random(1)).getOrdre());
+        assertEquals(bonus.getOrdre(),
+                Bonus.auHasard(RegionFr.LANGUEDOC_ROUSSILLON, new java.util.Random(1), false).getOrdre());
     }
 
     @Test
@@ -178,9 +185,9 @@ class BonusTest {
     }
 
     @Test
-    @DisplayName("Mode C : un département déjà trouvé est refusé sans rien coûter ; un nom donné à tort, non")
+    @DisplayName("Mode C, difficile : un département déjà trouvé est refusé sans rien coûter ; un nom donné à tort, non")
     void dejaTrouve() {
-        Bonus bonus = bretagne(Bonus.Question.CHOIX);
+        Bonus bonus = bretagneDifficile();
         bonus.repondre(departement("56"), departement("56"));
         bonus.repondre(departement("29"), departement("35"));     // faux : l'Ille-et-Vilaine n'est pas trouvée
 
@@ -195,9 +202,9 @@ class BonusTest {
     }
 
     @Test
-    @DisplayName("Mode C, la saisie : un nom, un numéro, ou un début de nom qui n'évoque qu'un département des 101")
+    @DisplayName("Mode C, difficile, la saisie : un nom, un numéro, ou un début de nom qui n'évoque qu'un des 101")
     void saisieChoix() {
-        Bonus bonus = bretagne(Bonus.Question.CHOIX);
+        Bonus bonus = bretagneDifficile();
 
         assertEquals(new ReponseBonus.Inconnue(), bonus.repondre(departement("22"), "Bretagne"));
         // « haute » évoque Haute-Corse, Haute-Garonne… : on demande de choisir, sans rien coûter
@@ -213,6 +220,90 @@ class BonusTest {
         // la suggestion choisie, avec son numéro (« Morbihan (56) »), répond bien avec ce département
         assertTrue(bonus.repondre(departement("56"), "Morbihan (56)") instanceof ReponseBonus.Jouee jouee
                 && jouee.tentative().juste());
+    }
+
+    // ---- les deux versions du mode C (phase 13) ----
+
+    @Test
+    @DisplayName("Les départements proposés : la région en version simple, les 101 en difficile")
+    void proposes() {
+        assertFalse(bretagne(Bonus.Question.CHOIX).isDifficile());
+        assertEquals(RegionFr.BRETAGNE.getDepartements(), bretagne(Bonus.Question.CHOIX).proposes());
+        assertEquals(Departement.tous(), bretagneDifficile().proposes());
+        // le mode B propose toujours la région ; le numéro d'outre-mer, rien, quelle que soit la version
+        assertEquals(RegionFr.BRETAGNE.getDepartements(),
+                new Bonus(RegionFr.BRETAGNE, RegionFr.BRETAGNE.getDepartements(), Bonus.Question.NOM, true).proposes());
+        assertEquals(List.of(), Bonus.duJour(RegionFr.GUYANE, JOUR, true).proposes());
+        assertEquals(List.of(), bretagne(Bonus.Question.CARTE).proposes());
+    }
+
+    @Test
+    @DisplayName("Version simple : un département d'une autre région est refusé sans coûter de réponse")
+    void horsRegion() {
+        Bonus bonus = bretagne(Bonus.Question.CHOIX);
+        Departement cantal = departement("15");
+
+        // écrit en entier, par son numéro, ou comme dans les suggestions de la version difficile
+        assertEquals(new ReponseBonus.HorsRegion(cantal), bonus.repondre(departement("22"), "Cantal"));
+        assertEquals(new ReponseBonus.HorsRegion(cantal), bonus.repondre(departement("22"), "15"));
+        assertEquals(new ReponseBonus.HorsRegion(cantal), bonus.repondre(departement("22"), "Cantal (15)"));
+        // et par la liste (un département donné directement)
+        assertEquals(new ReponseBonus.HorsRegion(cantal), bonus.repondre(departement("22"), cantal));
+        assertTrue(bonus.getTentatives().isEmpty());
+        // dans la version difficile, c'est une réponse fausse, qui compte
+        assertTrue(bretagneDifficile().repondre(departement("22"), "Cantal") instanceof ReponseBonus.Jouee jouee
+                && !jouee.tentative().juste());
+    }
+
+    @Test
+    @DisplayName("Version simple : un début de nom joue le seul département de la région qu'il évoque")
+    void debutDeNomSimple() {
+        Bonus bonus = bretagne(Bonus.Question.CHOIX);
+
+        // « haute » n'évoque aucun département de Bretagne (dans la version difficile : plusieurs, à choisir)
+        assertEquals(new ReponseBonus.Inconnue(), bonus.repondre(departement("22"), "haute"));
+        assertEquals(new ReponseBonus.Plusieurs(), bretagneDifficile().repondre(departement("22"), "haute"));
+        // « cant » n'évoque que le Cantal, hors de la région : ce n'est pas encore un département précis
+        assertEquals(new ReponseBonus.Inconnue(), bonus.repondre(departement("22"), "cant"));
+        assertTrue(bonus.getTentatives().isEmpty());
+        // « c » évoque le Cantal, le Calvados… mais un seul département de Bretagne : les Côtes-d'Armor
+        assertEquals(new ReponseBonus.Jouee(new Tentative(departement("22"), departement("22"))),
+                bonus.repondre(departement("22"), "c"));
+        assertEquals(new ReponseBonus.Plusieurs(), bretagneDifficile().repondre(departement("22"), "c"));
+    }
+
+    @Test
+    @DisplayName("Version simple : un nom complet hors région passe avant les débuts de nom (« Loire »)")
+    void nomCompletAvantDebut() {
+        Bonus bonus = new Bonus(RegionFr.PAYS_DE_LA_LOIRE, RegionFr.PAYS_DE_LA_LOIRE.getDepartements(),
+                Bonus.Question.CHOIX);
+        Departement choisi = departement("44");
+
+        // « Loire » est le département 42, d'Auvergne-Rhône-Alpes, et aussi un mot de Loire-Atlantique et de
+        // Maine-et-Loire : le nom complet l'emporte, refusé, plutôt que « choisissez dans la liste »
+        assertEquals(new ReponseBonus.HorsRegion(departement("42")), bonus.repondre(choisi, "Loire"));
+        // « loire a » ne peut être que Loire-Atlantique
+        assertTrue(bonus.repondre(choisi, "loire a") instanceof ReponseBonus.Jouee jouee && jouee.tentative().juste());
+    }
+
+    @Test
+    @DisplayName("La version se change jusqu'à la première réponse, puis elle est fixée")
+    void changerVersion() {
+        Bonus bonus = bretagne(Bonus.Question.CHOIX);
+
+        bonus.changerVersion(true);
+        assertTrue(bonus.isDifficile());
+        assertEquals(Departement.tous(), bonus.proposes());
+        bonus.changerVersion(false);
+        bonus.repondre(departement("29"), departement("29"));
+
+        assertThrows(IllegalStateException.class, () -> bonus.changerVersion(true));
+        assertFalse(bonus.isDifficile());
+        // un refus ne fixe rien : il ne coûte pas de réponse
+        Bonus refuse = bretagne(Bonus.Question.CHOIX);
+        refuse.repondre(departement("22"), "Cantal");
+        refuse.changerVersion(true);
+        assertTrue(refuse.isDifficile());
     }
 
     @Test

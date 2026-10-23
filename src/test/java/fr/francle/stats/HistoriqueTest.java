@@ -192,6 +192,34 @@ class HistoriqueTest {
     }
 
     @Test
+    @DisplayName("La version du bonus (simple ou difficile) est retenue avec ses réponses, et relue")
+    void bonusVersion() {
+        for (boolean difficile : List.of(false, true)) {
+            Bonus bonus = Bonus.duJour(CIBLE, JOUR, difficile);
+            Departement premier = bonus.getOrdre().get(0);
+            bonus.repondre(premier, premier);
+
+            Historique historique = gagnee().avecBonus(JOUR, bonus);
+
+            assertEquals(!difficile, historique.resultats().get(0).bonusSimple());
+            assertEquals(difficile, historique.bonusDuJour(JOUR).orElseThrow().isDifficile());
+            // retenir de nouveau la partie garde la version du bonus
+            assertEquals(!difficile, historique.avec(JOUR, historique.partieDuJour(JOUR))
+                    .resultats().get(0).bonusSimple());
+        }
+    }
+
+    @Test
+    @DisplayName("Un bonus enregistré avant la phase 13 se relit dans la version difficile")
+    void bonusAvantLesVersions() {
+        Departement premier = Bonus.duJour(CIBLE, JOUR).getOrdre().get(0);
+        Resultat resultat = new Resultat(JOUR, CIBLE, List.of(CIBLE), Partie.Etat.GAGNEE, null, null,
+                List.of(List.of(premier.code(), premier.code())));
+
+        assertTrue(resultat.rejouerBonus().orElseThrow().isDifficile());
+    }
+
+    @Test
     @DisplayName("L'ancien format (Phase 9 : les numéros donnés, dans l'ordre du jour) se relit toujours")
     void bonusAncienFormat() {
         List<Departement> ordre = Bonus.duJour(CIBLE, JOUR).getOrdre();

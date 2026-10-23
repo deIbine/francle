@@ -26,9 +26,13 @@ reste lisible dans les deux sens, sans changer de numéro de version.
 
 modes (depuis la Phase 9 aussi, repris de la version web) : les modes difficiles fixés au premier essai, pour le
 partage. Même principe : null dans un ancien fichier, ce qui se lit « sans mode difficile connu ».
+
+bonusSimple (depuis la Phase 13) : le bonus a été joué dans la version simple (les départements de la région). Le nom
+est choisi pour que l'absence dise vrai : un fichier plus ancien n'a pas ce champ, Jackson le laisse à false, et son
+bonus se relit dans la version difficile, la seule qui existait alors.
  */
 public record Resultat(LocalDate date, RegionFr region, List<RegionFr> propositions, Partie.Etat etat,
-                       List<String> bonus, ModesDifficiles modes, List<List<String>> paires) {
+                       List<String> bonus, ModesDifficiles modes, List<List<String>> paires, boolean bonusSimple) {
 
     // constructeur compact : il s'exécute avant de remplir les champs. List.copyOf fait une copie non modifiable,
     // pour que personne ne puisse changer un résultat après coup (et refuse une liste absente ou avec des trous)
@@ -41,35 +45,41 @@ public record Resultat(LocalDate date, RegionFr region, List<RegionFr> propositi
 
     // une partie sans bonus ni mode connu (perdue, abandonnée, ou gagnée sans avoir joué le bonus)
     public Resultat(LocalDate date, RegionFr region, List<RegionFr> propositions, Partie.Etat etat) {
-        this(date, region, propositions, etat, null, null, null);
+        this(date, region, propositions, etat, null, null, null, false);
     }
 
     // une partie avec un bonus de l'ancien format (les numéros donnés, dans l'ordre du jour)
     public Resultat(LocalDate date, RegionFr region, List<RegionFr> propositions, Partie.Etat etat,
                     List<String> bonus) {
-        this(date, region, propositions, etat, bonus, null, null);
+        this(date, region, propositions, etat, bonus, null, null, false);
     }
 
     public Resultat(LocalDate date, RegionFr region, List<RegionFr> propositions, Partie.Etat etat,
                     List<String> bonus, ModesDifficiles modes) {
-        this(date, region, propositions, etat, bonus, modes, null);
+        this(date, region, propositions, etat, bonus, modes, null, false);
+    }
+
+    // un bonus en paires, écrit avant la Phase 13 : la version difficile
+    public Resultat(LocalDate date, RegionFr region, List<RegionFr> propositions, Partie.Etat etat,
+                    List<String> bonus, ModesDifficiles modes, List<List<String>> paires) {
+        this(date, region, propositions, etat, bonus, modes, paires, false);
     }
 
     public boolean victoire() {
         return etat == Partie.Etat.GAGNEE;
     }
 
-    // le même résultat, avec les réponses de ce bonus, écrites en paires (l'ancien format disparaît)
+    // le même résultat, avec les réponses de ce bonus, écrites en paires (l'ancien format disparaît), et sa version
     public Resultat avecBonus(Bonus joue) {
         List<List<String>> reponses = joue.getTentatives().stream()
                 .map(tentative -> List.of(tentative.demande().code(), tentative.donne().code()))
                 .toList();
-        return new Resultat(date, region, propositions, etat, null, modes, reponses);
+        return new Resultat(date, region, propositions, etat, null, modes, reponses, !joue.isDifficile());
     }
 
     // le même résultat, avec le bonus d'un autre (celui qui était déjà enregistré pour cette date)
     Resultat avecBonusDe(Resultat autre) {
-        return new Resultat(date, region, propositions, etat, autre.bonus, modes, autre.paires);
+        return new Resultat(date, region, propositions, etat, autre.bonus, modes, autre.paires, autre.bonusSimple);
     }
 
     // le bonus reconstruit en rejouant ses réponses, s'il a été joué. Il est toujours fini : enregistré en cours
@@ -80,7 +90,7 @@ public record Resultat(LocalDate date, RegionFr region, List<RegionFr> propositi
         if (bonus == null && paires == null) {
             return Optional.empty();
         }
-        Bonus rejoue = Bonus.duJour(region, date);
+        Bonus rejoue = Bonus.duJour(region, date, !bonusSimple);
         if (paires != null) {
             for (List<String> paire : paires) {
                 Optional<Departement> demande = paire.size() == 2 ? Departement.parCode(paire.get(0)) : Optional.empty();
