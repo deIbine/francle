@@ -34,6 +34,7 @@ class ReglagesTest {
         assertNull(reglages.getUnitesAnglaises());     // pas encore choisi : suit la langue
         assertNull(reglages.getLangue());              // pas encore choisie : celle du système
         assertFalse(reglages.isSilhouetteTournee());
+        assertFalse(reglages.isDepartementsDifficiles());   // la version simple du bonus
     }
 
     @Test
@@ -68,6 +69,7 @@ class ReglagesTest {
         reglages.setThemeSombre(true);
         reglages.setUnitesAnglaises(true);
         reglages.setSilhouetteTournee(true);
+        reglages.setDepartementsDifficiles(true);
 
         sauvegarde.enregistrer(reglages);
         Reglages relus = sauvegarde.charger();
@@ -78,6 +80,7 @@ class ReglagesTest {
         assertTrue(relus.isThemeSombre());
         assertTrue(relus.getUnitesAnglaises());
         assertTrue(relus.isSilhouetteTournee());
+        assertTrue(relus.isDepartementsDifficiles());
         assertTrue(Files.readString(sauvegarde.getFichier()).contains("\"themeSombre\" : true"));
     }
 
@@ -92,6 +95,8 @@ class ReglagesTest {
         assertEquals(ModeRegions.ANCIENNES, reglages.getMode());
         assertTrue(reglages.isAvecImages());
         assertFalse(reglages.isThemeSombre());
+        // un joueur d'avant la phase 13 passe lui aussi à la version simple du bonus, celle par défaut
+        assertFalse(reglages.isDepartementsDifficiles());
     }
 
     @Test

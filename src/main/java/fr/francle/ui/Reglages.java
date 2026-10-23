@@ -32,6 +32,9 @@ class Reglages {
     // « Comment jouer » a déjà été montré au lancement. Absent d'un ancien fichier, il vaut false : un joueur qui a déjà
     // joué verra l'aide une fois, ce qui lui présente les nouveautés
     private boolean aideVue = false;
+    // la version difficile du bonus (les 101 départements dans la liste et les suggestions). Absent d'un ancien
+    // fichier, il vaut false : la version simple, celle par défaut pour tout le monde (phase 13)
+    private boolean departementsDifficiles = false;
 
     // ~/.francle/reglages.json, à côté de l'historique
     static Sauvegarde<Reglages> sauvegarde() {
@@ -79,4 +82,7 @@ class Reglages {
 
     public boolean isAideVue() { return aideVue; }
     public void setAideVue(boolean aideVue) { this.aideVue = aideVue; }
+
+    public boolean isDepartementsDifficiles() { return departementsDifficiles; }
+    public void setDepartementsDifficiles(boolean departementsDifficiles) { this.departementsDifficiles = departementsDifficiles; }
 }

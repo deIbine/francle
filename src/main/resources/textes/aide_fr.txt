@@ -29,8 +29,11 @@ tout comme les noms anglais (« Brittany »). Pendant la frappe, des suggestions
 ↓ et ↑ pour en choisir une, Entrée pour la reprendre, puis Entrée encore pour valider.
 Entrée sur un début de nom (« bret ») joue la seule région qu'il évoque.
 La liste des régions (menu Jeu) permet aussi de proposer une région d'un clic.
-Pendant le bonus, elle devient la liste des 101 départements : un clic sur un nom
-répond pour le département choisi sur la carte.
+Pendant le bonus, elle devient la liste des départements de la région : un clic sur
+un nom répond pour le département choisi sur la carte. Version difficile (menu
+Paramètres, Bonus 🗺️) : la liste et les suggestions proposent les 101 départements,
+pas seulement ceux de la région, et votre score est suivi de 💪 dans le partage.
+Comme les modes difficiles, la version est fixée à la première réponse du bonus.
 
 Le menu Paramètres propose un thème sombre, les distances en miles, la langue,
 et deux modes difficiles : la silhouette tournée 🌀 ou cachée 🙈. Ils sont fixés

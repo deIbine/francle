@@ -79,6 +79,12 @@ class TextesTest {
         assertEquals("Bonus 1/2 · Click on a département on the map", EN.questionBonus(choix, false));
         choix.repondre(Departement.parCode("2B").orElseThrow(), Departement.parCode("2A").orElseThrow());
         assertEquals("Raté : c'était 2B · Haute-Corse.", FR.reponseBonus(choix, choix.getTentatives().get(0)));
+        // version simple : une saisie qui ne désigne rien n'évoque aucun département de la région ; difficile : ce
+        // n'est pas un département
+        assertEquals("« cant » n'évoque aucun département de la région : réessayez.", FR.bonusInconnu(choix, "cant"));
+        assertEquals("“cant” matches no département of the region: try again.", EN.bonusInconnu(choix, "cant"));
+        Bonus difficile = new Bonus(RegionFr.CORSE, RegionFr.CORSE.getDepartements(), Bonus.Question.CHOIX, true);
+        assertEquals("« cant » n'est pas un département : réessayez.", FR.bonusInconnu(difficile, "cant"));
 
         Bonus guyane = Bonus.duJour(RegionFr.GUYANE, LocalDate.of(2030, 3, 10));
         assertEquals("Bonus · Quel est le numéro de la Guyane ?", FR.questionBonus(guyane, false));
@@ -242,9 +248,9 @@ class TextesTest {
     }
 
     @Test
-    @DisplayName("La liste des départements : les 101, triés à la française (Hérault à la lettre H)")
+    @DisplayName("La liste des départements : ceux donnés (ici les 101), triés à la française (Hérault à la lettre H)")
     void departementsTries() {
-        List<String> noms = FR.departementsTries().stream().map(Departement::nom).toList();
+        List<String> noms = FR.departementsTries(Departement.tous()).stream().map(Departement::nom).toList();
 
         assertEquals(101, noms.size());
         assertEquals("Ain", noms.get(0));
@@ -252,7 +258,10 @@ class TextesTest {
         assertTrue(noms.indexOf("Hauts-de-Seine") < noms.indexOf("Hérault"));
         assertTrue(noms.indexOf("Hérault") < noms.indexOf("Ille-et-Vilaine"));
         // la même liste en anglais : les noms restent en français
-        assertEquals(FR.departementsTries(), EN.departementsTries());
+        assertEquals(FR.departementsTries(Departement.tous()), EN.departementsTries(Departement.tous()));
+        // ceux d'une région seulement (la version simple du bonus) : Côtes-d'Armor, Finistère, Ille-et-Vilaine, Morbihan
+        assertEquals(List.of("Côtes-d'Armor", "Finistère", "Ille-et-Vilaine", "Morbihan"),
+                FR.departementsTries(RegionFr.BRETAGNE.getDepartements()).stream().map(Departement::nom).toList());
     }
 
     @Test

@@ -228,9 +228,15 @@ final class Textes {
                 : texte("bonus.rate", demande.code(), demande.nom());
     }
 
+    // une saisie qui ne désigne rien. Dans la version simple du mode C, elle peut évoquer un département d'une autre
+    // région (« cant » en Bretagne) : on dit donc qu'elle n'évoque aucun département de la région
     String bonusInconnu(Bonus bonus, String saisie) {
-        return texte(bonus.getQuestion() == Bonus.Question.NUMERO ? "bonus.inconnuNumero" : "bonus.inconnu",
-                saisie.strip());
+        String cle = switch (bonus.getQuestion()) {
+            case NUMERO -> "bonus.inconnuNumero";
+            case CHOIX -> bonus.isDifficile() ? "bonus.inconnu" : "bonus.inconnuRegion";
+            case CARTE, NOM -> "bonus.inconnu";
+        };
+        return texte(cle, saisie.strip());
     }
 
     // le bonus est fini : terminé ou passé, avec le score. Pour un seul département, on dit simplement juste ou faux
@@ -257,10 +263,10 @@ final class Textes {
         return regions;
     }
 
-    // les 101 départements, dans l'ordre alphabétique de la langue (Hérault à la lettre H). Les noms, eux, restent en
-    // français dans les deux langues, comme sur les cartes
-    List<Departement> departementsTries() {
-        List<Departement> departements = new ArrayList<>(Departement.tous());
+    // ces départements (ceux que le bonus propose : la région, ou les 101), dans l'ordre alphabétique de la langue
+    // (Hérault à la lettre H). Les noms, eux, restent en français dans les deux langues, comme sur les cartes
+    List<Departement> departementsTries(List<Departement> parmi) {
+        List<Departement> departements = new ArrayList<>(parmi);
         departements.sort(Comparator.comparing(Departement::nom, Collator.getInstance(langue.getLocale())));
         return departements;
     }
