@@ -110,6 +110,35 @@ class SauvegardeTest {
     }
 
     @Test
+    @DisplayName("La version simple du bonus (Phase 13) est enregistrée, et relue à l'identique")
+    void bonusSimple() throws IOException {
+        Sauvegarde<Historique> sauvegarde = Sauvegarde.historique(dossier.resolve("historique.json"));
+        Historique historique = new Historique(Historique.VERSION, List.of(new Resultat(JOUR, RegionFr.BRETAGNE,
+                List.of(RegionFr.BRETAGNE), Partie.Etat.GAGNEE, null, null, List.of(List.of("56", "56")), true)), null);
+
+        sauvegarde.enregistrer(historique);
+
+        assertTrue(Files.readString(sauvegarde.getFichier()).contains("\"bonusSimple\" : true"));
+        assertEquals(historique, sauvegarde.charger());
+    }
+
+    @Test
+    @DisplayName("Un bonus enregistré avant la Phase 13 (sans bonusSimple) se relit dans la version difficile")
+    void bonusAvantLesVersions() throws IOException {
+        Path fichier = dossier.resolve("historique.json");
+        Files.writeString(fichier, """
+                { "version" : 1, "resultats" : [ { "date" : "2030-03-10", "region" : "BRETAGNE",
+                  "propositions" : [ "BRETAGNE" ], "etat" : "GAGNEE", "modes" : null,
+                  "paires" : [ [ "56", "56" ] ] } ], "enCours" : null }
+                """);
+
+        Resultat resultat = Sauvegarde.historique(fichier).charger().resultats().get(0);
+
+        assertFalse(resultat.bonusSimple());
+        assertTrue(resultat.rejouerBonus().orElseThrow().isDifficile());
+    }
+
+    @Test
     @DisplayName("Un fichier d'avant le bonus (Phase 8) se lit toujours : pas de bonus joué")
     void avantLeBonus() throws IOException {
         Path fichier = dossier.resolve("historique.json");
