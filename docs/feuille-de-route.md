@@ -23,6 +23,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 11 | Les corrections relevées en jouant (avec la version web) | ✅ Fait (PR #40 à #42) |
 | 12 | La liste des départements, pendant le bonus | ✅ Fait (PR #48) |
 | 13 | Le bonus simplifié : les départements de la région | ✅ Fait (PR #50 et #51) |
+| 14 | La carte de fin en couleur | 🚧 En cours (14.1 : les contours de la France) |
 
 ---
 
@@ -898,3 +899,35 @@ un retour sur une décision de la phase 12 (« les 101, ça serait trop simple s
 2. **13.2 Le réglage et l'affichage** : `Reglages`, le sous-menu, la liste et les suggestions tirées du bonus (une
    liste plus courte en version simple), le changement avant la première réponse, le message « aucun département de
    la région », le 💪 du partage, les textes FR et EN, l'aide, la vérification en images, les leçons.
+
+---
+
+## Phase 14 : la carte de fin en couleur 🚧
+
+**Pourquoi.** C'est le point 12 de la phase 11, remis à plus tard. À la fin d'une partie, la carte de France ne
+colorie que la réponse, en bleu : ce sont des images toutes faites (`Representation.carte`), une par région. Une image
+fixe ne peut pas savoir ce que le joueur a proposé. La carte de fin montrera aussi **les régions proposées**, coloriées
+selon leur proximité : on y voit d'un coup d'œil le chemin parcouru. Le 23 octobre 2026, une maquette (la copie d'une
+carte actuelle, coloriée à la main) a fixé l'aspect, et l'utilisateur l'a validée.
+
+### Les décisions (le 23 octobre 2026)
+
+| Sujet | Décision |
+|---|---|
+| Régions proposées | Un **dégradé continu**, du jaune pâle (loin) à l'orange foncé (proche), selon le pourcentage de proximité de l'essai. |
+| La réponse | En **vert** si la partie est gagnée, en **bleu foncé** sinon (perdue ou abandonnée), comme aujourd'hui. |
+| Les autres régions | Le fond clair et les bords gris-bleu des cartes actuelles. |
+| Outre-mer | Les cinq régions d'outre-mer en **encarts**, à côté de la métropole, chacune à son échelle. Une proposition en outre-mer se voit donc aussi, et une réponse en outre-mer a enfin sa carte. |
+| Thème sombre | **Les mêmes couleurs** dans les deux thèmes (comme les images actuelles). |
+| Le dessin | Par le jeu lui-même (comme la carte des départements), à partir d'un **nouveau fichier de contours** de la France : les fichiers des départements ont chacun leur propre repère. |
+
+### Le découpage (trois PR empilées)
+
+1. **14.1 Les contours de la France** : `outils/generer_images.py` écrit `resources/france.json` (les 30 régions de
+   métropole, nouvelles et anciennes, dans un même repère, et les 5 régions d'outre-mer, chacune dans le sien) ;
+   `ContoursFrance` le lit ; des tests vérifient que chaque région y est, que les régions d'un mode ne se chevauchent
+   pas, et que chaque ancienne région tombe dans sa nouvelle. Le jeu ne change pas encore.
+2. **14.2 Le dessin** : le composant `CarteFin` (régions du mode, encarts d'outre-mer, une bulle d'aide qui nomme la
+   région survolée) ; la couleur de chaque région, une fonction sans affichage, testée.
+3. **14.3 Le branchement** : la fenêtre montre `CarteFin` à la fin de la partie ; les anciennes images
+   (`cartes/`) et `Representation.carte` disparaissent ; la vérification en images, les leçons, le README.

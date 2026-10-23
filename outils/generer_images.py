@@ -7,6 +7,8 @@ Les images sont sur fond transparent : elles s'affichent aussi bien en thème cl
     cartes/nouvelles/<image>    la France des régions de 2016, la réponse en bleu (fin de partie, mode « nouvelles »)
     cartes/anciennes/<image>    la France d'avant 2016, la réponse en bleu (fin de partie, mode « anciennes »)
     departements/<région>.json  les contours de chaque département de la région, pour le bonus des départements
+    france.json                 les contours de chaque région (métropole, et l'outre-mer en encarts), pour la carte
+                                de fin de partie que le jeu dessine lui-même
 
 Les départements de chaque région ne sont pas écrits ici : ils sont lus dans departements/departements.json, le
 fichier dont se sert aussi le jeu.
@@ -183,6 +185,18 @@ def aire(points):
     return abs(sum(x1 * y2 - x2 * y1 for (x1, y1), (x2, y2) in zip(points, points[1:] + points[:1]))) / 2
 
 
+def traces(anneaux_ecran, tolerance):
+    """Des contours déjà à l'échelle de l'écran -> les tracés à écrire : simplifiés, en nombres entiers, à plat
+    (x0, y0, x1, y1…), sans les îlots trop petits pour être vus. Pour les départements comme pour la carte de France."""
+    resultat = []
+    for anneau in anneaux_ecran:
+        points = simplifier(anneau, tolerance)
+        points = [(round(x), round(y)) for x, y in points[:-1]]   # le dernier point répète le premier
+        if len(points) >= 3 and aire(points) >= 4:
+            resultat.append([valeur for point in points for valeur in point])
+    return resultat
+
+
 def contours(chemin, departements, codes_zoom):
     anneaux_par_code = {d["properties"]["code"]: tous_les_anneaux(d["geometry"]) for d in departements}
     tous = [anneau for liste in anneaux_par_code.values() for anneau in liste]
@@ -200,14 +214,9 @@ def contours(chemin, departements, codes_zoom):
     points_ecrits = 0
     for d in departements:
         code = d["properties"]["code"]
-        traces = []
-        for anneau in projetes[code]:
-            points = simplifier([ecran(x, y) for x, y in anneau], TOLERANCE)
-            points = [(round(x), round(y)) for x, y in points[:-1]]   # le dernier point répète le premier
-            if len(points) >= 3 and aire(points) >= 4:
-                traces.append([valeur for point in points for valeur in point])
-                points_ecrits += len(points)
-        lignes.append(json.dumps({"code": code, "contours": traces}, separators=(",", ":")))
+        liste = traces([[ecran(x, y) for x, y in anneau] for anneau in projetes[code]], TOLERANCE)
+        points_ecrits += sum(len(trace) // 2 for trace in liste)
+        lignes.append(json.dumps({"code": code, "contours": liste}, separators=(",", ":")))
 
     entete = {"largeur": round((max(xs) - min(xs)) * echelle), "hauteur": round((max(ys) - min(ys)) * echelle)}
     if codes_zoom:
@@ -261,6 +270,69 @@ def carte(chemin, regions, nom_cible):
     enregistrer(fig, chemin, 0.6)
 
 
+# la carte de France de la fin de partie, que le jeu dessine lui-même (CarteFin) pour colorier chaque région
+# proposée : toutes les régions de métropole, nouvelles et anciennes, dans un même repère de 2000 unités sur le plus
+# grand côté (une France que le jeu dessine sur 220 pixels : une unité y fait un dixième de pixel, d'où une tolérance
+# de 2), puis les cinq régions d'outre-mer, chacune dans son propre repère : un encart, comme sur les cartes de l'INSEE
+COTE_FRANCE = 2000
+TOLERANCE_FRANCE = 2.0
+COTE_ENCART = 400
+# le département de chaque région d'outre-mer (une région d'un seul département), et le nom de son fichier
+OUTRE_MER = {"971": "guadeloupe", "972": "martinique", "973": "guyane", "974": "la-reunion", "976": "mayotte"}
+
+
+def france(chemin, nouvelles, anciennes, departements):
+    # chaque région une seule fois, sous le nom de fichier du jeu (RegionFr.getFichier) : les régions inchangées en
+    # 2016 sont prises dans les contours des nouvelles
+    projetes = {}
+    for images, liste in ((CARTES_NOUVELLES, nouvelles), (CARTES_ANCIENNES, anciennes)):
+        par_nom = {region["properties"]["nom"]: region for region in liste}
+        for image, nom in images.items():
+            fichier = image.removesuffix(".png")
+            if fichier not in projetes:
+                region = par_nom[nom]
+                projetes[fichier] = [projeter(anneau, LATITUDE_FRANCE, decalage(region))
+                                     for anneau in tous_les_anneaux(region["geometry"])]
+    xs = [x for liste in projetes.values() for anneau in liste for x, _ in anneau]
+    ys = [y for liste in projetes.values() for anneau in liste for _, y in anneau]
+    echelle = COTE_FRANCE / max(max(xs) - min(xs), max(ys) - min(ys))
+    lignes = []
+    points_ecrits = 0
+    for fichier, liste in projetes.items():
+        # la latitude monte vers le nord, l'écran descend : on retourne l'axe des y
+        ecran = [[((x - min(xs)) * echelle, (max(ys) - y) * echelle) for x, y in anneau] for anneau in liste]
+        trace = traces(ecran, TOLERANCE_FRANCE)
+        points_ecrits += sum(len(t) // 2 for t in trace)
+        lignes.append(json.dumps({"region": fichier, "contours": trace}, separators=(",", ":")))
+
+    par_code = {d["properties"]["code"]: d for d in departements}
+    encarts = []
+    for code, fichier in OUTRE_MER.items():
+        anneaux_dom = tous_les_anneaux(par_code[code]["geometry"])
+        # projetée à sa propre latitude, comme sa silhouette : la Guyane est près de l'équateur
+        latitude = sum(lat for anneau in anneaux_dom for _, lat in anneau) / sum(len(anneau) for anneau in anneaux_dom)
+        liste = [projeter(anneau, latitude) for anneau in anneaux_dom]
+        x0 = min(x for anneau in liste for x, _ in anneau)
+        x1 = max(x for anneau in liste for x, _ in anneau)
+        y0 = min(y for anneau in liste for _, y in anneau)
+        y1 = max(y for anneau in liste for _, y in anneau)
+        echelle_dom = COTE_ENCART / max(x1 - x0, y1 - y0)
+        ecran = [[((x - x0) * echelle_dom, (y1 - y) * echelle_dom) for x, y in anneau] for anneau in liste]
+        trace = traces(ecran, TOLERANCE)
+        points_ecrits += sum(len(t) // 2 for t in trace)
+        encarts.append(json.dumps({"region": fichier, "largeur": round((x1 - x0) * echelle_dom),
+                                   "hauteur": round((y1 - y0) * echelle_dom), "contours": trace},
+                                  separators=(",", ":")))
+
+    # une région par ligne, comme pour les départements
+    entete = {"largeur": round((max(xs) - min(xs)) * echelle), "hauteur": round((max(ys) - min(ys)) * echelle)}
+    texte = (json.dumps(entete)[:-1] + ',\n"regions":[\n' + ",\n".join(lignes) + '\n],\n"outreMer":[\n'
+             + ",\n".join(encarts) + "\n]}\n")
+    chemin.parent.mkdir(parents=True, exist_ok=True)
+    chemin.write_text(texte, encoding="utf8", newline="\n")
+    return points_ecrits
+
+
 def defaut(chemin, regions):
     formes = [projeter(anneau, LATITUDE_FRANCE, decalage(r)) for r in regions for anneau in anneaux(r["geometry"])]
     fig, ax = figure(formes, 440, 0.06)
@@ -296,8 +368,9 @@ def main():
         carte(ressources / "cartes" / "nouvelles" / image, nouvelles, nom)
     for image, nom in CARTES_ANCIENNES.items():
         carte(ressources / "cartes" / "anciennes" / image, anciennes, nom)
+    points_france = france(ressources / "france.json", nouvelles, anciennes, departements)
     print(f"{len(liste['regions']) + 1} silhouettes, {len(CARTES_NOUVELLES) + len(CARTES_ANCIENNES)} cartes, "
-          f"{len(liste['regions'])} fichiers de contours ({points} points)")
+          f"{len(liste['regions'])} fichiers de contours ({points} points), la carte de France ({points_france} points)")
 
 
 main()
