@@ -22,6 +22,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 10 | Le bonus revu : dès la victoire, et le mode C | ✅ Fait (PR #36 à #38) |
 | 11 | Les corrections relevées en jouant (avec la version web) | ✅ Fait (PR #40 à #42) |
 | 12 | La liste des départements, pendant le bonus | ✅ Fait (PR #48) |
+| 13 | Le bonus simplifié : les départements de la région | 🚧 En cours (13.1) |
 
 ---
 
@@ -851,3 +852,36 @@ Les décisions sont reprises de celles prises pour le web, adaptées au Java plu
 - Le piège du web (un compteur de demandes partagé entre deux fenêtres) n'existe pas en Swing : l'action du menu
   regarde l'état du jeu au moment du clic et ouvre la bonne liste. Il faut en revanche **renommer l'action** (et son
   article de menu) quand le bonus commence et finit, comme le web change le nom du bouton.
+
+---
+
+## Phase 13 : le bonus simplifié 🚧
+
+**Pourquoi.** Idée de l'utilisateur, le 23 octobre 2026 : pendant le bonus, la liste et les suggestions proposent les
+101 départements, ce qui le rend difficile. Elles ne proposeront plus que les **départements de la région jouée**, en
+partie du jour comme en partie libre. Le bonus actuel devient une option, « Départements : version difficile ». C'est
+un retour sur une décision de la phase 12 (« les 101, ça serait trop simple sinon ») : la version difficile la garde.
+
+### Les décisions (le 23 octobre 2026)
+
+| Sujet | Décision |
+|---|---|
+| Par défaut | La **version simple**, pour tout le monde (un réglage absent d'un ancien fichier vaut « simple »). |
+| Le réglage | Un sous-menu **« Bonus 🗺️ »** du menu Paramètres, avec la case « Départements : version difficile ». La phrase « La liste et les suggestions proposent les 101 départements, pas seulement ceux de la région. » en bulle d'aide et dans « Comment jouer ». (Le Java n'a pas d'écran de réglages à rubriques : ses réglages sont un menu.) |
+| Quand il compte | La version est **fixée à la première réponse** du bonus, comme les modes difficiles au premier essai : avant, un changement compte tout de suite ; après, il vaut pour le bonus suivant. |
+| Hors région | Version simple : un département d'une autre région, écrit en entier, par son numéro (« 15 ») ou comme une suggestion (« Cantal (15) »), est **refusé sans coûter de réponse** : « Cantal : ce département n'est pas dans la région. » Version difficile : une réponse fausse, qui compte, comme avant. |
+| Début de nom | Version simple : un début de nom qui n'évoque qu'**un seul département de la région** le joue, comme les suggestions. Un début de nom qui n'évoque que des départements d'autres régions (« cant » en Bretagne) : « n'évoque aucun département de la région », sans rien coûter. Le nom complet est cherché d'abord (« Loire » dans les Pays de la Loire est le département 42, refusé). |
+| Partage | La version difficile a son repère : « 🗺️ 9/12 💪 ». La simple n'en a pas, l'outre-mer non plus (la version n'y change rien). |
+| Statistiques | Elles ne séparent pas les deux versions. |
+| Anciens bonus | Un bonus enregistré avant la phase 13 se relit dans la version **difficile**, la seule qui existait. |
+| Outre-mer | Rien ne change : la question du numéro, sans liste ni suggestions. Les modes A et B, cachés, non plus. |
+
+### Le découpage (deux PR empilées)
+
+1. **13.1 Les règles, sans affichage** : `Bonus` connaît sa version (`isDifficile`, `changerVersion` jusqu'à la
+   première réponse, `proposes()`) ; `ReponseBonus.HorsRegion` ; `Resultat.bonusSimple`, relu par `rejouerBonus` ;
+   tests. La fenêtre reste en version difficile (le jeu ne change pas encore pour les joueurs) ; ses suggestions
+   passent déjà par `Bonus.proposes()`.
+2. **13.2 Le réglage et l'affichage** : `Reglages`, le sous-menu, la liste et les suggestions tirées du bonus (une
+   liste plus courte en version simple), le changement avant la première réponse, le message « aucun département de
+   la région », le 💪 du partage, les textes FR et EN, l'aide, la vérification en images, les leçons.
