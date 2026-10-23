@@ -23,7 +23,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 11 | Les corrections relevées en jouant (avec la version web) | ✅ Fait (PR #40 à #42) |
 | 12 | La liste des départements, pendant le bonus | ✅ Fait (PR #48) |
 | 13 | Le bonus simplifié : les départements de la région | ✅ Fait (PR #50 et #51) |
-| 14 | La carte de fin en couleur | 🚧 En cours (14.1 : les contours de la France) |
+| 14 | La carte de fin en couleur | 🚧 En cours (PR #52 : les contours ; 14.2 : le dessin) |
 
 ---
 
