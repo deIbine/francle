@@ -2072,9 +2072,21 @@ transparentes, sinon la silhouette paraîtrait plus petite qu'à l'endroit une f
 ## Bilan de la Phase 12
 
 - **Une seule PR** (#48), ménage du retour sur le PC compris, le 23 octobre 2026 : étiquette `phase-12.0` posée par
-  la conversation du web (qui a ouvert #47 pour le noter, en même temps), branches du cloud supprimées dans les deux
-  dépôts par celle du Java. Deux conversations qui font le même ménage en parallèle : vérifier ce qui est **déjà
-  fait** (`git ls-remote`) avant d'agir, et ne pas s'étonner d'un « already exists ».
+  une autre session au même moment (qui a ouvert #47 pour le noter), branche du cloud supprimée. Deux sessions qui
+  font le même ménage en parallèle : vérifier ce qui est **déjà fait** (`git ls-remote`) avant d'agir, et ne pas
+  s'étonner d'un « already exists ».
+
+### Séparer deux projets (le 23 octobre 2026)
+
+- **Pourquoi** : le Java et le web se renvoyaient l'un à l'autre (plans, tâches communes, PR jumelles). Deux sessions
+  travaillaient en parallèle sur les mêmes documents, d'où le conflit de la #48. Le web n'est plus qu'un outil de
+  comparaison.
+- **Comment le faire** : retirer les **liens de travail** (renvois au plan du web, « à faire aussi côté web »,
+  numéros de PR du web), garder l'**histoire** et les **comparaisons**, et écrire la règle dans `CLAUDE.md`, que
+  Claude lit au début de chaque conversation.
+- **Comment le penser** : un renvoi vers un autre dépôt est une dépendance, comme un `import` : il faut le tenir à
+  jour, et il casse quand l'autre bouge. Un document se suffit à lui-même quand on peut le lire sans ouvrir l'autre
+  projet.
 - **406 tests** (403 avant) : `avecListe`, `repondus`, le tri des 101 départements.
 - **Vérifié en image** : la liste sans département choisi (grisée), avec un choix, un département trouvé puis un
   manqué (barrés), en anglais, le bonus fini ; l'outre-mer (Guadeloupe, Guyane : la liste des régions reste) ; le
