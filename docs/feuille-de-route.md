@@ -523,8 +523,8 @@ réglages, et trois options changent l'expérience (thème sombre, miles, silhou
 Prévue d'abord avec Spring Boot (un serveur et une page HTML), elle a été **réorientée le 14 octobre 2026** : un
 **nouveau projet**, dans un **nouveau dépôt**, [deIbine/francle-web](https://github.com/deIbine/francle-web), en
 TypeScript (Vite + React), sans serveur, inspiré de Worldle, jouable par tous sur
-[deibine.github.io/francle-web](https://deibine.github.io/francle-web/). Son plan, ses décisions et ses leçons sont
-dans ce dépôt-là (`docs/plan.md`, `docs/lecons.md`).
+[deibine.github.io/francle-web](https://deibine.github.io/francle-web/). Depuis le 23 octobre 2026, les deux projets
+sont **séparés** : la version web n'est plus qu'un outil de comparaison (voir `CLAUDE.md`).
 
 Ce projet Java lui a servi de **référence** : le web donne la même région du jour, au bit près, et ses tests
 comparent distances, directions, pourcentages et suggestions à des valeurs produites par le Java
@@ -564,10 +564,6 @@ un commit par nouveauté. Restent propres au web : le partage en carrés emoji, 
 (`ResourceBundle`, `Locale`, `Collator`, `String.format`), la compatibilité des données enregistrées quand les règles
 changent.
 
-**Pour la suite.** Le dépôt web compare ses suggestions à celles du Java. Le Java cherche désormais aussi les noms
-anglais : si l'on régénère un jour `reference-java.json` côté web, il faudra que le test web cherche lui aussi les
-deux noms (son paramètre `nomsCherches`).
-
 Écarts qui restent voulus avec le web : 8 directions en flèches (et non en emoji), pas de partage, des menus Swing au
 lieu d'onglets. Les messages d'erreur de fichier illisible (`SauvegardeIllisible`) restent en français.
 
@@ -576,11 +572,10 @@ lieu d'onglets. Les messages d'erreur de fichier illisible (`SauvegardeIllisible
 ## Phase 9 : le bonus des départements ✅
 
 **Pourquoi.** Idée du 16 octobre 2026 : après une victoire, en bonus, faire deviner **tous les départements** de la
-région trouvée. Le bonus est fait **d'abord ici**, puis le sera dans la version web (son étape web.7, plan dans
-`docs/plan.md` de [deIbine/francle-web](https://github.com/deIbine/francle-web)). Le Java a servi à trancher les
-questions ouvertes ; ses réponses (plus bas) s'appliqueront au web.
+région trouvée. Le bonus a été fait **d'abord ici**, avant la version web. Le Java a servi à trancher les questions
+ouvertes.
 
-**Décisions** (le 16 octobre 2026, communes aux deux projets) :
+**Décisions** (le 16 octobre 2026) :
 
 - **Après chaque victoire**, en partie du jour **comme en partie libre** (d'abord prévu pour la partie du jour
   seulement, changé après le test du jeu, voir plus bas). Le bonus d'une partie libre n'est pas enregistré.
@@ -646,9 +641,6 @@ questions ouvertes ; ses réponses (plus bas) s'appliqueront au web.
   en emoji dans le tableau (elles le sont dans le partage).
 - Un test vérifie maintenant que chaque clé de texte écrite dans le code existe dans les fichiers de textes.
 
-**Côté web** : ces réponses sont reportées dans le plan de [deIbine/francle-web](https://github.com/deIbine/francle-web)
-(étape web.7.0.1, le 17 octobre 2026), y compris le bonus après **chaque** victoire ; reste à y faire le bonus.
-
 **Un écart voulu entre les deux versions : la reprise** (décidé le 17 octobre 2026). Ici, un bonus commencé puis
 quitté compte comme joué avec son score partiel, **sans reprise**. Dans la version web, un bonus du jour commencé
 puis quitté (page fermée, onglet rechargé) **reprend là où il en était** au retour : dans un navigateur, fermer un
@@ -672,8 +664,7 @@ anciens.
 **Pourquoi.** Retours des joueurs de la version web, le 17 octobre 2026 : (1) le bonus doit commencer **juste après
 la victoire**, au lieu d'attendre la fermeture des statistiques ; (2) plutôt que de chercher sur la carte un
 département nommé, on **clique sur un département, puis on écrit son nom**, comme on écrit une région. Le web l'a fait
-d'abord (étapes web.7.5 à web.7.7, plan dans `docs/plan.md` de
-[deIbine/francle-web](https://github.com/deIbine/francle-web)) ; le Java reprend les mêmes décisions.
+d'abord ; le Java reprend les mêmes décisions.
 
 **Les décisions** (celles du web, le 17 octobre 2026, et leurs réponses propres au Java) :
 
@@ -740,23 +731,13 @@ fin) reste à faire.
 **Pourquoi.** Le 18 octobre 2026, la version web a été testée de bout en bout (tests, jeu dans le navigateur, sur
 ordinateur et à la taille d'un téléphone). Chaque problème trouvé a été comparé au Java, en lisant son code et en
 exécutant ses règles dans `jshell` (`jshell --class-path "target/classes:<jars Jackson>"`, puis
-`new Partie(...).proposer("")`). Ceux qui suivent existent **aussi dans le Java**. La liste complète, avec ceux
-propres au web, est dans `docs/plan.md` de [deIbine/francle-web](https://github.com/deIbine/francle-web), section
-« Les corrections relevées le 18 octobre 2026 ».
+`new Partie(...).proposer("")`). Ceux qui suivent existent **aussi dans le Java** ; d'autres ne concernaient que le
+web.
 
-**Découpée et décidée le 18 octobre 2026, pas commencée.** Les décisions sont **celles du web**, validées le même
-jour (section « Les décisions (validées le 18 octobre 2026) » du `docs/plan.md` du web), adaptées au Java plus bas.
-Le web et le Java se font **en même temps, dans deux conversations différentes** (décidé le 18 octobre 2026) : celle
-du Java part de cette phase, sans attendre le web. Les numéros entre parenthèses sont ceux de la liste du web.
+**Découpée et décidée le 18 octobre 2026** (PR deIbine/francle#39). Les décisions sont reprises de celles prises pour
+le web le même jour, adaptées au Java plus bas. Les numéros entre parenthèses sont ceux de la liste relevée en jouant.
 
-### Pour reprendre (conversation du Java)
-
-1. Vérifier que `main` est à jour (`git pull`) et que la PR de ce plan (phase 11, deIbine/francle#39) est fusionnée.
-2. Lire cette phase, puis `docs/lecons.md`. Les décisions ci-dessous sont **déjà validées** : ne pas les reposer,
-   seulement présenter le découpage à l'utilisateur et attendre son accord avant de coder.
-3. Une branche et une PR par étape (11.1, 11.2, 11.3), empilées, comme à la phase 10.
-
-### Le découpage (trois PR, comme le web)
+### Le découpage (trois PR, empilées comme à la phase 10)
 
 1. **11.1 Les bugs** (points 1 et 4) : `Autocompletion`, `Fenetre.jouer()`, `Partie.proposer()`, tests JUnit.
 2. **11.2 La saisie et la fin de partie** (points 5 et 6) : une nouvelle réponse `Reponse.AutreEpoque` (le
@@ -779,7 +760,7 @@ Le point 12 (carte de fin) est remis à plus tard, comme sur le web.
 | (8) Suggestions | **« Finistère (29) »** partout dans le bonus ; choisir une suggestion répond bien avec ce département. |
 | (12) Carte de fin | **Plus tard**, dans sa propre étape. |
 
-Ne concernent que le web : les points 2, 3, 9, 10 et 11 (voir plus bas), et la PR d'outillage des tests.
+Ne concernaient que le web : les points 2, 3, 9, 10 et 11 (voir plus bas).
 
 **Les bugs :**
 
@@ -803,13 +784,12 @@ Ne concernent que le web : les points 2, 3, 9, 10 et 11 (voir plus bas), et la P
 - **(7) La question du numéro, en outre-mer.** « Bonus · Quel est le numéro de : La Réunion ? » : les deux-points
   sont maladroits (`bonus.numero` dans les textes). Piste : « Quel est le numéro de La Réunion ? », ce qui demande
   l'article de chacun des cinq départements d'outre-mer (« de la Guadeloupe », « de la Guyane », « de Mayotte »…) :
-  sans doute la raison des deux-points. Le focus, lui, va déjà dans la saisie : rien à changer ici (le web, lui,
-  doit le corriger).
+  sans doute la raison des deux-points. Le focus, lui, va déjà dans la saisie : rien à changer ici.
 - **(8) Les numéros dans les suggestions de départements.** « corse » propose « Corse-du-Sud, Haute-Corse », sans
   2A ni 2B (`Departement::nom` dans `Fenetre.suggestions`). Piste : « Finistère (29) », pour apprendre les numéros en
   passant ; la saisie doit alors accepter la suggestion choisie avec son numéro.
 - **(12) La carte de fin.** Elle ne colore que la réponse (des images toutes faites, `Representation.carte`).
-  Piste, déjà notée côté web : montrer aussi les régions proposées ; demande de dessiner la carte (comme le web avec
+  Piste : montrer aussi les régions proposées ; demande de dessiner la carte (comme le web avec
   ses contours), donc une étape plus longue.
 
 **Ce qui ne concerne pas le Java** (vérifié) : le pourcentage des statistiques (le Java passe déjà par
@@ -823,10 +803,8 @@ le « survol » au doigt, et le score du bonus dans les résultats d'une partie 
 **Faite le 23 octobre 2026**, en une seule PR (deIbine/francle#48, choix de l'utilisateur : le ménage du retour sur
 le PC et le code ensemble). Ce qui a été fait :
 
-- **Le ménage** : la conversation du web a posé l'étiquette `phase-12.0` (sur `f16f013`) et celles du web
-  (`web-7.12.0`, `web-7.12.0.1`, `web-7.12`), le même jour (PR deIbine/francle#47 et deIbine/francle-web#39) ; celle
-  du Java a supprimé les branches du cloud (`ccr-8009fd8d-mbx5ca`) dans les deux dépôts, après avoir vérifié que leur
-  contenu était celui de `main` (même arbre).
+- **Le ménage** : l'étiquette `phase-12.0` posée sur `f16f013` (notée par la PR deIbine/francle#47) et la branche du
+  cloud (`ccr-8009fd8d-mbx5ca`) supprimée, après avoir vérifié que son contenu était celui de `main` (même arbre).
 - **Le domaine** : `Bonus.avecListe()` (mode C seulement) et `Bonus.repondus()` (le département joué de chaque
   réponse), comme le web.
 - **La fenêtre** : `montrerListe()` ouvre la liste des départements ou des régions selon l'état du jeu au moment du
@@ -835,21 +813,17 @@ le PC et le code ensemble). Ce qui a été fait :
 - **Les textes** : `action.listeDepartements`, `liste.departements.*` (au vouvoiement), la case des paramètres
   (« Liste des régions et des départements ») et une phrase dans l'aide, en français et en anglais.
 
-Les leçons sont dans [lecons.md](lecons.md#phase-12--la-liste-des-départements). Pour la suite : le point 12 de la
-phase 11 (la carte de fin), ou une des idées du web (compteur de la partie libre, repère « voisine », mode
-« métropole seulement »), à choisir avec l'utilisateur.
+Les leçons sont dans [lecons.md](lecons.md#phase-12--la-liste-des-départements). Pour la suite, à choisir avec
+l'utilisateur : le point 12 de la phase 11 (la carte de fin), un compteur de la partie libre, un repère « voisine »,
+un mode « métropole seulement ».
 
 **Travailler depuis le cloud** (noté le 19 octobre 2026) : Claude Code sur le web peut fusionner les PR, mais **ni
 poser d'étiquette, ni supprimer de branche** (erreur 403 du serveur intermédiaire). Ce qui reste à faire est alors
-noté dans la section « À faire sur le PC » du `docs/plan.md` de
-[deIbine/francle-web](https://github.com/deIbine/francle-web) (pour les deux dépôts), et fait au retour sur le PC par
-Claude (l'utilisateur ne lance aucune commande).
+noté dans cette feuille de route, et fait au retour sur le PC par Claude (l'utilisateur ne lance aucune commande).
 
 **Pourquoi.** Idée de l'utilisateur, le 19 octobre 2026 : le bonus n'a pas de liste, contrairement à la partie (menu
 Jeu, « Liste des régions », Ctrl+L). Pendant le bonus, cette commande ouvrirait donc la **liste des départements**.
-Les décisions ont été prises dans la conversation du web (section « La liste des départements (web.7.12) » du
-`docs/plan.md` de [deIbine/francle-web](https://github.com/deIbine/francle-web)), et valent pour le Java, adaptées
-plus bas. Le web et le Java se font chacun dans sa conversation, sans s'attendre.
+Les décisions sont reprises de celles prises pour le web, adaptées au Java plus bas.
 
 ### Les décisions (celles du web, adaptées au Java)
 
@@ -863,10 +837,10 @@ plus bas. Le web et le Java se font chacun dans sa conversation, sans s'attendre
 | Quand | Les départements **tant que le bonus est affiché**, même fini (tout grisé, avec « Le bonus est fini »). Les régions de nouveau quand la silhouette revient (bonus passé avant toute réponse, nouvelle partie). |
 | La commande | **La même** (menu Jeu, Ctrl+L), dont le nom change : « Liste des départements » pendant le bonus (`action.liste` et un nouveau texte). |
 | Réglage et aide | La case « Liste des régions » des paramètres (`parametre.liste`, `Reglages.avecListe`) vaut pour les deux listes, son texte le dit ; une phrase dans l'aide. En français et en anglais. |
-| Déjà répondus, précisé | (Décidé au découpage du web, le 19 octobre 2026.) Sont barrés **tous les départements dont la place sur la carte est déjà jouée, trouvés comme manqués** : les donner ailleurs ne peut être que faux (ou refusé, pour un département trouvé), et leur nom est déjà sur la carte. Seuls des départements de la région peuvent donc être barrés. |
+| Déjà répondus, précisé | (Décidé le 19 octobre 2026.) Sont barrés **tous les départements dont la place sur la carte est déjà jouée, trouvés comme manqués** : les donner ailleurs ne peut être que faux (ou refusé, pour un département trouvé), et leur nom est déjà sur la carte. Seuls des départements de la région peuvent donc être barrés. |
 | Après un clic | (Idem.) La liste se ferme, la réponse est donnée, et le **focus revient là où il était** (sur le web, le bouton 📃 ; en Swing, la fenêtre principale, comme à la fermeture de la liste des régions). |
 
-**Ce que le web a fait, utile pour le Java** (PR deIbine/francle-web#36) :
+**Comparaison avec la version web**, qui avait déjà sa liste et a servi de modèle :
 
 - Une fonction du domaine décide si le bonus a sa liste (`avecListe` : seulement le mode C, donc pas la question du
   numéro), une autre donne les départements à barrer (`repondus`) : l'équivalent Java irait dans `Bonus`.
