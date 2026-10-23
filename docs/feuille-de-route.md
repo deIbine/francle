@@ -22,7 +22,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 10 | Le bonus revu : dès la victoire, et le mode C | ✅ Fait (PR #36 à #38) |
 | 11 | Les corrections relevées en jouant (avec la version web) | ✅ Fait (PR #40 à #42) |
 | 12 | La liste des départements, pendant le bonus | ✅ Fait (PR #48) |
-| 13 | Le bonus simplifié : les départements de la région | 🚧 En relecture (PR #50 et 13.2) |
+| 13 | Le bonus simplifié : les départements de la région | 🚧 En relecture (PR #50 et #51) |
 
 ---
 
@@ -857,7 +857,7 @@ Les décisions sont reprises de celles prises pour le web, adaptées au Java plu
 
 ## Phase 13 : le bonus simplifié 🚧
 
-**Codée le 23 octobre 2026**, en deux PR empilées : deIbine/francle#50 (13.1, les règles) et la 13.2 (le réglage et
+**Codée le 23 octobre 2026**, en deux PR empilées : deIbine/francle#50 (13.1, les règles) et #51 (13.2, le réglage et
 l'affichage). Ce qui a été fait, en plus des décisions plus bas :
 
 - **13.1** : `Bonus.proposes()`, `isDifficile()`, `changerVersion()` ; `ReponseBonus.HorsRegion` ;
