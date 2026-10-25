@@ -8,7 +8,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -100,5 +103,36 @@ class RegionDuJourTest {
         }
         // 100 jours, 360 angles possibles : s'ils étaient presque tous pareils, le hasard serait mal fait
         assertTrue(angles.size() > 50, angles.size() + " angles différents seulement");
+    }
+
+    // un fuseau qui change d'heure : Paris passe à l'heure d'hiver le 25 octobre 2026 (3 h -> 2 h), et à l'heure
+    // d'été le 29 mars 2026 (2 h -> 3 h)
+    private static final ZoneId PARIS = ZoneId.of("Europe/Paris");
+
+    @ParameterizedTest(name = "{0} à {1} h : {2} h avant minuit")
+    @CsvSource({
+            // un jour ordinaire : 24 heures moins l'heure qu'il est
+            "2026-10-24, 1, 23",
+            "2026-10-24, 15, 9",
+            // le jour de 25 heures : à 1 h, il reste 24 heures (l'heure de 2 h à 3 h passe deux fois)
+            "2026-10-25, 1, 24",
+            "2026-10-25, 15, 9",
+            // le jour de 23 heures : à 1 h, il ne reste que 22 heures (l'heure de 2 h à 3 h n'existe pas)
+            "2026-03-29, 1, 22",
+            "2026-03-29, 15, 9",
+    })
+    @DisplayName("Le temps jusqu'à minuit tient compte des changements d'heure")
+    void jusquAMinuit(LocalDate date, int heure, int heuresRestantes) {
+        ZonedDateTime maintenant = date.atTime(heure, 0).atZone(PARIS);
+        assertEquals(Duration.ofHours(heuresRestantes), RegionDuJour.jusquAMinuit(maintenant));
+    }
+
+    @Test
+    @DisplayName("Juste avant minuit, il reste une seconde ; à minuit pile, une journée entière")
+    void autourDeMinuit() {
+        ZonedDateTime presque = LocalDate.of(2026, 10, 24).atTime(23, 59, 59).atZone(PARIS);
+        assertEquals(Duration.ofSeconds(1), RegionDuJour.jusquAMinuit(presque));
+        ZonedDateTime minuit = LocalDate.of(2026, 10, 25).atStartOfDay(PARIS);
+        assertEquals(Duration.ofHours(25), RegionDuJour.jusquAMinuit(minuit));
     }
 }
