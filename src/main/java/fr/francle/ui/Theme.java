@@ -31,4 +31,10 @@ final class Theme {
         installer(sombre);
         FlatLaf.updateUI();
     }
+
+    // le thème installé est-il sombre ? Pour les rares couleurs écrites dans le code (les cartes dessinées à la main) :
+    // elles le demandent à chaque dessin, et suivent donc un changement de thème sans rien avoir à retenir
+    static boolean sombre() {
+        return FlatLaf.isLafDark();
+    }
 }

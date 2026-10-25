@@ -4,6 +4,7 @@ import fr.francle.donnees.Langue;
 import fr.francle.jeu.Essai;
 import fr.francle.jeu.Partie;
 
+import java.util.Optional;
 import javax.swing.table.AbstractTableModel;
 
 /*
@@ -46,6 +47,19 @@ class TableauEssais extends AbstractTableModel {
     void essaiJoue() {
         int ligne = partie.getEssais().size() - 1;
         fireTableRowsUpdated(ligne, ligne);
+    }
+
+    // l'essai de cette ligne, s'il a été joué : la case de la proximité en tire sa couleur
+    Optional<Essai> essai(int ligne) {
+        if (partie == null || ligne >= partie.getEssais().size()) {
+            return Optional.empty();
+        }
+        return Optional.of(partie.getEssais().get(ligne));
+    }
+
+    // l'essai de cette ligne a trouvé la réponse
+    boolean trouve(int ligne) {
+        return essai(ligne).map(essai -> essai.proposition() == partie.getCible()).orElse(false);
     }
 
     @Override

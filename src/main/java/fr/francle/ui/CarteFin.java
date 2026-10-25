@@ -31,9 +31,9 @@ forme (ContoursFrance) remplie de sa couleur.
     vert             la réponse, quand la partie est gagnée
     bleu foncé       la réponse, quand elle est perdue ou abandonnée
     jaune → orange   les régions proposées : plus la couleur est foncée, plus elles étaient proches de la réponse
-    fond clair       les autres
+    fond             les autres : clair en thème clair, gris bleuté en thème sombre
 À gauche, la métropole du mode de la partie ; à droite, les cinq régions d'outre-mer, chacune dans son encart, sur
-deux colonnes. Les couleurs sont les mêmes dans les deux thèmes, comme celles des images du jeu.
+deux colonnes. Seuls le fond et les bords suivent le thème : les autres couleurs sont les mêmes dans les deux.
 
 Une fois la partie finie, rien n'est plus à deviner : le survol d'une région donne son nom (bulle d'aide), pour
 apprendre celles qu'on connaît mal.
@@ -43,6 +43,10 @@ final class CarteFin extends JComponent {
     // les couleurs des cartes d'origine du jeu (outils/generer_images.py), et celles de la maquette validée
     static final Color FOND = new Color(0xFBF9F6);
     static final Color TRAIT = new Color(0x8C98B8);
+    // en thème sombre, les régions non proposées : un gris bleuté un peu plus clair que la fenêtre, et non le blanc
+    // cassé, qui éblouissait (phase 16). Les couleurs des réponses et des propositions, elles, ne changent pas
+    static final Color FOND_SOMBRE = new Color(0x5B6270);
+    static final Color TRAIT_SOMBRE = new Color(0x8D97AB);
     static final Color TROUVEE = new Color(0x2EA043);
     static final Color MANQUEE = new Color(0x3A4BC4);
     // le dégradé des régions proposées : trois couleurs, de la plus éloignée (0 %) à la plus proche (100 %)
@@ -78,8 +82,13 @@ final class CarteFin extends JComponent {
 
     // ---- les couleurs : sans affichage, testées à part ----
 
-    // la couleur d'une région, d'après la partie : la réponse, une région proposée, ou une autre
+    // la couleur d'une région, d'après la partie : la réponse, une région proposée, ou une autre (FOND, en thème clair)
     static Color couleur(RegionFr region, Partie partie) {
+        return couleur(region, partie, FOND);
+    }
+
+    // la même, avec le fond du thème pour les régions qui ne sont ni la réponse ni proposées
+    static Color couleur(RegionFr region, Partie partie, Color fond) {
         if (region == partie.getCible()) {
             return partie.getEtat() == Partie.Etat.GAGNEE ? TROUVEE : MANQUEE;
         }
@@ -87,7 +96,7 @@ final class CarteFin extends JComponent {
                 .filter(essai -> essai.proposition() == region)
                 .findFirst()
                 .map(essai -> degrade(essai.pourcentage()))
-                .orElse(FOND);
+                .orElse(fond);
     }
 
     // le dégradé continu : de LOIN à MILIEU sur la première moitié, puis de MILIEU à PROCHE. Trois couleurs plutôt
@@ -176,15 +185,18 @@ final class CarteFin extends JComponent {
         // d'abord toutes les couleurs, puis tous les bords : un bord dessiné avant le remplissage de la région
         // voisine serait à moitié recouvert, et les frontières n'auraient pas toutes la même épaisseur
         Map<Vue, Shape> formes = new LinkedHashMap<>();
+        // le thème est demandé à chaque dessin : un changement de thème se voit au dessin suivant
+        boolean sombre = Theme.sombre();
+        Color fond = sombre ? FOND_SOMBRE : FOND;
         for (Vue vue : disposition.vues()) {
             // la forme transformée, et non le pinceau : le trait garde ainsi 1 pixel d'épaisseur, quelle que soit
             // l'échelle (comme dans CarteDepartements)
             Shape forme = vue.transformation().createTransformedShape(vue.forme());
             formes.put(vue, forme);
-            g2.setColor(couleur(vue.region(), partie));
+            g2.setColor(couleur(vue.region(), partie, fond));
             g2.fill(forme);
         }
-        g2.setColor(TRAIT);
+        g2.setColor(sombre ? TRAIT_SOMBRE : TRAIT);
         g2.setStroke(new BasicStroke(1f));
         formes.values().forEach(g2::draw);
         // un cadre fin autour de chaque encart : on voit que ces régions ne sont pas à leur place ni à l'échelle
