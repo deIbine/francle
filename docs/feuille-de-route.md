@@ -24,6 +24,8 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 12 | La liste des départements, pendant le bonus | ✅ Fait (PR #48) |
 | 13 | Le bonus simplifié : les départements de la région | ✅ Fait (PR #50 et #51) |
 | 14 | La carte de fin en couleur | ✅ Fait (PR #52 à #54) |
+| 15 | Les corrections de la revue (changement d'heure, verrou…) | ✅ Fait (PR #55) |
+| 16 | L'esthétique de la fenêtre | 🚧 En cours |
 
 ---
 
@@ -945,3 +947,35 @@ carte actuelle, coloriée à la main) a fixé l'aspect, et l'utilisateur l'a val
    région survolée) ; la couleur de chaque région, une fonction sans affichage, testée.
 3. **14.3 Le branchement** : la fenêtre montre `CarteFin` à la fin de la partie ; les anciennes images
    (`cartes/`) et `Representation.carte` disparaissent ; la vérification en images, les leçons, le README.
+
+---
+
+## Phase 15 : les corrections de la revue ✅
+
+**Faite le 25 octobre 2026**, en une PR (deIbine/francle#55). Le 25 octobre, une revue du code et de la fenêtre
+(dessinée en images à 150 %, comme sur l'écran de l'utilisateur) a relevé quatre bugs et sept points d'esthétique.
+Les bugs font cette phase, l'esthétique la suivante. Les leçons sont dans
+[lecons.md](lecons.md#phase-15--les-corrections-de-la-revue). 457 tests (445 avant).
+
+| Bug | Symptôme | Correction |
+|---|---|---|
+| Changement d'heure | Le compte à rebours se trompait d'une heure les jours de 23 ou 25 heures (le 25 octobre 2026 à 1 h : « 23 h » pour 24 h réelles) ; au printemps, la région aurait changé à 1 h. | `RegionDuJour.jusquAMinuit(ZonedDateTime)`, testé à Paris les 25 octobre et 29 mars 2026. |
+| Phrase du bonus | Juste après une victoire du jour, les statistiques disaient « gagnez une partie du jour pour le jouer ». | `FenetreStatistiques.ligneBonus` : « aucun joué pour l'instant » quand il y a déjà une victoire. |
+| Minuit pendant le bonus | Le bonus fini après minuit, plus de partage possible, ni de barre du jour dans les statistiques. | La partie d'hier reste partageable tant qu'elle est à l'écran ; le compte à rebours montre 00:00:00 ; les résultats fermés, la fenêtre passe à la nouvelle région (`rattraperMinuit`). |
+| Deux jeux ouverts | Chacun réécrivait l'historique, et effaçait les parties de l'autre. | `stats.Verrou` (un verrou de fichier du système, `~/.francle/francle.lock`) ; un second lancement le dit et s'arrête. |
+
+---
+
+## Phase 16 : l'esthétique de la fenêtre 🚧
+
+**Commencée le 25 octobre 2026.** Les sept points d'esthétique de la revue de la phase 15, en trois PR empilées sur
+celle de la phase 15.
+
+1. **16.1 Une silhouette nette, une icône** : les silhouettes PNG (440 × 389) sont réduites à 220 points de haut, puis
+   agrandies par Windows à 150 % : leurs bords sont en escalier. La fenêtre n'a pas d'icône (la tasse de Java dans la
+   barre des tâches).
+2. **16.2 Les couleurs** : la colonne « Proximité » du tableau prend le dégradé de la carte de fin (la bonne réponse
+   en vert) ; en thème sombre, les cartes (fin de partie, départements) ne sont plus presque blanches.
+3. **16.3 Les finitions** : en fin de partie, le champ de saisie vide et grisé laisse sa place ; les indices ont une
+   marge et une icône chacun ; les noms de régions prennent leur article dans les phrases (« La réponse était le Grand
+   Est »).

@@ -48,10 +48,7 @@ final class FenetreStatistiques {
 
         // sous les barres : le bonus des départements, puis, sans aucune partie, de quoi commencer
         JPanel bas = new JPanel(new GridLayout(0, 1, 0, 6));
-        String bonus = stats.bonusJoues() == 0
-                ? textes.texte("statistiques.bonus.vide")
-                : textes.texte("statistiques.bonus", textes.pourcentage(stats.scoreMoyenBonus()), stats.bonusJoues());
-        bas.add(new JLabel(bonus, SwingConstants.CENTER));
+        bas.add(new JLabel(ligneBonus(stats, textes), SwingConstants.CENTER));
         if (stats.jouees() == 0) {
             bas.add(new JLabel(textes.texte("statistiques.vide"), SwingConstants.CENTER));
         }
@@ -64,6 +61,16 @@ final class FenetreStatistiques {
         panneau.add(barres, BorderLayout.CENTER);
         panneau.add(bas, BorderLayout.SOUTH);
         return panneau;
+    }
+
+    // la ligne du bonus : le score moyen ; sans aucun bonus joué, ce qu'il faut faire pour en jouer un. Une victoire
+    // du jour suffit : si le joueur en a déjà une (son bonus passé sans réponse, ou pas encore répondu), lui dire
+    // « gagnez une partie du jour » serait faux
+    static String ligneBonus(Statistiques stats, Textes textes) {
+        if (stats.bonusJoues() > 0) {
+            return textes.texte("statistiques.bonus", textes.pourcentage(stats.scoreMoyenBonus()), stats.bonusJoues());
+        }
+        return textes.texte(stats.victoires() > 0 ? "statistiques.bonus.aucun" : "statistiques.bonus.vide");
     }
 
     /*

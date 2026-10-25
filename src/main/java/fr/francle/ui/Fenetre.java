@@ -33,7 +33,7 @@ import java.io.IOException;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -702,24 +702,37 @@ class Fenetre {
     private void montrerStatistiques() {
         LocalDate aujourdhui = LocalDate.now(horloge);
         Statistiques stats = Statistiques.de(historique.resultats(), aujourdhui);
-        // la barre de la victoire du jour est mise en valeur
-        int essaisDuJour = historique.resultats().stream()
-                .filter(resultat -> resultat.date().equals(aujourdhui) && resultat.victoire())
-                .mapToInt(resultat -> resultat.propositions().size())
-                .findFirst().orElse(0);
         // la partie du jour finie : le compte à rebours jusqu'à la suivante, et un bouton pour partager le résultat
         boolean fini = duJourFini();
-        JPanel panneau = FenetreStatistiques.panneau(stats, essaisDuJour, textes, fini ? this::jusqueMinuit : null);
+        // la barre de la victoire du jour est mise en valeur : celle de la partie du jour finie (d'hier, si minuit est
+        // passé pendant son bonus), sinon celle d'aujourd'hui
+        LocalDate jour = fini ? dateDuJour : aujourdhui;
+        int essaisDuJour = historique.resultats().stream()
+                .filter(resultat -> resultat.date().equals(jour) && resultat.victoire())
+                .mapToInt(resultat -> resultat.propositions().size())
+                .findFirst().orElse(0);
+        JPanel panneau = FenetreStatistiques.panneau(stats, essaisDuJour, textes, fini ? this::avantLaSuivante : null);
         if (!fini) {
             JOptionPane.showMessageDialog(frame, panneau, textes.texte("action.statistiques"), JOptionPane.PLAIN_MESSAGE);
-            return;
+        } else {
+            String partagerTexte = textes.texte("statistiques.partager");
+            String fermer = textes.texte("fermer");
+            int choix = JOptionPane.showOptionDialog(frame, panneau, textes.texte("action.statistiques"),
+                    JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, new Object[]{partagerTexte, fermer}, fermer);
+            if (choix == 0) {
+                partager();
+            }
         }
-        String partagerTexte = textes.texte("statistiques.partager");
-        String fermer = textes.texte("fermer");
-        int choix = JOptionPane.showOptionDialog(frame, panneau, textes.texte("action.statistiques"),
-                JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, new Object[]{partagerTexte, fermer}, fermer);
-        if (choix == 0) {
-            partager();
+        rattraperMinuit();
+    }
+
+    // minuit est passé pendant le bonus de la partie du jour (aMinuit l'a laissé finir), et ce bonus est maintenant
+    // fini ou passé : une fois ses résultats vus, la fenêtre passe à la nouvelle région, comme elle l'aurait fait à
+    // minuit. Pas en plein bonus (le bouton « Résultats » ne l'interrompt pas)
+    private void rattraperMinuit() {
+        boolean bonusFini = bonus == null || !bonus.enCours();
+        if (partie == duJour && LocalDate.now(horloge).isAfter(dateDuJour) && bonusFini) {
+            jouerDuJour();
         }
     }
 
@@ -740,15 +753,24 @@ class Fenetre {
         programmerMinuit();
     }
 
-    // la partie du jour d'aujourd'hui est finie (gagnée, perdue ou abandonnée) : il y a un résultat à partager
+    // la partie du jour est finie (gagnée, perdue ou abandonnée) : il y a un résultat à partager. Celle d'aujourd'hui,
+    // ou celle d'hier tant qu'elle est à l'écran : minuit a pu passer pendant son bonus (aMinuit ne change pas de
+    // partie en plein bonus), et le joueur qui vient de le finir doit pouvoir partager ce qu'il a joué. En partie
+    // libre, après minuit, la partie d'hier n'est plus « du jour » : rien à partager avant d'avoir joué la nouvelle
     private boolean duJourFini() {
-        return duJour != null && !duJour.enCours() && LocalDate.now(horloge).equals(dateDuJour);
+        return duJour != null && !duJour.enCours() && (partie == duJour || LocalDate.now(horloge).equals(dateDuJour));
     }
 
-    // le temps qu'il reste jusqu'à minuit, l'heure de la région suivante
+    // le temps qu'il reste jusqu'à minuit, l'heure de la région suivante, dans le fuseau de l'horloge (celui de
+    // l'ordinateur) : les jours de changement d'heure, la journée ne dure pas 24 heures
     private Duration jusqueMinuit() {
-        LocalDateTime maintenant = LocalDateTime.now(horloge);
-        return Duration.between(maintenant, maintenant.toLocalDate().plusDays(1).atStartOfDay());
+        return RegionDuJour.jusquAMinuit(ZonedDateTime.now(horloge));
+    }
+
+    // le compte à rebours des statistiques : jusqu'à minuit, ou rien du tout si minuit est déjà passé pendant le bonus
+    // de la partie affichée (la région suivante est là : « Prochaine région dans 00:00:00 »)
+    private Duration avantLaSuivante() {
+        return LocalDate.now(horloge).isAfter(dateDuJour) ? Duration.ZERO : jusqueMinuit();
     }
 
     // copie le résultat de la partie du jour dans le presse-papiers, prêt à être collé dans une messagerie. Le

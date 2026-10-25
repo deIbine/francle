@@ -2292,6 +2292,79 @@ transparentes, sinon la silhouette paraîtrait plus petite qu'à l'endroit une f
   puis la fenêtre entière après une victoire (Mayotte) et une défaite (Martinique, thème sombre). Pas vu : la bulle
   d'aide à l'écran (il faut survoler une fenêtre affichée ; son texte est vérifié par un test).
 
+## Phase 15 : les corrections de la revue
+
+### Une journée ne dure pas toujours 24 heures
+
+- **Pourquoi** : le compte à rebours « Prochaine région dans… » faisait `Duration.between` entre deux
+  `LocalDateTime`, des heures **sans fuseau**. Pour elles, toutes les journées durent 24 heures. Mais le 25 octobre
+  2026, à 3 h, les montres reculent à 2 h : la journée dure 25 heures. À 1 h du matin, le jeu annonçait 23 heures
+  alors qu'il en restait 24. Au printemps (journée de 23 heures), le minuteur de minuit se serait déclenché à 1 h.
+- **Comment le faire** : repérer le symptôme, c'est se demander « que se passe-t-il le jour du changement d'heure ? »
+  et l'écrire en test : une date, une heure, le temps attendu. Le calcul est passé dans `RegionDuJour.jusquAMinuit`,
+  qui prend un `ZonedDateTime` (une heure **avec** son fuseau) : `atStartOfDay(zone)` donne le vrai minuit du
+  lendemain, et `Duration.between` compte alors les vraies secondes. La fenêtre lui donne
+  `ZonedDateTime.now(horloge)`. Les tests fixent le fuseau `Europe/Paris` : ils passent partout, même sur la machine
+  de la CI, réglée sur l'heure universelle.
+- **Comment le penser** : `LocalDateTime` dit « ce qu'affiche la montre », `ZonedDateTime` (ou `Instant`) « un moment
+  réel ». Pour une **durée** entre deux moments, il faut des moments réels. Les dates sans fuseau conviennent pour
+  le calendrier (la région du jour ne dépend que de `LocalDate`), pas pour chronométrer.
+
+### Sortir un calcul de la fenêtre pour pouvoir le tester
+
+- **Pourquoi** : `Fenetre` n'a pas de tests (il faudrait un écran). Un calcul qui y reste ne se vérifie qu'en jouant,
+  et le bug du changement d'heure ne se voit que deux nuits par an.
+- **Comment le faire** : déplacer le calcul dans une méthode `static` sans affichage, qui reçoit tout ce dont elle a
+  besoin en paramètre (`jusquAMinuit(maintenant)` ; `FenetreStatistiques.ligneBonus(stats, textes)`). La fenêtre ne
+  fait plus que l'appeler.
+- **Comment le penser** : c'est la séparation de la phase 3 (la logique d'un côté, l'affichage de l'autre), appliquée
+  en petit. Avant d'écrire un calcul dans une classe d'interface, se demander : « comment je le testerai ? ».
+
+### Le message dit vrai dans tous les cas
+
+- **Pourquoi** : sous les statistiques, « gagnez une partie du jour pour jouer le bonus » s'affichait dès qu'aucun
+  bonus n'était enregistré. C'était vrai au début, mais aussi juste après une victoire, avant la première réponse du
+  bonus. Le joueur venait de gagner, et le jeu lui demandait de gagner.
+- **Comment le faire** : énumérer les situations (pas de victoire ; une victoire, pas de bonus ; des bonus) et donner
+  une phrase à chacune. Un test par situation.
+- **Comment le penser** : une condition (`bonusJoues == 0`) regroupe souvent plusieurs situations différentes. Pour
+  chaque message, se demander « dans quels cas exactement est-il affiché, et est-il vrai dans chacun ? ».
+
+### Une condition qui ne pense qu'au cas ordinaire
+
+- **Pourquoi** : `duJourFini()` demandait que la partie du jour soit celle **d'aujourd'hui**. C'est juste en partie
+  libre après minuit : la partie d'hier n'a plus à être partagée. Mais le jeu laisse finir le bonus quand minuit
+  passe en plein milieu (voulu). Une fois le bonus fini, le partage était grisé, et les statistiques ne montraient
+  plus la partie qu'on venait de jouer.
+- **Comment le faire** : la condition accepte aussi la partie d'hier **tant qu'elle est à l'écran**. Le compte à
+  rebours montre alors 00:00:00 (la région suivante est déjà là). Une fois les résultats fermés, `rattraperMinuit`
+  fait ce que minuit n'avait pas fait : passer à la nouvelle région. Vérifié avec une horloge qu'on avance à la main :
+  `Clock` est une classe abstraite, une petite sous-classe dont `instant()` rend une variable suffit.
+- **Comment le penser** : quand on ajoute une exception à une règle (« pas de changement en plein bonus »), chercher
+  tout ce qui supposait la règle sans exception. Ici, tout ce qui comparait la date de la partie à celle du jour.
+
+### Un seul programme à la fois : le verrou de fichier
+
+- **Pourquoi** : chaque fenêtre garde l'historique en mémoire et réécrit tout le fichier à chaque essai. Avec deux
+  jeux ouverts (un double-clic de trop), le dernier à enregistrer effaçait les parties jouées dans l'autre.
+- **Comment le faire** : au lancement, `Verrou.prendre` ouvre `~/.francle/francle.lock` et demande au système un
+  **verrou** (`FileChannel.tryLock`). Le second lancement le trouve pris : il le dit, et s'arrête sans rien créer.
+  C'est le système qui tient le verrou, pas le contenu du fichier : si le jeu plante, le verrou est relâché avec lui.
+  Vérifié avec deux programmes lancés en même temps. Le test JUnit, lui, tourne dans un seul programme, où Java
+  signale un verrou déjà tenu par une exception (`OverlappingFileLockException`), traitée comme « pris ».
+- **Comment le penser** : un fichier qui dit « je suis ouvert » ne s'efface pas tout seul après un plantage : le jeu
+  refuserait ensuite de démarrer. Un verrou du système, si. Plus généralement : quand deux programmes partagent une
+  ressource, se demander qui a le droit d'écrire, et ce qui se passe quand l'un s'arrête brutalement.
+
+## Bilan de la Phase 15
+
+- **Une PR**, quatre bugs trouvés en relisant le code et en regardant la fenêtre en images, chacun avec son test :
+  le changement d'heure (`RegionDuJour.jusquAMinuit`), la phrase du bonus dans les statistiques
+  (`FenetreStatistiques.ligneBonus`, clé `statistiques.bonus.aucun`), minuit pendant le bonus (`duJourFini`,
+  `avantLaSuivante`, `rattraperMinuit`), deux jeux ouverts (`Verrou`, clé `dejaOuvert`).
+- **457 tests** (445 avant). Vérifié en plus hors des tests : minuit en plein bonus, dans la vraie fenêtre, avec une
+  horloge avancée à la main ; le verrou entre deux programmes.
+
 ---
 
 ## Aide-mémoire

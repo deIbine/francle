@@ -3,7 +3,9 @@ package fr.francle.jeu;
 import fr.francle.donnees.ModeRegions;
 import fr.francle.donnees.RegionFr;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,6 +56,14 @@ public final class RegionDuJour {
 
     // les octets ASCII de « Angle »
     private static final long SEL_ANGLE = 0x416E676C65L;
+
+    // le temps qu'il reste jusqu'à minuit, l'heure de la région suivante. Avec l'heure du fuseau (ZonedDateTime), et
+    // non une heure « sans fuseau » (LocalDateTime) : les jours de changement d'heure durent 23 ou 25 heures, et un
+    // calcul sans fuseau se tromperait d'une heure (le 25 octobre 2026 à 1 h, il restait 24 heures, pas 23)
+    public static Duration jusquAMinuit(ZonedDateTime maintenant) {
+        ZonedDateTime minuit = maintenant.toLocalDate().plusDays(1).atStartOfDay(maintenant.getZone());
+        return Duration.between(maintenant, minuit);
+    }
 
     // l'ordre des régions pendant un cycle
     static List<RegionFr> ordre(long cycle) {
