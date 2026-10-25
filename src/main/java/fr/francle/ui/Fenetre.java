@@ -41,6 +41,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Stream;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
@@ -140,7 +141,14 @@ class Fenetre {
     // dans la version web)
     private final JButton boutonResultats = new JButton(statistiques);
     private final Message message = new Message();
-    private final JTextArea indices = new JTextArea(Indice.values().length, 30);
+    // la ligne de saisie : le champ, et à droite les boutons. Sans champ (fin de partie), les boutons passent au milieu
+    private final JPanel boutons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
+    private final JPanel ligneSaisie = new JPanel(new BorderLayout());
+    // les indices : une ligne chacun, dans l'ordre où ils se révèlent. Ceux qui restent à venir sont écrits en gris
+    // (« Capitale régionale : après l'essai 4 ») : le joueur voit ce qui l'attend
+    private final JPanel indices = new JPanel(new GridLayout(Indice.values().length, 1));
+    private final JLabel[] lignesIndices = Stream.generate(JLabel::new).limit(Indice.values().length)
+            .toArray(JLabel[]::new);
 
     // l'horloge qui donne la date du jour. Un paramètre plutôt qu'un appel direct à LocalDate.now() : un test ou un
     // harnais de vérification peut ainsi lancer la fenêtre « le 1er janvier 2030 », sans toucher à l'horloge du système
@@ -426,7 +434,6 @@ class Fenetre {
         // pas de FlowLayout ici : quand « Nouvelle partie » (plus large) remplace « Abandonner », la ligne déborde,
         // FlowLayout renvoie le bouton à la ligne, et cette seconde ligne est coupée (la hauteur a été fixée par
         // pack). Avec BorderLayout, le champ prend la largeur qui reste et les boutons ne bougent jamais de ligne.
-        JPanel boutons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
         boutons.add(valider);
         boutons.add(boutonAbandonner);
         boutons.add(boutonPasser);
@@ -434,7 +441,6 @@ class Fenetre {
         boutons.add(boutonBonus);
         boutons.add(boutonResultats);
         boutonResultats.setVisible(false);
-        JPanel ligneSaisie = new JPanel(new BorderLayout());
         ligneSaisie.add(saisie, BorderLayout.CENTER);
         ligneSaisie.add(boutons, BorderLayout.EAST);
 
@@ -442,8 +448,10 @@ class Fenetre {
         haut.add(ligneSaisie, BorderLayout.CENTER);
         haut.add(message, BorderLayout.SOUTH);
 
-        indices.setEditable(false);
-        indices.setFocusable(false);
+        // une étiquette par indice, toujours là (révélé ou pas) : la hauteur de l'encadré ne change jamais
+        for (JLabel ligne : lignesIndices) {
+            indices.add(ligne);
+        }
 
         JPanel bas = new JPanel(new BorderLayout(0, 10));
         bas.add(haut, BorderLayout.NORTH);
@@ -971,7 +979,10 @@ class Fenetre {
         boutonBonus.setText(textes.texte("bouton.bonus"));
         boutonResultats.setHideActionText(true);
         boutonResultats.setText(textes.texte("resultats"));
-        indices.setBorder(BorderFactory.createTitledBorder(textes.texte("indices")));
+        // le cadre titré, et une marge à l'intérieur : sans elle, le texte touchait presque le trait du cadre
+        indices.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createTitledBorder(textes.texte("indices")),
+                BorderFactory.createEmptyBorder(0, 8, 2, 8)));
         tableau.setTextes(textes);
         // la JTable a copié les titres des colonnes à sa création : on les lui redonne, puis on redessine l'en-tête
         for (int colonne = 0; colonne < tableau.getColumnCount(); colonne++) {
@@ -1126,6 +1137,7 @@ class Fenetre {
         // département : grisée, avec ce qu'il faut faire d'abord
         boolean saisieVisible = enCours && question != Bonus.Question.CARTE;
         boolean ecrire = saisieVisible && (question != Bonus.Question.CHOIX || choisi);
+        montrerChamp(saisieVisible);
         saisie.setEnabled(ecrire);
         saisie.putClientProperty(TEXTE_FANTOME,
                 saisieVisible && !ecrire ? textes.texte("bonus.choixDabord") : null);
@@ -1194,8 +1206,35 @@ class Fenetre {
         boutonBonus.setVisible(!active && bonusAJouer());
         actionBonus.setEnabled(bonusGagne());
         partager.setEnabled(duJourFini());
+        // AVANT le bouton par défaut : montrerChamp retire les boutons de la fenêtre puis les remet, et un bouton
+        // retiré cesse d'être le bouton par défaut (JButton.removeNotify)
+        montrerChamp(active);
         // la touche Entrée déclenche « Valider » pendant la partie, « Nouvelle partie » à la fin
         frame.getRootPane().setDefaultButton(active ? valider : boutonRejouer);
+    }
+
+    // le champ de saisie, ou rien : à la fin de la partie (ou du bonus), un champ vide et grisé ne dit rien d'utile.
+    // Il disparaît, et les boutons qui restent (Partie libre, Bonus…) se rangent au milieu de la ligne. La ligne garde
+    // sa hauteur (celle des boutons, la même que celle du champ) : la fenêtre ne bouge pas
+    private void montrerChamp(boolean avecChamp) {
+        if ((saisie.getParent() == ligneSaisie) == avecChamp) {
+            return;
+        }
+        ((FlowLayout) boutons.getLayout()).setAlignment(avecChamp ? FlowLayout.RIGHT : FlowLayout.CENTER);
+        // la ligne est refaite en entier. Un BorderLayout ne retient qu'UN composant par place : y mettre les boutons au
+        // centre lui ferait oublier le champ, qui ne serait plus jamais placé, même une fois les boutons repartis à
+        // droite. Sans champ, celui-ci n'est donc plus du tout dans la ligne (et l'autocomplétion, qui ne trouve plus
+        // de fenêtre au-dessus de lui, ne s'ouvre pas)
+        ligneSaisie.removeAll();
+        if (avecChamp) {
+            ligneSaisie.add(saisie, BorderLayout.CENTER);
+            ligneSaisie.add(boutons, BorderLayout.EAST);
+        } else {
+            ligneSaisie.add(boutons, BorderLayout.CENTER);
+        }
+        // le conteneur a changé : il refait sa disposition (revalidate), puis se redessine
+        ligneSaisie.revalidate();
+        ligneSaisie.repaint();
     }
 
     private void montrer(String chemin) {
@@ -1241,11 +1280,24 @@ class Fenetre {
         return partie == duJour ? RegionDuJour.angle(dateDuJour) : angleLibre;
     }
 
+    // chaque indice sur sa ligne : révélé, sa valeur en gras ; à venir, grisé, avec l'essai après lequel il viendra.
+    // Le gras passe par un peu de HTML ; la valeur est échappée, comme dans le message (Message.echapper). Une ligne
+    // grisée reste en texte simple : Swing ne grise pas le HTML d'une étiquette désactivée
     private void afficherIndices() {
-        List<String> lignes = new ArrayList<>();
-        for (Indice indice : partie.indicesReveles()) {
-            lignes.add(textes.indice(indice, partie.getCible(), reglages.unitesAnglaises()));
+        List<Indice> reveles = partie.indicesReveles();
+        Indice[] tous = Indice.values();
+        for (int i = 0; i < tous.length; i++) {
+            Indice indice = tous[i];
+            JLabel ligne = lignesIndices[i];
+            boolean revele = reveles.contains(indice);
+            if (revele) {
+                String valeur = textes.valeurIndice(indice, partie.getCible(), reglages.unitesAnglaises());
+                ligne.setText("<html>" + textes.ligneIndice(indice, "<b>" + Message.echapper(valeur) + "</b>") + "</html>");
+            } else {
+                ligne.setText(textes.ligneIndice(indice, textes.indiceCache(indice)));
+            }
+            // grisée (la couleur « désactivée » du thème) tant qu'il n'est pas révélé
+            ligne.setEnabled(revele);
         }
-        indices.setText(String.join("\n", lignes));
     }
 }

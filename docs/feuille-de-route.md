@@ -25,7 +25,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 13 | Le bonus simplifié : les départements de la région | ✅ Fait (PR #50 et #51) |
 | 14 | La carte de fin en couleur | ✅ Fait (PR #52 à #54) |
 | 15 | Les corrections de la revue (changement d'heure, verrou…) | ✅ Fait (PR #55) |
-| 16 | L'esthétique de la fenêtre | 🚧 En cours |
+| 16 | L'esthétique de la fenêtre | ✅ Fait (PR #56 à #58) |
 
 ---
 
@@ -966,10 +966,22 @@ Les bugs font cette phase, l'esthétique la suivante. Les leçons sont dans
 
 ---
 
-## Phase 16 : l'esthétique de la fenêtre 🚧
+## Phase 16 : l'esthétique de la fenêtre ✅
 
-**Commencée le 25 octobre 2026.** Les sept points d'esthétique de la revue de la phase 15, en trois PR empilées sur
-celle de la phase 15.
+**Faite le 25 octobre 2026**, en trois PR empilées sur celle de la phase 15 : deIbine/francle#56 (16.1), #57 (16.2) et
+#58 (16.3). Les sept points d'esthétique de la revue. Les leçons sont dans
+[lecons.md](lecons.md#phase-16--lesthétique-de-la-fenêtre). 504 tests (457 avant, dont 35 pour les articles, un par
+région). La fenêtre garde sa taille (466 × 635 points). Ce qui a été fait :
+
+- **16.1** : `ImageNette` (la silhouette réduite au dessin, à la taille en pixels de l'écran) ; `IconeFenetre` (la
+  France en blanc sur un carré bleu, 9 tailles, dessinée à partir de `france.json`).
+- **16.2** : `CaseProximite` (la pastille de couleur) ; `CarteFin.FOND_SOMBRE`, `CarteDepartements.Palette`,
+  `Theme.sombre()`.
+- **16.3** : `montrerChamp` (le champ disparaît en fin de partie, les boutons se centrent) ; l'encadré des indices en
+  une étiquette par indice (valeur en gras, indices à venir grisés, marge) ; `articles_fr.properties` et
+  `Textes.nomDansUnePhrase`, pour les messages de fin.
+
+Le découpage prévu :
 
 1. **16.1 Une silhouette nette, une icône** : les silhouettes PNG (440 × 389) sont réduites à 220 points de haut, puis
    agrandies par Windows à 150 % : leurs bords sont en escalier. La fenêtre n'a pas d'icône (la tasse de Java dans la

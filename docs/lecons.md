@@ -2365,6 +2365,103 @@ transparentes, sinon la silhouette paraîtrait plus petite qu'à l'endroit une f
 - **457 tests** (445 avant). Vérifié en plus hors des tests : minuit en plein bonus, dans la vraie fenêtre, avec une
   horloge avancée à la main ; le verrou entre deux programmes.
 
+## Phase 16 : l'esthétique de la fenêtre
+
+### Regarder la fenêtre comme la voit le joueur
+
+- **Pourquoi** : sur l'écran du développeur, tout semblait net. Sous Windows à 150 % (l'écran de l'utilisateur), un
+  « point » de Swing fait 1,5 pixel, et les défauts n'apparaissent qu'à cette échelle.
+- **Comment le faire** : le harnais de vérification dessine la fenêtre dans une image en mémoire, avec
+  `g.scale(1.5, 1.5)` avant `paint` : exactement ce que fait Windows. On le lance pour chaque état (début, essais,
+  défaite, bonus), dans les deux thèmes et les deux langues, puis on regarde les images. C'est en le faisant que deux
+  bugs de cette phase ont été vus (le bouton « Valider » caché, le bouton par défaut perdu) : aucun test ne les
+  attrapait.
+- **Comment le penser** : un test vérifie ce qu'on a pensé à vérifier. Une image montre aussi le reste. Pour une
+  interface, les deux se complètent.
+
+### Réduire au dernier moment, à la vraie taille
+
+- **Pourquoi** : la silhouette (440 pixels) était réduite d'avance à 220 points, puis agrandie à 330 pixels par
+  Windows. Réduire puis agrandir, c'est perdre des détails, puis inventer des pixels : des bords en escalier.
+- **Comment le faire** : `ImageNette` implémente `Icon` (une taille en points, et `paintIcon`). Elle garde l'image
+  d'origine. Au dessin, l'échelle de la transformation du pinceau (`getTransform().getScaleX()`) donne la taille en
+  pixels ; l'image est réduite une fois à cette taille (`SCALE_SMOOTH`, qui fait la moyenne des pixels), gardée, puis
+  posée pixel pour pixel.
+- **Comment le penser** : garder la source la plus riche le plus longtemps possible, et ne transformer qu'à la fin,
+  quand on connaît la destination. C'est la même idée que les distances gardées en kilomètres et converties en miles
+  seulement à l'affichage (phase 6).
+
+### Dessiner plutôt que fournir un fichier
+
+- **Pourquoi** : sans icône, Windows montre la tasse de café de Java. Une icône se fournit d'habitude en fichiers, une
+  image par taille.
+- **Comment le faire** : `IconeFenetre` dessine la France (les contours de la carte de fin) sur un carré arrondi, dans
+  neuf tailles ; `setIconImages` les donne toutes, et Windows choisit. Les régions, remplies l'une après l'autre,
+  laissaient entre elles une couture pâle (l'anticrénelage éclaircit le bord de chaque forme) : un trait fin de la
+  même couleur la recouvre.
+- **Comment le penser** : quand les données existent déjà (les contours), un dessin de quelques lignes vaut mieux
+  qu'un fichier de plus à fabriquer et à tenir à jour.
+
+### Une couleur, un sens, partout
+
+- **Pourquoi** : la carte de fin colore les régions proposées du jaune pâle (loin) à l'orange foncé (proche). Le
+  tableau disait la même chose en chiffres, sans couleur.
+- **Comment le faire** : `CaseProximite`, un « renderer » de la JTable, peint une pastille de `CarteFin.degrade` sous
+  le pourcentage (vert pour la réponse). Deux pièges : un renderer opaque peint son fond par-dessus tout (on redéfinit
+  `isOpaque`), et le texte doit rester lisible sur toutes les couleurs (testé : écart de luminosité).
+- **Comment le penser** : réutiliser la même fonction de couleur (et non recopier les valeurs) garantit que le tableau
+  et la carte ne divergeront jamais. Un code couleur n'a de sens que s'il est le même partout.
+
+### Le thème sombre : demander au moment de dessiner
+
+- **Pourquoi** : les couleurs écrites dans le code ne suivent pas le thème. La carte de fin restait presque blanche
+  sur une fenêtre sombre.
+- **Comment le faire** : `Theme.sombre()` (`FlatLaf.isLafDark()`), demandé dans `paintComponent`. La carte des
+  départements a deux palettes (`Palette`, un record : CLAIRE et SOMBRE). En sombre, le département à nommer devient
+  plus clair que les autres, et non plus foncé : ce qui compte, c'est l'écart, testé dans les deux palettes.
+- **Comment le penser** : ne pas retenir le thème dans un champ, mais le redemander à chaque dessin : un changement de
+  thème se voit tout de suite, sans rien à tenir à jour. Et une règle visuelle (« se détache ») se teste comme un
+  écart, pas comme une couleur précise.
+
+### BorderLayout ne retient qu'un composant par place
+
+- **Pourquoi** : en fin de partie, le champ vide disparaît et les boutons passent au milieu. Première version : mettre
+  les boutons au CENTRE du `BorderLayout`. Ensuite, dans le bonus, le champ recouvrait « Valider ».
+- **Comment le faire** : le harnais a affiché les positions (`getBounds`) : le champ gardait son ancienne largeur.
+  `BorderLayout` garde **une** référence par place ; ajouter les boutons au centre avait remplacé celle du champ, qui
+  n'était plus jamais placé. La ligne est maintenant refaite en entier (`removeAll`, puis les bons `add`).
+- **Comment le penser** : un gestionnaire de disposition a son propre état, distinct de la liste des enfants du
+  conteneur. Avant de déplacer un composant, se demander ce que le gestionnaire en retient.
+
+### Retirer un bouton lui fait perdre son rôle
+
+- **Pourquoi** : après ce changement, « Partie libre » n'était plus le bouton par défaut (Entrée ne le déclenchait
+  plus, et il n'était plus coloré).
+- **Comment le faire** : un bouton retiré de la fenêtre (`removeNotify`) cesse d'être le bouton par défaut de sa
+  `JRootPane`. `montrerChamp` est donc appelé **avant** `setDefaultButton`.
+- **Comment le penser** : en Swing, retirer puis remettre un composant n'est pas neutre (focus, bouton par défaut,
+  bulles d'aide). Quand l'ordre de deux appels compte, l'écrire dans un commentaire.
+
+### Une donnée propre à une langue
+
+- **Pourquoi** : « La réponse était Grand Est » : en français, un nom de région prend un article au milieu d'une
+  phrase (le Grand Est, l'Occitanie, les Hauts-de-France, Mayotte sans article). L'anglais n'en met pas.
+- **Comment le faire** : un fichier à part, `articles_fr.properties`, et non une clé de plus dans les fichiers de
+  textes (qui doivent avoir les mêmes clés dans les deux langues). `Textes.nomDansUnePhrase` le lit en français, et
+  rend le nom seul en anglais. Un test, une fois par région, vérifie qu'aucune n'est oubliée et que chaque article
+  finit bien par le nom de la région.
+- **Comment le penser** : la traduction n'est pas toujours « la même phrase dans une autre langue ». Certaines langues
+  ont des règles que d'autres n'ont pas (articles, genres, pluriels) : leur donnée va là où elle a un sens.
+
+## Bilan de la Phase 16
+
+- **Trois PR empilées** : 16.1 la silhouette nette et l'icône, 16.2 les couleurs (tableau, thème sombre), 16.3 les
+  finitions (fin de partie, indices, articles), avec les docs.
+- **Nouveau pour le joueur** : une silhouette nette à 150 %, une vraie icône, la proximité en couleur, un thème sombre
+  qui n'éblouit plus, les indices à venir annoncés, « la réponse était le Grand Est ».
+- **504 tests** (457 avant). Vérifié en images, à 150 %, dans les deux thèmes et les deux langues : début, essais,
+  défaite, bonus, partie libre après une défaite. La fenêtre garde sa taille (466 × 635 points, sous les 650).
+
 ---
 
 ## Aide-mémoire

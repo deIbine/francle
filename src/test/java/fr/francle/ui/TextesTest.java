@@ -190,11 +190,11 @@ class TextesTest {
         for (String proposition : List.of("Corse", "Normandie", "Occitanie", "Grand Est", "Guyane", "Mayotte")) {
             perdue.proposer(proposition);
         }
-        assertEquals("C'est raté ! La réponse était Bretagne.", FR.fin(perdue));
+        assertEquals("C'est raté ! La réponse était la Bretagne.", FR.fin(perdue));
 
         Partie abandonnee = new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES);
         abandonnee.abandonner();
-        assertEquals("Vous avez abandonné. La réponse était Bretagne.", FR.fin(abandonnee));
+        assertEquals("Vous avez abandonné. La réponse était la Bretagne.", FR.fin(abandonnee));
     }
 
     @Test
@@ -325,5 +325,41 @@ class TextesTest {
         assertFalse(FR.aide().contains("{exemple}"));
         assertTrue(FR.aide().contains("Par exemple, « Normandie · 251 km · ↙ · 76 % » : Bretagne"), FR.exemple());
         assertTrue(EN.aide().contains("For example, “Normandy · 251 km · ↙ · 76%”: Brittany"), EN.exemple());
+    }
+
+    @Test
+    @DisplayName("Au milieu d'une phrase, le nom prend son article en français, jamais en anglais")
+    void nomDansUnePhrase() {
+        assertEquals("le Grand Est", FR.nomDansUnePhrase(RegionFr.GRAND_EST));
+        assertEquals("l'Occitanie", FR.nomDansUnePhrase(RegionFr.OCCITANIE));
+        assertEquals("les Hauts-de-France", FR.nomDansUnePhrase(RegionFr.HAUTS_DE_FRANCE));
+        assertEquals("Mayotte", FR.nomDansUnePhrase(RegionFr.MAYOTTE));
+        assertEquals("La Réunion", FR.nomDansUnePhrase(RegionFr.LA_REUNION));
+        assertEquals("Brittany", EN.nomDansUnePhrase(RegionFr.BRETAGNE));
+
+        Partie abandonnee = new Partie(RegionFr.GRAND_EST, ModeRegions.NOUVELLES);
+        abandonnee.abandonner();
+        assertEquals("Vous avez abandonné. La réponse était le Grand Est.", FR.fin(abandonnee));
+        assertEquals("You gave up. The answer was Grand Est.", EN.fin(abandonnee));
+    }
+
+    @ParameterizedTest
+    @EnumSource(RegionFr.class)
+    @DisplayName("Chaque région a son article, qui finit par son nom (rien d'oublié, rien de mal recopié)")
+    void articles(RegionFr region) {
+        String avecArticle = Textes.articles().getProperty(region.name());
+        assertNotNull(avecArticle, region + " n'a pas d'article dans articles_fr.properties");
+        assertTrue(avecArticle.endsWith(FR.nom(region)), avecArticle);
+    }
+
+    @Test
+    @DisplayName("Un indice : sa ligne autour de sa valeur, et pour un indice à venir, l'essai après lequel il viendra")
+    void ligneIndice() {
+        RegionFr bretagne = RegionFr.BRETAGNE;
+        assertEquals("la crêpe", FR.valeurIndice(Indice.SPECIALITE, bretagne, false));
+        assertEquals("Capitale régionale : <b>Rennes</b>", FR.ligneIndice(Indice.CAPITALE, "<b>Rennes</b>"));
+        assertEquals("Capitale régionale : après l'essai 4",
+                FR.ligneIndice(Indice.CAPITALE, FR.indiceCache(Indice.CAPITALE)));
+        assertEquals("Area: after guess 1", EN.ligneIndice(Indice.SUPERFICIE, EN.indiceCache(Indice.SUPERFICIE)));
     }
 }
