@@ -4,13 +4,12 @@ import fr.francle.donnees.RegionFr;
 
 import java.awt.Dimension;
 import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.net.URL;
 import javax.imageio.ImageIO;
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 
 /*
 Les images du jeu : la silhouette de la région à deviner (la carte de France de la fin, elle, est dessinée par
@@ -53,12 +52,13 @@ final class Representation {
     }
 
     // l'image prête à mettre dans un JLabel, ajustée au cadre ; null si elle est introuvable
-    static ImageIcon icone(String chemin, int largeurMax, int hauteurMax) {
+    static Icon icone(String chemin, int largeurMax, int hauteurMax) {
         return icone(chemin, largeurMax, hauteurMax, 0);
     }
 
-    // la même, tournée de « degres » dans le sens des aiguilles d'une montre (0 : telle quelle)
-    static ImageIcon icone(String chemin, int largeurMax, int hauteurMax, int degres) {
+    // la même, tournée de « degres » dans le sens des aiguilles d'une montre (0 : telle quelle). Une ImageNette : elle
+    // garde l'image d'origine, et ne la réduit qu'au dessin, à la taille en pixels de l'écran (nette à 150 %)
+    static Icon icone(String chemin, int largeurMax, int hauteurMax, int degres) {
         BufferedImage image = charger(chemin);
         if (image == null) {
             return null;
@@ -67,7 +67,7 @@ final class Representation {
             image = rogner(tourner(image, degres));
         }
         Dimension taille = ajuster(image.getWidth(), image.getHeight(), largeurMax, hauteurMax);
-        return new ImageIcon(image.getScaledInstance(taille.width, taille.height, Image.SCALE_SMOOTH));
+        return new ImageNette(image, taille.width, taille.height);
     }
 
     /*
