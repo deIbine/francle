@@ -34,9 +34,9 @@ import javax.swing.UIManager;
 /*
 La carte des départements du bonus, dessinée à la main (comme les barres des statistiques) : chaque département est
 une forme (Path2D) remplie d'une couleur qui dit où l'on en est.
-    bleu clair   pas encore répondu (plus foncé sous la souris, quand on peut cliquer)
-    bleu foncé   le département à nommer : celui que le joueur a choisi (mode CHOIX), ou celui de la question
-                 (modes NOM et NUMERO)
+    bleu clair   pas encore répondu (plus foncé sous la souris, quand on peut cliquer) ; bleu sourd en thème sombre
+    bleu foncé   le département à nommer (très clair en thème sombre) : celui que le joueur a choisi (mode CHOIX),
+                 ou celui de la question (modes NOM et NUMERO)
     vert, rouge  trouvé, raté
 En mode CARTE, le département cliqué à tort est entouré de rouge jusqu'à la réponse suivante.
 
@@ -54,11 +54,15 @@ touches (InputMap et ActionMap) et dessiner soi-même où est le focus.
  */
 final class CarteDepartements extends JComponent {
 
-    // les couleurs des images du jeu (outils/generer_images.py) : elles vont avec les deux thèmes
-    private static final Color FOND = new Color(0xA2D1FB);
-    private static final Color SURVOL = new Color(0x6FB3F2);
-    private static final Color DEMANDE = new Color(0x3A4BC4);
-    private static final Color TRAIT = new Color(0x7F97AD);
+    // les couleurs qui dépendent du thème : le fond des départements, leur survol, celui à nommer, et les bords. En
+    // thème clair, celles des images du jeu (outils/generer_images.py). En thème sombre (phase 16), un bleu plus
+    // sourd, qui n'éblouit pas sur la fenêtre sombre ; le département à nommer y est donc plus CLAIR que les autres, et
+    // non plus foncé : ce qui compte, c'est qu'il se détache
+    record Palette(Color fond, Color survol, Color demande, Color trait) {}
+    static final Palette CLAIRE = new Palette(new Color(0xA2D1FB), new Color(0x6FB3F2), new Color(0x3A4BC4),
+            new Color(0x7F97AD));
+    static final Palette SOMBRE = new Palette(new Color(0x3F6690), new Color(0x5A87B8), new Color(0xBFD4FF),
+            new Color(0x8FA7C0));
     private static final Color TROUVE = new Color(0x5CB85C);
     private static final Color RATE = new Color(0xE05252);
     private static final int MARGE = 6;
@@ -296,7 +300,7 @@ final class CarteDepartements extends JComponent {
         dessiner(g2, vues.principale());
         if (vues.encart() != null) {
             // sur la carte, le cadre de ce qui est agrandi
-            g2.setColor(TRAIT);
+            g2.setColor(palette().trait());
             g2.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f, new float[]{3f, 3f}, 0f));
             g2.draw(vues.principale().createTransformedShape(contours.zoom().get()));
             // l'encart : un fond, le même dessin agrandi, limité au cadre (clip), puis une bordure
@@ -307,7 +311,7 @@ final class CarteDepartements extends JComponent {
             g2.clip(vues.encart());
             dessiner(g2, vues.zoom());
             g2.setClip(avant);
-            g2.setColor(TRAIT);
+            g2.setColor(palette().trait());
             g2.draw(vues.encart());
         }
         g2.dispose();
@@ -321,7 +325,7 @@ final class CarteDepartements extends JComponent {
             Shape forme = transformation.createTransformedShape(entree.getValue());
             g2.setColor(couleur(entree.getKey()));
             g2.fill(forme);
-            g2.setColor(TRAIT);
+            g2.setColor(palette().trait());
             g2.draw(forme);
         }
         if (erreur != null && contours.formes().containsKey(erreur)) {
@@ -330,7 +334,7 @@ final class CarteDepartements extends JComponent {
         // le focus du clavier : le département qu'Entrée choisirait, entouré de la couleur du focus du thème
         if (isFocusOwner() && vise != null && cliquable(vise)) {
             Color focus = UIManager.getColor("Component.focusColor");
-            entourer(g2, transformation, vise, focus != null ? focus : DEMANDE);
+            entourer(g2, transformation, vise, focus != null ? focus : palette().demande());
         }
     }
 
@@ -341,15 +345,20 @@ final class CarteDepartements extends JComponent {
         g2.setStroke(new BasicStroke(1f));
     }
 
+    // les couleurs du thème installé, demandées à chaque dessin (un changement de thème se voit au dessin suivant)
+    static Palette palette() {
+        return Theme.sombre() ? SOMBRE : CLAIRE;
+    }
+
     private Color couleur(Departement departement) {
         Optional<Tentative> tentative = bonus.tentative(departement);
         if (tentative.isPresent()) {
             return tentative.get().juste() ? TROUVE : RATE;
         }
         if (departement.equals(choisi) || departement.equals(questionEnCours())) {
-            return DEMANDE;
+            return palette().demande();
         }
-        return departement.equals(survole) && cliquable(departement) ? SURVOL : FOND;
+        return departement.equals(survole) && cliquable(departement) ? palette().survol() : palette().fond();
     }
 
     // modes NOM et NUMERO : le département de la question, colorié pour être nommé (null sinon)

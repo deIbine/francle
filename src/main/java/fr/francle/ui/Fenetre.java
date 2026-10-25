@@ -477,6 +477,8 @@ class Fenetre {
         };
         fleches.setHorizontalAlignment(SwingConstants.CENTER);
         table.getColumnModel().getColumn(3).setCellRenderer(fleches);
+        // la proximité sur une pastille de la couleur de la carte de fin
+        table.getColumnModel().getColumn(4).setCellRenderer(new CaseProximite(tableau));
         table.setRowHeight(Math.round(table.getRowHeight() * 1.2f));
         table.getColumnModel().getColumn(0).setMaxWidth(40);
         table.getColumnModel().getColumn(1).setPreferredWidth(200);

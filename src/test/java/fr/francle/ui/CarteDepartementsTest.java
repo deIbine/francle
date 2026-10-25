@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
+import java.awt.Color;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
@@ -163,5 +164,20 @@ class CarteDepartementsTest {
         carte.montrer(Bonus.duJour(RegionFr.BRETAGNE, JOUR));
 
         assertEquals(Optional.empty(), carte.departementSous(new Point(5, 5)));
+    }
+
+    @Test
+    @DisplayName("Dans chaque thème, le département à nommer se détache nettement des autres")
+    void palettes() {
+        for (CarteDepartements.Palette palette : List.of(CarteDepartements.CLAIRE, CarteDepartements.SOMBRE)) {
+            int ecart = Math.abs(somme(palette.demande()) - somme(palette.fond()));
+            assertTrue(ecart > 150, palette + " : " + ecart);
+        }
+        // le fond du thème sombre n'éblouit pas : bien plus sombre que celui du thème clair
+        assertTrue(somme(CarteDepartements.SOMBRE.fond()) < somme(CarteDepartements.CLAIRE.fond()) / 2);
+    }
+
+    private static int somme(Color couleur) {
+        return couleur.getRed() + couleur.getGreen() + couleur.getBlue();
     }
 }

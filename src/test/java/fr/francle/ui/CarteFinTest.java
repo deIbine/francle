@@ -86,6 +86,23 @@ class CarteFinTest {
     }
 
     @Test
+    @DisplayName("En thème sombre, seul le fond change : la réponse et les proposées gardent leurs couleurs")
+    void fondDuTheme() {
+        Partie partie = partie(RegionFr.AUVERGNE_RHONE_ALPES, ModeRegions.NOUVELLES, "Bretagne", "Auvergne-Rhône-Alpes");
+
+        assertEquals(CarteFin.FOND_SOMBRE, CarteFin.couleur(RegionFr.GRAND_EST, partie, CarteFin.FOND_SOMBRE));
+        assertEquals(CarteFin.TROUVEE, CarteFin.couleur(RegionFr.AUVERGNE_RHONE_ALPES, partie, CarteFin.FOND_SOMBRE));
+        assertEquals(CarteFin.couleur(RegionFr.BRETAGNE, partie),
+                CarteFin.couleur(RegionFr.BRETAGNE, partie, CarteFin.FOND_SOMBRE));
+        // le fond sombre est bien plus sombre que le clair (la somme des composantes, à peu près la luminosité)
+        assertTrue(somme(CarteFin.FOND_SOMBRE) < somme(CarteFin.FOND) / 2);
+    }
+
+    private static int somme(Color couleur) {
+        return couleur.getRed() + couleur.getGreen() + couleur.getBlue();
+    }
+
+    @Test
     @DisplayName("Partie perdue ou abandonnée : la réponse en bleu foncé")
     void couleursPartiePerdue() {
         Partie perdue = partie(RegionFr.CORSE, ModeRegions.NOUVELLES,
