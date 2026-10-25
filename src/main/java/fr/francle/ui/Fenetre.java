@@ -45,7 +45,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComponent;
@@ -282,6 +282,9 @@ class Fenetre {
 
     private void construire() {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        // l'icône de la barre de titre et de la barre des tâches, en plusieurs tailles (Windows choisit). Les boîtes de
+        // dialogue ouvertes sur la fenêtre la reprennent
+        frame.setIconImages(IconeFenetre.images());
         JPanel contenu = new JPanel(new BorderLayout(0, 10));
         contenu.setBorder(BorderFactory.createEmptyBorder(10, 16, 16, 16));
         image.setHorizontalAlignment(SwingConstants.CENTER);
@@ -1198,7 +1201,7 @@ class Fenetre {
     }
 
     private void montrer(String chemin, int degres) {
-        ImageIcon icone = Representation.icone(chemin, LARGEUR_IMAGE, HAUTEUR_IMAGE, degres);
+        Icon icone = Representation.icone(chemin, LARGEUR_IMAGE, HAUTEUR_IMAGE, degres);
         image.setIcon(icone);
     }
 
