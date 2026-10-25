@@ -129,6 +129,8 @@ et ce qu'elle a permis d'apprendre dans [docs/lecons.md](docs/lecons.md).
 - [x] **Phase 12** : la liste des départements pendant le bonus, reprise du web
 - [x] **Phase 13** : le bonus simplifié (les départements de la région), et sa version difficile en option
 - [x] **Phase 14** : la carte de fin en couleur (les propositions selon leur proximité, l'outre-mer en encarts)
+- [x] **Phase 15** : les corrections de la revue (changement d'heure, minuit pendant le bonus, un seul jeu ouvert)
+- [x] **Phase 16** : l'esthétique (silhouette nette, icône, proximité en couleur, thème sombre, indices, articles)
 
 ## Historique
 

@@ -15,6 +15,8 @@ import fr.francle.jeu.Tentative;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.text.Collator;
@@ -25,6 +27,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
 
@@ -124,15 +127,30 @@ final class Textes {
     }
 
     String indice(Indice indice, RegionFr cible, boolean unitesAnglaises) {
-        String valeur = switch (indice) {
+        return ligneIndice(indice, valeurIndice(indice, cible, unitesAnglaises));
+    }
+
+    // ce que l'indice dit de la région : « 27 208 km² », « la crêpe »…
+    String valeurIndice(Indice indice, RegionFr cible, boolean unitesAnglaises) {
+        return switch (indice) {
             case SUPERFICIE -> superficie(cible.getSuperficie(), unitesAnglaises);
             case SPECIALITE -> cible.getSpecialite().dans(langue);
             case PERSONNALITE -> cible.getPersonnalite().dans(langue);
             case CAPITALE -> cible.getCapitale();
             case MONUMENT -> cible.getMonument().dans(langue);
         };
-        // la clé porte le nom de l'indice : « indice.SUPERFICIE »…
+    }
+
+    // la ligne de l'indice, autour de ce qui tient lieu de valeur (la valeur elle-même, mise en gras par la fenêtre, ou
+    // « après l'essai 3 » pour un indice pas encore révélé). La clé porte le nom de l'indice : « indice.SUPERFICIE »…
+    String ligneIndice(Indice indice, String valeur) {
         return texte("indice." + indice.name(), valeur);
+    }
+
+    // pour un indice pas encore révélé, quand il le sera : « après l'essai 3 » (le troisième indice vient après le
+    // troisième essai raté)
+    String indiceCache(Indice indice) {
+        return texte("indice.cache", indice.ordinal() + 1);
     }
 
     // le nom d'un mode de jeu, dans le menu Paramètres
@@ -142,6 +160,33 @@ final class Textes {
 
     String nom(RegionFr region) {
         return region.getNom(langue);
+    }
+
+    // le nom au milieu d'une phrase : « le Grand Est », « l'Occitanie », « Mayotte » en français ; le nom seul en
+    // anglais, qui n'en met pas devant les régions
+    String nomDansUnePhrase(RegionFr region) {
+        return langue == Langue.FR ? Articles.FR.getProperty(region.name(), nom(region)) : nom(region);
+    }
+
+    // les articles du français (resources/textes/articles_fr.properties), lus une seule fois, au premier besoin
+    // (le même « holder » que ContoursFrance). Properties.load lit un flux d'octets en ISO-8859-1, et abîmerait les
+    // accents d'un fichier UTF-8 : on lui donne donc le texte déjà décodé (lire), par un Reader
+    private static final class Articles {
+        static final Properties FR = lireProprietes("/textes/articles_fr.properties");
+    }
+
+    static Properties articles() {
+        return Articles.FR;
+    }
+
+    private static Properties lireProprietes(String chemin) {
+        Properties proprietes = new Properties();
+        try (Reader lecteur = new StringReader(lire(chemin))) {
+            proprietes.load(lecteur);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        return proprietes;
     }
 
     // le message sous la saisie, avant le premier essai ou après un essai raté
@@ -187,7 +232,8 @@ final class Textes {
     }
 
     String fin(Partie partie) {
-        String reponse = nom(partie.getCible());
+        // au milieu de la phrase : « La réponse était le Grand Est. »
+        String reponse = nomDansUnePhrase(partie.getCible());
         return switch (partie.getEtat()) {
             case GAGNEE -> {
                 int essais = partie.getEssais().size();
