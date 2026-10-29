@@ -355,7 +355,7 @@ class Fenetre {
             retenirReglages();
             // celui-ci compte tout de suite : l'article « Liste des régions » (ou « des départements ») du menu Jeu
             // se grise ou non
-            liste.setEnabled(reglages.isAvecListe());
+            actualiserListe();
         });
         JCheckBoxMenuItem avecSuggestions = new JCheckBoxMenuItem(textes.texte("parametre.suggestions"), reglages.isAvecSuggestions());
         // compte dès la prochaine lettre tapée
@@ -555,7 +555,6 @@ class Fenetre {
         afficherTitre();
         tableau.setPartie(partie);
         afficherIndices();
-        liste.setEnabled(reglages.isAvecListe());
         saisie.setText("");
         if (!partie.enCours()) {
             terminer();
@@ -854,8 +853,9 @@ class Fenetre {
     }
 
     // la commande « Liste » (menu Jeu, Ctrl+L) : la liste des départements tant que le bonus est affiché (même fini),
-    // sauf pour la question du numéro en outre-mer ; celle des régions sinon. Elle regarde l'état du jeu au moment où
-    // on l'appelle : une seule action pour les deux listes, sans rien à tenir à jour, à part son nom (nommerListe)
+    // celle des régions hors du bonus. Pour la question du numéro, en outre-mer, il n'y a rien à ouvrir : la commande
+    // est grisée. Elle regarde l'état du jeu au moment où on l'appelle : une seule action pour les deux listes, sans
+    // rien à tenir à jour, à part son nom et son état (actualiserListe)
     private void montrerListe() {
         if (listeDuBonus()) {
             montrerListeDepartements();
@@ -868,15 +868,18 @@ class Fenetre {
         return dansLeBonus && bonus.avecListe();
     }
 
-    // le nom de la commande suit la liste qu'elle ouvre : appelé quand le bonus s'affiche ou s'en va, et à chaque
-    // changement de langue. Changer le nom de l'Action renomme aussi l'article du menu, qui l'écoute
-    private void nommerListe() {
+    // le nom de la commande suit la liste qu'elle ouvre ; elle est grisée quand il n'y en a pas : réglage décoché, ou
+    // bonus sans liste (la question du numéro, en outre-mer). Appelé quand le bonus s'affiche ou s'en va (donc à chaque
+    // partie montrée), à chaque changement de langue et du réglage. Changer l'Action change aussi l'article du menu,
+    // qui l'écoute, et son raccourci
+    private void actualiserListe() {
         liste.putValue(Action.NAME, textes.texte(listeDuBonus() ? "action.listeDepartements" : "action.liste"));
+        liste.setEnabled(reglages.isAvecListe() && (!dansLeBonus || bonus.avecListe()));
     }
 
     // la liste des régions du mode joué, sur deux colonnes, comme dans la version web : un clic sur un nom le propose,
-    // comme si on l'avait tapé ; les régions déjà proposées sont barrées et ne se cliquent plus. Pendant un bonus
-    // d'outre-mer, la partie est gagnée : tout y est grisé
+    // comme si on l'avait tapé ; les régions déjà proposées sont barrées et ne se cliquent plus. La partie finie, tout
+    // y est grisé
     private void montrerListeRegions() {
         JDialog fenetre = new JDialog(frame, textes.texte("action.liste"), true);
         Set<RegionFr> proposees = partie.proposees();
@@ -1001,7 +1004,7 @@ class Fenetre {
         textes = new Textes(reglages.langue());
         nomsDesActions.forEach((action, cle) -> action.putValue(Action.NAME, textes.texte(cle)));
         // (sauf la liste, dont le nom dépend aussi du bonus)
-        nommerListe();
+        actualiserListe();
         frame.setJMenuBar(menus());
         frame.getRootPane().revalidate();
         valider.setText(textes.texte("valider"));
@@ -1066,7 +1069,7 @@ class Fenetre {
         // un bonus passé avant toute réponse, puis repris : la version a pu changer entre-temps
         appliquerVersion();
         dansLeBonus = true;
-        nommerListe();
+        actualiserListe();
         carte.montrer(bonus);
         cartes.show(cadre, DEPARTEMENTS);
         saisie.setText("");
@@ -1151,7 +1154,7 @@ class Fenetre {
             // (rien de nouveau à enregistrer : les réponses le sont déjà, et un bonus relu est toujours fini)
         }
         dansLeBonus = false;
-        nommerListe();
+        actualiserListe();
         saisie.putClientProperty(TEXTE_FANTOME, null);
         cartes.show(cadre, IMAGE);
     }
