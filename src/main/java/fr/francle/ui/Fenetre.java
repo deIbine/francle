@@ -499,6 +499,9 @@ class Fenetre {
 
     // la partie du jour : créée au premier appel de la journée, puis reprise telle quelle (en cours ou terminée)
     private void jouerDuJour() {
+        if (!quitterPartieLibre(textes.texte("action.duJour"))) {
+            return;
+        }
         LocalDate aujourdhui = LocalDate.now(horloge);
         if (duJour == null || !aujourdhui.equals(dateDuJour)) {
             dateDuJour = aujourdhui;
@@ -513,9 +516,31 @@ class Fenetre {
 
     // une partie libre : une nouvelle Partie à chaque fois, avec le mode choisi dans les réglages
     private void jouerLibre() {
+        if (!quitterPartieLibre(textes.texte("action.libre"))) {
+            return;
+        }
         ModeRegions mode = reglages.getMode();
         angleLibre = HASARD.nextInt(360);
         montrerPartie(new Partie(RegionFr.tirer(mode), mode));
+    }
+
+    // vrai si l'on peut quitter la partie affichée pour une autre (titre : le nom de la commande qui la remplace). Une
+    // partie libre n'est enregistrée nulle part : la quitter la perd, elle et son bonus. Une question d'abord, comme
+    // pour l'abandon, mais seulement s'il y a quelque chose à perdre
+    private boolean quitterPartieLibre(String titre) {
+        return !libreAPerdre() || confirmer(textes.texte("libre.question"), titre);
+    }
+
+    // une partie libre en cours avec au moins un essai, ou son bonus en cours avec au moins une réponse. Une partie
+    // neuve ou finie, ou un bonus sans réponse, se quittent sans rien demander ; la partie du jour aussi, qui est
+    // enregistrée à chaque essai et se reprend telle quelle
+    private boolean libreAPerdre() {
+        if (partie == null || partie == duJour) {
+            return false;
+        }
+        boolean partieCommencee = partie.enCours() && !partie.getEssais().isEmpty();
+        boolean bonusCommence = bonus != null && bonus.enCours() && !bonus.getTentatives().isEmpty();
+        return partieCommencee || bonusCommence;
     }
 
     // affiche une partie dans l'état où elle est (neuve, en cours ou terminée), uniquement à partir de cet état :
@@ -1148,7 +1173,7 @@ class Fenetre {
         passer.setEnabled(enCours);
         boutonPasser.setVisible(enCours);
         // sous le bonus, comme dans la version web : « Résultats » pour la partie du jour, « Partie libre » pour une
-        // partie libre (qui abandonne le bonus sans rien demander : rien n'en est compté)
+        // partie libre (qui demande d'abord, si le bonus a déjà une réponse : rien n'en est compté, mais tout serait perdu)
         boolean duJourAffiche = partie == duJour;
         boutonResultats.setVisible(duJourAffiche);
         boutonRejouer.setVisible(!enCours || !duJourAffiche);
