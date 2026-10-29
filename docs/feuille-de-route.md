@@ -26,6 +26,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 14 | La carte de fin en couleur | ✅ Fait (PR #52 à #54) |
 | 15 | Les corrections de la revue (changement d'heure, verrou…) | ✅ Fait (PR #55) |
 | 16 | L'esthétique de la fenêtre | ✅ Fait (PR #56 à #58) |
+| 17 | Trois points d'interface | ✅ Fait (PR #59) |
 
 ---
 
@@ -991,3 +992,19 @@ Le découpage prévu :
 3. **16.3 Les finitions** : en fin de partie, le champ de saisie vide et grisé laisse sa place ; les indices ont une
    marge et une icône chacun ; les noms de régions prennent leur article dans les phrases (« La réponse était le Grand
    Est »).
+
+---
+
+## Phase 17 : trois points d'interface ✅
+
+**Faite le 29 octobre 2026**, en une PR (deIbine/francle#59), un commit par point. Trois défauts relevés dans la
+fenêtre, analysés puis décidés le 29 octobre. Les leçons sont dans
+[lecons.md](lecons.md#phase-17--trois-points-dinterface). 505 tests (504 avant).
+
+| Point | Symptôme | Correction |
+|---|---|---|
+| Partie libre perdue | « Partie libre » (Ctrl+N), et aussi « Partie du jour » (Ctrl+D), remplaçaient une partie libre commencée sans rien demander, en plein bonus compris. | Une question d'abord, comme pour l'abandon (`quitterPartieLibre`), seulement s'il y a quelque chose à perdre (`libreAPerdre` : au moins un essai, ou une réponse au bonus). |
+| Suggestions | Après « Bretagne », « bre » la suggérait encore ; la choisir était refusé. Pendant le bonus, de même pour les départements déjà répondus. | Les suggestions laissent de côté ce que les listes barrent : `Partie.proposees()`, et `Bonus.repondus()` pendant le bonus. |
+| Liste en outre-mer | Pendant la question du numéro, « Liste » ouvrait la liste des régions, toute grisée. | La commande est grisée : `actualiserListe` (l'ancien `nommerListe`) règle son nom et son état. |
+
+Hors de cette phase : fermer la fenêtre (Ctrl+Q) perd aussi une partie libre commencée, sans question.
