@@ -131,6 +131,7 @@ et ce qu'elle a permis d'apprendre dans [docs/lecons.md](docs/lecons.md).
 - [x] **Phase 14** : la carte de fin en couleur (les propositions selon leur proximité, l'outre-mer en encarts)
 - [x] **Phase 15** : les corrections de la revue (changement d'heure, minuit pendant le bonus, un seul jeu ouvert)
 - [x] **Phase 16** : l'esthétique (silhouette nette, icône, proximité en couleur, thème sombre, indices, articles)
+- [x] **Phase 17** : trois points d'interface (partie libre confirmée, suggestions sans doublons, liste grisée en outre-mer)
 
 ## Historique
 

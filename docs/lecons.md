@@ -2464,6 +2464,63 @@ transparentes, sinon la silhouette paraîtrait plus petite qu'à l'endroit une f
 
 ---
 
+## Phase 17 : trois points d'interface
+
+### Demander seulement quand il y a quelque chose à perdre
+
+- **Pourquoi** : Ctrl+N remplaçait une partie libre commencée sans rien demander. Une partie libre n'est enregistrée
+  nulle part : ses essais étaient perdus. Mais une question à chaque Ctrl+N deviendrait vite pénible, et le joueur
+  apprendrait à répondre « Oui » sans lire : la question ne protégerait plus rien.
+- **Comment le faire** : une condition à part, `libreAPerdre()` (une partie libre en cours avec au moins un essai, ou
+  son bonus avec au moins une réponse), puis `quitterPartieLibre()`, qui ne pose la question (`confirmer`, comme pour
+  l'abandon) que si elle est vraie. Les deux sont appelées au début de `jouerLibre()` et de `jouerDuJour()`. C'est
+  en analysant le premier cas qu'on a trouvé le second : Ctrl+D perdait aussi la partie libre.
+- **Comment le penser** : une confirmation coûte de l'attention au joueur. Elle ne vaut que si l'action est
+  irréversible **et** que quelque chose serait perdu. Et quand on protège une action, se demander quelles autres
+  actions ont le même effet : la protection va dans ce qu'elles ont en commun (ici, quitter la partie affichée).
+
+### Séparer la condition de la question
+
+- **Pourquoi** : la boîte de dialogue s'ouvrirait à l'écran pendant la vérification. Une condition sans affichage,
+  elle, se vérifie sans rien ouvrir.
+- **Comment le faire** : `libreAPerdre()` ne fait que calculer. La sonde de vérification l'interroge dans chaque
+  situation (partie neuve, avec un essai, gagnée, bonus avec une réponse, finie, partie du jour). Ce qui reste à
+  vérifier à la main, c'est seulement la boîte elle-même, déjà utilisée pour l'abandon.
+- **Comment le penser** : c'est la séparation logique / affichage de la phase 3, à petite échelle. Ce qui décide se
+  teste ; ce qui montre se regarde.
+
+### Les suggestions disent la même chose que la liste
+
+- **Pourquoi** : la liste des régions barrait les régions déjà proposées, mais les suggestions les proposaient encore.
+  Deux vues de la même information, deux réponses différentes : le joueur choisit une suggestion, et le jeu la refuse.
+- **Comment le faire** : `Partie.proposees()` (l'ensemble des régions jouées) sert maintenant à trois endroits : le
+  refus dans `Partie.proposer`, la liste qui les barre, les suggestions qui les retirent. Pendant le bonus,
+  `Bonus.repondus()` fait de même pour les départements. `Collectors.toUnmodifiableSet()` : l'interface lit l'ensemble,
+  elle ne peut pas le modifier. Un test dans `PartieTest`.
+- **Comment le penser** : quand deux endroits montrent la même règle, ils doivent la lire au même endroit. La question
+  à se poser : « où d'autre cette information est-elle affichée, et dit-elle la même chose ? »
+
+### Griser plutôt qu'ouvrir une fenêtre vide
+
+- **Pourquoi** : pendant la question du numéro (outre-mer), « Liste » ouvrait la liste des régions, toute grisée : une
+  fenêtre qui ne sert à rien, à fermer aussitôt.
+- **Comment le faire** : `actualiserListe()` (l'ancien `nommerListe()`) règle à la fois le nom et l'état de l'action
+  `liste`. Comme l'article du menu et le raccourci Ctrl+L partagent la même `Action`, la griser grise les deux.
+  L'état était réglé à deux autres endroits (`montrerPartie`, la case du réglage) : ils passent maintenant par elle.
+- **Comment le penser** : un état (actif ou grisé) calculé à un seul endroit, à partir de tout ce dont il dépend
+  (réglage, bonus, question), ne peut pas se contredire. Trois endroits qui le règlent chacun à moitié finissent
+  toujours par en oublier un.
+
+## Bilan de la Phase 17
+
+- **Une PR, trois commits**, un par point, avec les docs.
+- **Nouveau pour le joueur** : une partie libre commencée ne se perd plus par mégarde (Ctrl+N ou Ctrl+D) ; les
+  suggestions ne proposent plus ce qui a déjà été joué ; « Liste » est grisée quand elle n'a rien à montrer.
+- **505 tests** (504 avant). Vérifié par une sonde (la fenêtre construite sans être affichée) : 23 situations, dans
+  les deux langues et les deux époques, dont la Martinique (question du numéro) et l'Occitanie (choix sur la carte).
+
+---
+
 ## Aide-mémoire
 
 

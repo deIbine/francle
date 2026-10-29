@@ -5,7 +5,6 @@ import fr.francle.donnees.Langue;
 import fr.francle.donnees.ModeRegions;
 import fr.francle.donnees.RegionFr;
 import fr.francle.jeu.Bonus;
-import fr.francle.jeu.Essai;
 import fr.francle.jeu.Indice;
 import fr.francle.jeu.ModesDifficiles;
 import fr.francle.jeu.Partie;
@@ -356,7 +355,7 @@ class Fenetre {
             retenirReglages();
             // celui-ci compte tout de suite : l'article « Liste des régions » (ou « des départements ») du menu Jeu
             // se grise ou non
-            liste.setEnabled(reglages.isAvecListe());
+            actualiserListe();
         });
         JCheckBoxMenuItem avecSuggestions = new JCheckBoxMenuItem(textes.texte("parametre.suggestions"), reglages.isAvecSuggestions());
         // compte dès la prochaine lettre tapée
@@ -499,6 +498,9 @@ class Fenetre {
 
     // la partie du jour : créée au premier appel de la journée, puis reprise telle quelle (en cours ou terminée)
     private void jouerDuJour() {
+        if (!quitterPartieLibre(textes.texte("action.duJour"))) {
+            return;
+        }
         LocalDate aujourdhui = LocalDate.now(horloge);
         if (duJour == null || !aujourdhui.equals(dateDuJour)) {
             dateDuJour = aujourdhui;
@@ -513,9 +515,31 @@ class Fenetre {
 
     // une partie libre : une nouvelle Partie à chaque fois, avec le mode choisi dans les réglages
     private void jouerLibre() {
+        if (!quitterPartieLibre(textes.texte("action.libre"))) {
+            return;
+        }
         ModeRegions mode = reglages.getMode();
         angleLibre = HASARD.nextInt(360);
         montrerPartie(new Partie(RegionFr.tirer(mode), mode));
+    }
+
+    // vrai si l'on peut quitter la partie affichée pour une autre (titre : le nom de la commande qui la remplace). Une
+    // partie libre n'est enregistrée nulle part : la quitter la perd, elle et son bonus. Une question d'abord, comme
+    // pour l'abandon, mais seulement s'il y a quelque chose à perdre
+    private boolean quitterPartieLibre(String titre) {
+        return !libreAPerdre() || confirmer(textes.texte("libre.question"), titre);
+    }
+
+    // une partie libre en cours avec au moins un essai, ou son bonus en cours avec au moins une réponse. Une partie
+    // neuve ou finie, ou un bonus sans réponse, se quittent sans rien demander ; la partie du jour aussi, qui est
+    // enregistrée à chaque essai et se reprend telle quelle
+    private boolean libreAPerdre() {
+        if (partie == null || partie == duJour) {
+            return false;
+        }
+        boolean partieCommencee = partie.enCours() && !partie.getEssais().isEmpty();
+        boolean bonusCommence = bonus != null && bonus.enCours() && !bonus.getTentatives().isEmpty();
+        return partieCommencee || bonusCommence;
     }
 
     // affiche une partie dans l'état où elle est (neuve, en cours ou terminée), uniquement à partir de cet état :
@@ -531,7 +555,6 @@ class Fenetre {
         afficherTitre();
         tableau.setPartie(partie);
         afficherIndices();
-        liste.setEnabled(reglages.isAvecListe());
         saisie.setText("");
         if (!partie.enCours()) {
             terminer();
@@ -613,18 +636,25 @@ class Fenetre {
     }
 
     // les noms à suggérer pour ce début de saisie, parmi les régions acceptées dans le mode de la partie, dans la
-    // langue du joueur
+    // langue du joueur. Sans celles déjà proposées : la partie les refuserait (la liste des régions, elle, les barre)
     private List<String> suggestions(String debut) {
         if (!reglages.isAvecSuggestions()) {
             return List.of();
         }
         if (dansLeBonus) {
             // ceux que le bonus propose (Bonus.proposes : la région ou les 101 selon la version ; rien pour un
-            // numéro), chacun avec son numéro (« Finistère (29) »), que la réponse accepte (Departement.chercher)
+            // numéro), chacun avec son numéro (« Finistère (29) »), que la réponse accepte (Departement.chercher).
+            // Sans ceux qui ont déjà leur réponse, barrés dans la liste des départements : les redonner serait refusé
+            // ou faux
+            List<Departement> repondus = bonus.repondus();
             return Departement.suggestions(debut, bonus.proposes(), textes.getLangue()).stream()
+                    .filter(departement -> !repondus.contains(departement))
                     .map(Departement::nomEtNumero).toList();
         }
-        return RegionFr.suggestions(debut, partie.getMode(), textes.getLangue()).stream().map(textes::nom).toList();
+        Set<RegionFr> proposees = partie.proposees();
+        return RegionFr.suggestions(debut, partie.getMode(), textes.getLangue()).stream()
+                .filter(region -> !proposees.contains(region))
+                .map(textes::nom).toList();
     }
 
     // comme dans la version web, une confirmation d'abord : un clic malheureux ne doit pas coûter la partie du jour
@@ -823,8 +853,9 @@ class Fenetre {
     }
 
     // la commande « Liste » (menu Jeu, Ctrl+L) : la liste des départements tant que le bonus est affiché (même fini),
-    // sauf pour la question du numéro en outre-mer ; celle des régions sinon. Elle regarde l'état du jeu au moment où
-    // on l'appelle : une seule action pour les deux listes, sans rien à tenir à jour, à part son nom (nommerListe)
+    // celle des régions hors du bonus. Pour la question du numéro, en outre-mer, il n'y a rien à ouvrir : la commande
+    // est grisée. Elle regarde l'état du jeu au moment où on l'appelle : une seule action pour les deux listes, sans
+    // rien à tenir à jour, à part son nom et son état (actualiserListe)
     private void montrerListe() {
         if (listeDuBonus()) {
             montrerListeDepartements();
@@ -837,18 +868,21 @@ class Fenetre {
         return dansLeBonus && bonus.avecListe();
     }
 
-    // le nom de la commande suit la liste qu'elle ouvre : appelé quand le bonus s'affiche ou s'en va, et à chaque
-    // changement de langue. Changer le nom de l'Action renomme aussi l'article du menu, qui l'écoute
-    private void nommerListe() {
+    // le nom de la commande suit la liste qu'elle ouvre ; elle est grisée quand il n'y en a pas : réglage décoché, ou
+    // bonus sans liste (la question du numéro, en outre-mer). Appelé quand le bonus s'affiche ou s'en va (donc à chaque
+    // partie montrée), à chaque changement de langue et du réglage. Changer l'Action change aussi l'article du menu,
+    // qui l'écoute, et son raccourci
+    private void actualiserListe() {
         liste.putValue(Action.NAME, textes.texte(listeDuBonus() ? "action.listeDepartements" : "action.liste"));
+        liste.setEnabled(reglages.isAvecListe() && (!dansLeBonus || bonus.avecListe()));
     }
 
     // la liste des régions du mode joué, sur deux colonnes, comme dans la version web : un clic sur un nom le propose,
-    // comme si on l'avait tapé ; les régions déjà proposées sont barrées et ne se cliquent plus. Pendant un bonus
-    // d'outre-mer, la partie est gagnée : tout y est grisé
+    // comme si on l'avait tapé ; les régions déjà proposées sont barrées et ne se cliquent plus. La partie finie, tout
+    // y est grisé
     private void montrerListeRegions() {
         JDialog fenetre = new JDialog(frame, textes.texte("action.liste"), true);
-        Set<RegionFr> proposees = new HashSet<>(partie.getEssais().stream().map(Essai::proposition).toList());
+        Set<RegionFr> proposees = partie.proposees();
         boolean finie = !partie.enCours();
         JPanel noms = new JPanel(new GridLayout(0, 2, 6, 0));
         for (RegionFr region : textes.regionsTriees(partie.getMode())) {
@@ -970,7 +1004,7 @@ class Fenetre {
         textes = new Textes(reglages.langue());
         nomsDesActions.forEach((action, cle) -> action.putValue(Action.NAME, textes.texte(cle)));
         // (sauf la liste, dont le nom dépend aussi du bonus)
-        nommerListe();
+        actualiserListe();
         frame.setJMenuBar(menus());
         frame.getRootPane().revalidate();
         valider.setText(textes.texte("valider"));
@@ -1035,7 +1069,7 @@ class Fenetre {
         // un bonus passé avant toute réponse, puis repris : la version a pu changer entre-temps
         appliquerVersion();
         dansLeBonus = true;
-        nommerListe();
+        actualiserListe();
         carte.montrer(bonus);
         cartes.show(cadre, DEPARTEMENTS);
         saisie.setText("");
@@ -1120,7 +1154,7 @@ class Fenetre {
             // (rien de nouveau à enregistrer : les réponses le sont déjà, et un bonus relu est toujours fini)
         }
         dansLeBonus = false;
-        nommerListe();
+        actualiserListe();
         saisie.putClientProperty(TEXTE_FANTOME, null);
         cartes.show(cadre, IMAGE);
     }
@@ -1148,7 +1182,7 @@ class Fenetre {
         passer.setEnabled(enCours);
         boutonPasser.setVisible(enCours);
         // sous le bonus, comme dans la version web : « Résultats » pour la partie du jour, « Partie libre » pour une
-        // partie libre (qui abandonne le bonus sans rien demander : rien n'en est compté)
+        // partie libre (qui demande d'abord, si le bonus a déjà une réponse : rien n'en est compté, mais tout serait perdu)
         boolean duJourAffiche = partie == duJour;
         boutonResultats.setVisible(duJourAffiche);
         boutonRejouer.setVisible(!enCours || !duJourAffiche);

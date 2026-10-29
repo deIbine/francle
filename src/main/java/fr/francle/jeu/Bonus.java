@@ -214,7 +214,7 @@ public class Bonus {
 
     // vrai si ce bonus a sa liste des départements (menu Jeu, Ctrl+L) : en mode CHOIX seulement, où l'on choisit sur
     // la carte, puis on nomme. Pas pour la question du numéro, en outre-mer : la liste, qui montre les numéros, donnerait
-    // la réponse ; la commande y reste celle des régions
+    // la réponse ; la commande y est grisée
     public boolean avecListe() {
         return question == Question.CHOIX;
     }
