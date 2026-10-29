@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /*
 Les règles du jeu, sans aucun affichage : Partie reçoit les saisies du joueur et dit ce qui s'est passé.
@@ -55,7 +57,7 @@ public class Partie {
             trouvee = Optional.of(evoquees.get(0));
         }
         RegionFr proposition = trouvee.get();
-        if (essais.stream().anyMatch(essai -> essai.proposition() == proposition)) {
+        if (proposees().contains(proposition)) {
             return new Reponse.DejaProposee(proposition);
         }
         double distance = cible.distance(proposition);
@@ -102,6 +104,12 @@ public class Partie {
     public boolean enCours() { return etat == Etat.EN_COURS; }
     // une vue en lecture seule : l'interface peut lire les essais, pas en ajouter
     public List<Essai> getEssais() { return Collections.unmodifiableList(essais); }
+
+    // les régions déjà proposées : les rejouer est refusé. L'interface les retire des suggestions et les barre dans la
+    // liste des régions
+    public Set<RegionFr> proposees() {
+        return essais.stream().map(Essai::proposition).collect(Collectors.toUnmodifiableSet());
+    }
 
     // pourcentage de proximité : 100 % à 0 km, 0 % pour la région de référence la plus éloignée de la cible.
     // Pour une cible en métropole, seules les régions de métropole servent de référence : sinon l'outre-mer,

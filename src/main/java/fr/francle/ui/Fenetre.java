@@ -5,7 +5,6 @@ import fr.francle.donnees.Langue;
 import fr.francle.donnees.ModeRegions;
 import fr.francle.donnees.RegionFr;
 import fr.francle.jeu.Bonus;
-import fr.francle.jeu.Essai;
 import fr.francle.jeu.Indice;
 import fr.francle.jeu.ModesDifficiles;
 import fr.francle.jeu.Partie;
@@ -638,18 +637,25 @@ class Fenetre {
     }
 
     // les noms à suggérer pour ce début de saisie, parmi les régions acceptées dans le mode de la partie, dans la
-    // langue du joueur
+    // langue du joueur. Sans celles déjà proposées : la partie les refuserait (la liste des régions, elle, les barre)
     private List<String> suggestions(String debut) {
         if (!reglages.isAvecSuggestions()) {
             return List.of();
         }
         if (dansLeBonus) {
             // ceux que le bonus propose (Bonus.proposes : la région ou les 101 selon la version ; rien pour un
-            // numéro), chacun avec son numéro (« Finistère (29) »), que la réponse accepte (Departement.chercher)
+            // numéro), chacun avec son numéro (« Finistère (29) »), que la réponse accepte (Departement.chercher).
+            // Sans ceux qui ont déjà leur réponse, barrés dans la liste des départements : les redonner serait refusé
+            // ou faux
+            List<Departement> repondus = bonus.repondus();
             return Departement.suggestions(debut, bonus.proposes(), textes.getLangue()).stream()
+                    .filter(departement -> !repondus.contains(departement))
                     .map(Departement::nomEtNumero).toList();
         }
-        return RegionFr.suggestions(debut, partie.getMode(), textes.getLangue()).stream().map(textes::nom).toList();
+        Set<RegionFr> proposees = partie.proposees();
+        return RegionFr.suggestions(debut, partie.getMode(), textes.getLangue()).stream()
+                .filter(region -> !proposees.contains(region))
+                .map(textes::nom).toList();
     }
 
     // comme dans la version web, une confirmation d'abord : un clic malheureux ne doit pas coûter la partie du jour
@@ -873,7 +879,7 @@ class Fenetre {
     // d'outre-mer, la partie est gagnée : tout y est grisé
     private void montrerListeRegions() {
         JDialog fenetre = new JDialog(frame, textes.texte("action.liste"), true);
-        Set<RegionFr> proposees = new HashSet<>(partie.getEssais().stream().map(Essai::proposition).toList());
+        Set<RegionFr> proposees = partie.proposees();
         boolean finie = !partie.enCours();
         JPanel noms = new JPanel(new GridLayout(0, 2, 6, 0));
         for (RegionFr region : textes.regionsTriees(partie.getMode())) {

@@ -7,6 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -74,6 +75,21 @@ class PartieTest {
         assertEquals(new Reponse.DejaProposee(RegionFr.CORSE), partie.proposer("corse"));
         assertEquals(1, partie.getEssais().size());
         assertTrue(partie.enCours());
+    }
+
+    @Test
+    @DisplayName("Les régions proposées : aucune au départ, une de plus par essai, rien pour une saisie refusée")
+    void regionsProposees() {
+        Partie partie = new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES);
+        assertTrue(partie.proposees().isEmpty());
+
+        partie.proposer("Corse");
+        partie.proposer("Normandie");
+        partie.proposer("corse");
+        partie.proposer("Atlantide");
+
+        assertEquals(Set.of(RegionFr.CORSE, RegionFr.NORMANDIE), partie.proposees());
+        assertThrows(UnsupportedOperationException.class, () -> partie.proposees().add(RegionFr.BRETAGNE));
     }
 
     @Test
