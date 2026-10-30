@@ -27,6 +27,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 15 | Les corrections de la revue (changement d'heure, verrou…) | ✅ Fait (PR #55) |
 | 16 | L'esthétique de la fenêtre | ✅ Fait (PR #56 à #58) |
 | 17 | Trois points d'interface | ✅ Fait (PR #59) |
+| 18 | La passe de vérification (minuit, résultats, bulles, accessibilité) | En cours |
 
 ---
 
@@ -1008,3 +1009,26 @@ fenêtre, analysés puis décidés le 29 octobre. Les leçons sont dans
 | Liste en outre-mer | Pendant la question du numéro, « Liste » ouvrait la liste des régions, toute grisée. | La commande est grisée : `actualiserListe` (l'ancien `nommerListe`) règle son nom et son état. |
 
 Hors de cette phase : fermer la fenêtre (Ctrl+Q) perd aussi une partie libre commencée, sans question.
+
+---
+
+## Phase 18 : la passe de vérification
+
+**Faite le 30 octobre 2026**, en une PR, un commit par point retenu. Sept points ont d'abord été vérifiés sans rien
+modifier, avec le code et un harnais qui pilote la vraie fenêtre (horloge factice, dossier temporaire) ; trois
+sont corrigés, un quatrième l'est en partie, les trois autres étaient déjà bons. Les leçons sont dans
+[lecons.md](lecons.md#phase-18--la-passe-de-vérification). 508 tests (505 avant).
+
+| Point | Constat | Décision |
+|---|---|---|
+| Fenêtre ouverte « plus tard » | La question « Abandonner ? » restée ouverte à minuit abandonnait la partie **du nouveau jour** (vu au harnais). Un clic dans la liste des régions ouverte à minuit aurait joué dans la nouvelle partie. « Résultats » cliqué pendant les 1,5 s d'attente de la fin du bonus ouvrait deux fenêtres de statistiques. | 18.1 : la partie (ou le bonus) visée est retenue avant la question ou la liste ; rien n'est fait si elle a changé. `montrerStatistiques` arrête la minuterie `avantResultats`. |
+| Couleurs de la carte de fin | Déjà bon : le dégradé commence à 0 % et il est continu, et la luminance va de 0,77 (0 %) à 0,25 (100 %). 0 %, 32 % et 36 % ont trois couleurs (32 et 36 très proches). Sous 50 % : 70 % des paires (nouvelles régions, cible en métropole), 76 % (cible en outre-mer). | Pas de légende : la pastille du tableau, avec son pourcentage, en tient lieu. |
+| Silhouette cachée ou tournée à la fin | Sans objet : à la fin, la carte de France remplace la silhouette ; la région y a sa vraie forme, à l'endroit. | Rien. |
+| Résultats d'une partie libre | La fenêtre des résultats, une fois fermée, ne se rouvrait pas (« Statistiques » montre la partie du jour). | 18.2 : le bouton « Résultats » reste sous l'écran de fin, partie du jour ou libre, et à la fin du bonus. |
+| Commandes grisées | Aucune n'avait de bulle d'aide. | 18.2 : la bulle dit pourquoi, pour la liste (réglage décoché ; « Pas de liste pour cette question »), « Copier le résultat du jour » et « Bonus des départements ». Pas pour « Abandonner », dont la raison se voit. |
+| Phrase de victoire | Déjà bonne : une seule tournure, « Bravo ! Trouvé en N essais. » (`Textes.fin`), à l'écran comme dans la fenêtre des résultats. | Rien. |
+| Accessibilité des statistiques | La répartition, dessinée à la main, n'avait aucun contexte accessible (`null`). | 18.3 : un nom (le titre du cadre) et une description qui dit chaque barre, celle du jour signalée. |
+
+Hors de cette phase : après un bonus joué en partie libre, la carte de fin de la région ne se revoit plus (la
+partie du jour, elle, y revient par Ctrl+D). Un moyen de passer de la carte de fin à celle du bonus, dans les deux
+modes, a été laissé de côté.
