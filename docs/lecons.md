@@ -2586,6 +2586,43 @@ transparentes, sinon la silhouette paraîtrait plus petite qu'à l'endroit une f
 
 ---
 
+## Phase 19 : la carte de fin après le bonus
+
+### Un écran sans chemin pour y revenir
+
+- **Pourquoi** : en partie libre gagnée, la carte de fin était affichée puis remplacée par le bonus dans le même
+  clic : le joueur ne la voyait jamais. Le bonus fini, aucune commande n'y ramenait. La partie du jour n'avait pas ce
+  défaut, mais par chance : Ctrl+D la réaffiche, et passe donc par la carte de fin.
+- **Comment le faire** : dresser la carte des écrans (silhouette, carte de fin, carte des départements) et, pour
+  chacun, les commandes qui y mènent. Il manquait une flèche : bonus fini → carte de fin. Le bouton « Carte »
+  (`montrerCarteDeFin`) l'ajoute, en réutilisant ce qui existe : `quitterBonus()` puis `terminer()`. La flèche
+  inverse existait déjà (`jouerBonus` sait montrer un bonus fini) : il suffisait de laisser « Bonus » visible
+  (`bonusGagne()` au lieu de `bonusAJouer()`).
+- **Comment le penser** : un écran qu'on peut quitter doit pouvoir se retrouver, surtout s'il contient le résultat.
+  La question à se poser : « depuis chaque écran, comment revient-on à chacun des autres ? » Un chemin qui n'existe
+  que par un détour (Ctrl+D pour la partie du jour) cache souvent un trou dans l'autre mode.
+
+### Ne pas annuler ce qu'on attendait
+
+- **Pourquoi** : `quitterBonus()` arrête la minuterie des résultats, parce qu'en temps normal on quitte le bonus pour
+  une autre partie. Ici, on reste dans la même : cliquer « Carte » dans les 1,5 s après la dernière réponse aurait
+  fait disparaître les résultats, sans raison.
+- **Comment le faire** : regarder l'état de la minuterie **avant** de l'arrêter (`avantResultats.isRunning()`), puis,
+  la carte affichée, ouvrir les résultats tout de suite (`resultatsEnFin()`).
+- **Comment le penser** : quand on réutilise une méthode, relire ses effets de bord avec le nouveau contexte. Ce qui
+  était juste pour « je pars ailleurs » ne l'est plus forcément pour « je reste, mais je regarde autre chose ».
+
+## Bilan de la Phase 19
+
+- **Une PR** : le code et « Comment jouer », puis les docs.
+- **Nouveau pour le joueur** : « Carte » sous le bonus fini, « Bonus » sous la carte de fin, dans les deux modes.
+- **508 tests**, sans nouveau : la logique est dans `Fenetre`, que les tests ne peuvent pas charger sans écran
+  (`HeadlessException` à l'initialisation de sa constante `RACCOURCI`). Vérifié au harnais : partie libre gagnée
+  avec bonus joué jusqu'au bout, « Carte » avec et sans résultats en attente, « Bonus » pour revenir, partie
+  abandonnée (ni l'un ni l'autre), partie du jour au bonus passé, en français et en anglais.
+
+---
+
 ## Aide-mémoire
 
 

@@ -28,6 +28,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 16 | L'esthétique de la fenêtre | ✅ Fait (PR #56 à #58) |
 | 17 | Trois points d'interface | ✅ Fait (PR #59) |
 | 18 | La passe de vérification (minuit, résultats, bulles, accessibilité) | ✅ Fait (PR #60) |
+| 19 | La carte de fin après le bonus | ✅ Fait |
 
 ---
 
@@ -1029,6 +1030,21 @@ sont corrigés, un quatrième l'est en partie, les trois autres étaient déjà 
 | Phrase de victoire | Déjà bonne : une seule tournure, « Bravo ! Trouvé en N essais. » (`Textes.fin`), à l'écran comme dans la fenêtre des résultats. | Rien. |
 | Accessibilité des statistiques | La répartition, dessinée à la main, n'avait aucun contexte accessible (`null`). | 18.3 : un nom (le titre du cadre) et une description qui dit chaque barre, celle du jour signalée. |
 
-Hors de cette phase : après un bonus joué en partie libre, la carte de fin de la région ne se revoit plus (la
-partie du jour, elle, y revient par Ctrl+D). Un moyen de passer de la carte de fin à celle du bonus, dans les deux
-modes, a été laissé de côté.
+Hors de cette phase : une partie libre gagnée ne montrait **jamais** sa carte de fin. Le bonus la remplace dès la
+victoire, et une fois le bonus fini, rien n'y ramenait (la partie du jour, elle, y revient par Ctrl+D). Fait à la
+phase 19.
+
+---
+
+## Phase 19 : la carte de fin après le bonus ✅
+
+**Faite le 30 octobre 2026**, en une PR, juste après la phase 18 qui avait relevé le défaut. Les leçons sont dans
+[lecons.md](lecons.md#phase-19--la-carte-de-fin-après-le-bonus). 508 tests (aucun nouveau : tout se passe dans
+`Fenetre`, vérifiée au harnais).
+
+| Avant | Après |
+|---|---|
+| Partie libre gagnée : `essaiJoue()` montre la carte de fin, puis `jouerBonus()` la remplace aussitôt par celle des départements. Le bonus fini, rien n'y ramène : Ctrl+D va à la partie du jour, Ctrl+N lance une autre partie, Ctrl+B ne fait rien en plein bonus, « Résultats » ne montre que du texte. | Sous le bonus fini, un bouton **« Carte »** affiche la carte de fin (`montrerCarteDeFin`), dans les deux modes. Sous la carte de fin d'une partie gagnée, **« Bonus »** reste, même le bonus fini, pour revenir à sa carte (`bonusGagne()` au lieu de `bonusAJouer()`). |
+| — | Cliqué dans les 1,5 s qui suivent la dernière réponse, « Carte » ouvre les résultats tout de suite (`quitterBonus` les aurait annulés). |
+
+« Comment jouer » le dit en une phrase, en français et en anglais.
