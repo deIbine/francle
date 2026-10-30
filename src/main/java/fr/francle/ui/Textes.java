@@ -27,6 +27,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -300,6 +301,21 @@ final class Textes {
     // le score du bonus en quelques caractères, après le message de fin de la partie : « Bonus : 3/4. »
     String resumeBonus(Bonus bonus) {
         return texte("bonus.resume", bonus.score(), bonus.total());
+    }
+
+    // ---- les commandes grisées ----
+
+    // pourquoi la liste (des régions ou des départements) ne s'ouvre pas, pour la bulle d'aide de la commande grisée :
+    // le réglage décoché d'abord (le joueur peut y remédier), sinon une question du bonus qui n'a pas de liste (le
+    // numéro, en outre-mer). Rien si elle s'ouvre
+    Optional<String> listeGrisee(boolean avecListe, boolean questionAvecListe) {
+        if (!avecListe) {
+            return Optional.of(texte("liste.desactivee"));
+        }
+        if (!questionAvecListe) {
+            return Optional.of(texte("liste.aucune"));
+        }
+        return Optional.empty();
     }
 
     // les régions jouables, dans l'ordre alphabétique de leur nom dans la langue (Île-de-France rangée à la lettre I)

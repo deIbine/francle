@@ -362,4 +362,15 @@ class TextesTest {
                 FR.ligneIndice(Indice.CAPITALE, FR.indiceCache(Indice.CAPITALE)));
         assertEquals("Area: after guess 1", EN.ligneIndice(Indice.SUPERFICIE, EN.indiceCache(Indice.SUPERFICIE)));
     }
+
+    @Test
+    @DisplayName("La liste grisée dit pourquoi : le réglage d'abord, puis une question sans liste ; rien si elle s'ouvre")
+    void listeGrisee() {
+        assertEquals(java.util.Optional.empty(), FR.listeGrisee(true, true));
+        assertEquals("Pas de liste pour cette question", FR.listeGrisee(true, false).orElseThrow());
+        assertEquals("Liste désactivée dans les Paramètres", FR.listeGrisee(false, true).orElseThrow());
+        // les deux à la fois : le réglage, que le joueur peut changer
+        assertEquals("Liste désactivée dans les Paramètres", FR.listeGrisee(false, false).orElseThrow());
+        assertEquals("No list for this question", EN.listeGrisee(true, false).orElseThrow());
+    }
 }
