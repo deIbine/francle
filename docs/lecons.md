@@ -2521,6 +2521,71 @@ transparentes, sinon la silhouette paraîtrait plus petite qu'à l'endroit une f
 
 ---
 
+## Phase 18 : la passe de vérification
+
+### Vérifier avant de corriger
+
+- **Pourquoi** : sur sept points soupçonnés, trois étaient déjà bons et un n'avait pas de sens en Swing (la
+  silhouette à la fin : la carte de France la remplace). Les corriger « par précaution » aurait ajouté du code pour
+  rien, ou cassé ce qui marchait.
+- **Comment le faire** : pour chaque point, une preuve : un `fichier:ligne` lu, un calcul (les proximités de toutes
+  les paires de régions, avec `Partie.pourcentage`), ou le harnais qui pilote la vraie fenêtre. Le harnais vit hors
+  du dépôt : une classe dans le package `fr.francle.ui` (pour appeler les méthodes de `Fenetre` par réflexion,
+  `setAccessible(true)`), une horloge factice (`Clock`) et un dossier temporaire pour les sauvegardes. On le compile
+  avec `javac -cp target/classes;…` et le classpath que donne `mvnw dependency:build-classpath`.
+- **Comment le penser** : un constat se prouve avant de devenir une tâche. La question : « qu'est-ce qui me montre
+  que c'est faux, ici, dans ce jeu, et pas dans un autre (la version web, un souvenir) ? »
+
+### Une fenêtre modale n'arrête pas le temps
+
+- **Pourquoi** : la question « Abandonner ? » est modale : `showOptionDialog` ne rend la main qu'une fois fermée.
+  Mais pendant ce temps, Swing continue de traiter les événements, minuteries comprises. À minuit, `aMinuit` passait
+  à la partie du nouveau jour sous la question ; « Oui » abandonnait alors cette nouvelle partie, sans un seul essai,
+  et celle de la veille restait en cours. Le harnais l'a montré : `partie du nouveau jour : ABANDONNEE, 0 essai(s)`.
+- **Comment le faire** : retenir ce qu'on vise **avant** la question (`Partie visee = partie;`), et vérifier
+  **après** que c'est toujours lui (`partie != visee` : on ne fait rien). Même garde pour un clic dans une liste
+  (régions ou départements), et `montrerStatistiques` arrête la minuterie des résultats en attente : sinon elle
+  sonnait pendant que « Résultats » était ouvert, et une seconde fenêtre s'empilait sur la première.
+- **Comment le penser** : tout ce qui attend (une question, une liste, une minuterie, un `invokeLater`) laisse le
+  monde changer entre le moment où l'on décide et celui où l'on agit. Après chaque attente, se demander : « est-ce
+  que ce que j'ai lu avant est encore vrai ? » Une référence comparée avec `!=` (le même objet ?) suffit souvent.
+
+### Une commande grisée dit pourquoi
+
+- **Pourquoi** : une commande grisée sans explication laisse le joueur chercher. « Liste des régions » se grise pour
+  deux raisons très différentes : un réglage qu'il peut changer, ou une question qui n'a pas de liste.
+- **Comment le faire** : la bulle d'aide d'une `Action`, c'est sa valeur `Action.SHORT_DESCRIPTION` : le bouton et
+  l'article de menu qui partagent l'action la reprennent, et la suivent quand elle change. Une seule méthode,
+  `activer(action, active, raison)`, règle l'état et la bulle ensemble : grisée, la raison ; active, rien (le nom dit
+  déjà ce que fait la commande). La raison de la liste est choisie par `Textes.listeGrisee`, testée sans fenêtre.
+  Swing montre bien la bulle d'un article grisé (vérifié en survolant le menu avec un `Robot`).
+- **Comment le penser** : l'état et son explication sont une seule information. Les régler au même endroit
+  empêche qu'une commande soit grisée avec la bulle d'une autre raison, ou d'une autre langue (`appliquerLangue`
+  les recalcule).
+
+### Rendre lisible ce qu'on dessine à la main
+
+- **Pourquoi** : les barres de la répartition sont des rectangles peints dans `paintComponent`. Pour un lecteur
+  d'écran, il n'y a rien : un `JComponent` « nu » n'a même pas de contexte accessible (`getAccessibleContext()`
+  renvoie `null`). Les `JLabel` et `JButton`, eux, en ont un tout fait.
+- **Comment le faire** : redéfinir `getAccessibleContext()` pour créer, à la première demande, un
+  `AccessibleJComponent` (une classe interne de `JComponent`, faite pour ça) avec le rôle `LABEL`. Puis lui donner un
+  nom (le titre du cadre) et une description (`FenetreStatistiques.description` : « 2 essais : 5 victoires (la partie
+  du jour). »). Le pluriel est une phrase par cas dans les fichiers de textes, comme pour `apresEssai`.
+- **Comment le penser** : tout ce qu'on dessine soi-même, on doit aussi le dire soi-même. La question à se poser
+  devant un `paintComponent` : « si je ne voyais pas l'écran, qu'est-ce que j'apprendrais ici ? »
+
+## Bilan de la Phase 18
+
+- **Une PR, trois commits** (18.1, 18.2, 18.3), puis les docs.
+- **Nouveau pour le joueur** : minuit ne touche plus une question ou une liste ouverte ; les résultats d'une partie
+  libre se rouvrent ; les commandes grisées disent pourquoi ; la répartition se lit avec un lecteur d'écran.
+- **508 tests** (505 avant). Vérifié au harnais : l'abandon à minuit, une seule fenêtre de statistiques, le bouton
+  « Résultats » d'une partie libre (qui rouvre bien sa fenêtre), les bulles dans le menu, la ligne des boutons de fin
+  en français et en anglais (258 points sur 420).
+
+---
+
 ## Aide-mémoire
 
 
@@ -2572,6 +2637,7 @@ transparentes, sinon la silhouette paraîtrait plus petite qu'à l'endroit une f
 | `java -jar target/francle.jar` | Lancer le jeu empaqueté |
 | `.\mvnw.cmd clean` | Supprimer `target/` |
 | `.\mvnw.cmd "-Dtest=PartieTest" test` | Lancer une seule classe de tests |
+| `.\mvnw.cmd dependency:build-classpath "-Dmdep.outputFile=cp.txt"` | Écrire le classpath des dépendances (pour compiler un harnais avec `javac`) |
 
 Sous PowerShell, le `.\` est obligatoire : par sécurité, PowerShell ne lance jamais un programme du dossier
 courant sans qu'on le désigne explicitement (sinon un faux `notepad.cmd` déposé dans un dossier serait lancé à la

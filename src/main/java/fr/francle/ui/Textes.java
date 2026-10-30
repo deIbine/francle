@@ -27,6 +27,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -300,6 +301,31 @@ final class Textes {
     // le score du bonus en quelques caractères, après le message de fin de la partie : « Bonus : 3/4. »
     String resumeBonus(Bonus bonus) {
         return texte("bonus.resume", bonus.score(), bonus.total());
+    }
+
+    // une barre de la répartition des victoires, en mots, pour un lecteur d'écran : « 2 essais : 5 victoires. », et
+    // pour celle de la victoire du jour, « (la partie du jour) » en plus. Un pluriel par phrase, comme apresEssai
+    String barreRepartition(int essais, int victoires, boolean duJour) {
+        String combien = essais == 1 ? texte("repartition.essais.un") : texte("repartition.essais.plusieurs", essais);
+        String gagnees = victoires == 0 ? texte("repartition.victoires.aucune")
+                : victoires == 1 ? texte("repartition.victoires.une") : texte("repartition.victoires.plusieurs", victoires);
+        String barre = texte("repartition.barre", combien, gagnees);
+        return duJour ? texte("repartition.duJour", barre) : barre;
+    }
+
+    // ---- les commandes grisées ----
+
+    // pourquoi la liste (des régions ou des départements) ne s'ouvre pas, pour la bulle d'aide de la commande grisée :
+    // le réglage décoché d'abord (le joueur peut y remédier), sinon une question du bonus qui n'a pas de liste (le
+    // numéro, en outre-mer). Rien si elle s'ouvre
+    Optional<String> listeGrisee(boolean avecListe, boolean questionAvecListe) {
+        if (!avecListe) {
+            return Optional.of(texte("liste.desactivee"));
+        }
+        if (!questionAvecListe) {
+            return Optional.of(texte("liste.aucune"));
+        }
+        return Optional.empty();
     }
 
     // les régions jouables, dans l'ordre alphabétique de leur nom dans la langue (Île-de-France rangée à la lettre I)

@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Stream;
 import javax.swing.AbstractAction;
@@ -111,6 +112,9 @@ class Fenetre {
     // Ctrl+Maj+C : Ctrl+C seul copie le texte sélectionné dans le champ de saisie
     private final Action partager = action("action.partager",
             KeyStroke.getKeyStroke(KeyEvent.VK_C, RACCOURCI | KeyEvent.SHIFT_DOWN_MASK), this::partager);
+    // la fenêtre des résultats, rouverte à la demande : les statistiques pour la partie du jour, la fin de la partie
+    // pour une partie libre (montrerResultats). Seulement sur un bouton, pas dans le menu
+    private final Action resultats = action("resultats", null, this::montrerResultats);
 
     private final JFrame frame = new JFrame("Francle");
     // les trois « cartes » du CardLayout, et leurs noms
@@ -136,9 +140,10 @@ class Fenetre {
     // bonus a été passé avant toute réponse
     private final JButton boutonPasser = new JButton(passer);
     private final JButton boutonBonus = new JButton(actionBonus);
-    // pendant le bonus de la partie du jour : les statistiques, sans quitter le bonus (comme « Voir les résultats »
-    // dans la version web)
-    private final JButton boutonResultats = new JButton(statistiques);
+    // les résultats, sans quitter l'écran (comme « Voir les résultats » dans la version web) : pendant le bonus de la
+    // partie du jour, et une fois la partie (ou son bonus) finie, du jour ou libre. Une partie libre n'a pas de
+    // statistiques : sans ce bouton, sa fenêtre de résultats, une fois fermée, ne se rouvrait plus
+    private final JButton boutonResultats = new JButton(resultats);
     private final Message message = new Message();
     // la ligne de saisie : le champ, et à droite les boutons. Sans champ (fin de partie), les boutons passent au milieu
     private final JPanel boutons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
@@ -657,9 +662,14 @@ class Fenetre {
                 .map(textes::nom).toList();
     }
 
-    // comme dans la version web, une confirmation d'abord : un clic malheureux ne doit pas coûter la partie du jour
+    // comme dans la version web, une confirmation d'abord : un clic malheureux ne doit pas coûter la partie du jour.
+    // La question est modale, mais le jeu ne s'arrête pas pour autant : les minuteries de Swing sonnent pendant qu'elle
+    // est ouverte. Si minuit passe, la fenêtre change de partie sous la question ; « Oui » abandonnerait alors la partie
+    // du nouveau jour, que le joueur n'a même pas vue. On retient donc la partie visée, et on ne fait rien si ce n'est
+    // plus elle
     private void abandonner() {
-        if (!confirmer(textes.texte("abandon.question"), textes.texte("action.abandonner"))) {
+        Partie visee = partie;
+        if (!confirmer(textes.texte("abandon.question"), textes.texte("action.abandonner")) || partie != visee) {
             return;
         }
         partie.abandonner();
@@ -743,6 +753,9 @@ class Fenetre {
     }
 
     private void montrerStatistiques() {
+        // les résultats en attente (fin du bonus) sont ceux-ci : sans cet arrêt, la minuterie sonnerait pendant que
+        // cette fenêtre est ouverte (« Résultats » cliqué tout de suite), et en ouvrirait une seconde par-dessus
+        avantResultats.stop();
         LocalDate aujourdhui = LocalDate.now(horloge);
         Statistiques stats = Statistiques.de(historique.resultats(), aujourdhui);
         // la partie du jour finie : le compte à rebours jusqu'à la suivante, et un bouton pour partager le résultat
@@ -871,10 +884,26 @@ class Fenetre {
     // le nom de la commande suit la liste qu'elle ouvre ; elle est grisée quand il n'y en a pas : réglage décoché, ou
     // bonus sans liste (la question du numéro, en outre-mer). Appelé quand le bonus s'affiche ou s'en va (donc à chaque
     // partie montrée), à chaque changement de langue et du réglage. Changer l'Action change aussi l'article du menu,
-    // qui l'écoute, et son raccourci
+    // qui l'écoute, et son raccourci. Grisée, sa bulle d'aide dit laquelle de ces deux raisons
     private void actualiserListe() {
         liste.putValue(Action.NAME, textes.texte(listeDuBonus() ? "action.listeDepartements" : "action.liste"));
-        liste.setEnabled(reglages.isAvecListe() && (!dansLeBonus || bonus.avecListe()));
+        Optional<String> raison = textes.listeGrisee(reglages.isAvecListe(), !dansLeBonus || bonus.avecListe());
+        activer(liste, raison.isEmpty(), raison.orElse(null));
+    }
+
+    // « Copier le résultat du jour » et « Bonus des départements » : actives, ou grisées avec leur raison. Appelé à
+    // chaque changement de l'écran (activerSaisie, afficherBonus) et de langue
+    private void actualiserPartageEtBonus() {
+        activer(partager, duJourFini(), textes.texte("action.partager.grisee"));
+        activer(actionBonus, bonusGagne(), textes.texte("action.bonus.grisee"));
+    }
+
+    // une action active, ou grisée avec la raison dans sa bulle d'aide (SHORT_DESCRIPTION : le bouton et l'article de
+    // menu qui partagent l'action la reprennent). Une commande grisée sans explication laisse le joueur deviner ;
+    // active, elle n'a pas de bulle : son nom dit déjà ce qu'elle fait
+    private static void activer(Action action, boolean active, String raison) {
+        action.setEnabled(active);
+        action.putValue(Action.SHORT_DESCRIPTION, active ? null : raison);
     }
 
     // la liste des régions du mode joué, sur deux colonnes, comme dans la version web : un clic sur un nom le propose,
@@ -882,6 +911,8 @@ class Fenetre {
     // y est grisé
     private void montrerListeRegions() {
         JDialog fenetre = new JDialog(frame, textes.texte("action.liste"), true);
+        // la partie dont la liste montre les noms : minuit peut passer pendant qu'elle est ouverte (voir abandonner)
+        Partie listee = partie;
         Set<RegionFr> proposees = partie.proposees();
         boolean finie = !partie.enCours();
         JPanel noms = new JPanel(new GridLayout(0, 2, 6, 0));
@@ -890,6 +921,10 @@ class Fenetre {
             noms.add(nomDeListe(textes.nom(region), dejaProposee, !finie && !dejaProposee, () -> {
                 // la liste se ferme d'abord : si l'essai termine la partie, la suite s'affiche dans la fenêtre du jeu
                 fenetre.dispose();
+                // une autre partie est à l'écran : ce nom a été choisi pour la précédente, il ne compte pas
+                if (partie != listee) {
+                    return;
+                }
                 saisie.setText(textes.nom(region));
                 jouer();
             }));
@@ -903,6 +938,8 @@ class Fenetre {
     // leur réponse sont barrés
     private void montrerListeDepartements() {
         JDialog fenetre = new JDialog(frame, textes.texte("action.listeDepartements"), true);
+        // le bonus dont la liste montre les noms : comme pour la liste des régions, il a pu quitter l'écran entre-temps
+        Bonus bonusListe = bonus;
         Set<Departement> repondus = new HashSet<>(bonus.repondus());
         boolean fini = !bonus.enCours();
         boolean choisi = carte.getChoisi().isPresent();
@@ -913,6 +950,9 @@ class Fenetre {
                 // la liste se ferme d'abord : si c'était la dernière réponse, les résultats s'ouvriront ensuite. Le
                 // focus revient à la fenêtre du jeu, sur la carte, pour choisir le département suivant
                 fenetre.dispose();
+                if (!dansLeBonus || bonus != bonusListe) {
+                    return;
+                }
                 carte.getChoisi().ifPresent(choix -> repondre(bonus.repondre(choix, departement)));
             });
             // un lecteur d'écran ne lit pas le trait du nom barré : il le dit avec des mots
@@ -1003,16 +1043,15 @@ class Fenetre {
     private void appliquerLangue() {
         textes = new Textes(reglages.langue());
         nomsDesActions.forEach((action, cle) -> action.putValue(Action.NAME, textes.texte(cle)));
-        // (sauf la liste, dont le nom dépend aussi du bonus)
+        // (sauf la liste, dont le nom dépend aussi du bonus), puis les bulles des commandes grisées
         actualiserListe();
+        actualiserPartageEtBonus();
         frame.setJMenuBar(menus());
         frame.getRootPane().revalidate();
         valider.setText(textes.texte("valider"));
         // le bouton du bonus a un nom court, à lui : celui de l'action (« Bonus des départements ») élargirait la fenêtre
         boutonBonus.setHideActionText(true);
         boutonBonus.setText(textes.texte("bouton.bonus"));
-        boutonResultats.setHideActionText(true);
-        boutonResultats.setText(textes.texte("resultats"));
         // le cadre titré, et une marge à l'intérieur : sans elle, le texte touchait presque le trait du cadre
         indices.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createTitledBorder(textes.texte("indices")),
@@ -1182,13 +1221,13 @@ class Fenetre {
         passer.setEnabled(enCours);
         boutonPasser.setVisible(enCours);
         // sous le bonus, comme dans la version web : « Résultats » pour la partie du jour, « Partie libre » pour une
-        // partie libre (qui demande d'abord, si le bonus a déjà une réponse : rien n'en est compté, mais tout serait perdu)
+        // partie libre (qui demande d'abord, si le bonus a déjà une réponse : rien n'en est compté, mais tout serait perdu).
+        // Le bonus fini, les deux, dans les deux cas
         boolean duJourAffiche = partie == duJour;
-        boutonResultats.setVisible(duJourAffiche);
+        boutonResultats.setVisible(duJourAffiche || !enCours);
         boutonRejouer.setVisible(!enCours || !duJourAffiche);
         boutonBonus.setVisible(false);
-        actionBonus.setEnabled(true);
-        partager.setEnabled(duJourFini());
+        actualiserPartageEtBonus();
         message.setText(enCours ? textes.questionBonus(bonus, choisi) : textes.finBonus(bonus));
         frame.getRootPane().setDefaultButton(ecrire ? valider : enCours ? null : boutonRejouer);
         // le focus du clavier là où est la suite : la saisie s'il faut écrire, sinon la carte pour choisir (ou
@@ -1235,11 +1274,11 @@ class Fenetre {
         boutonAbandonner.setVisible(active);
         boutonRejouer.setVisible(!active);
         boutonPasser.setVisible(false);
-        boutonResultats.setVisible(false);
+        // la partie finie, de quoi rouvrir ses résultats une fois leur fenêtre fermée
+        boutonResultats.setVisible(!active);
         // à la fin d'une partie gagnée, tant que le bonus n'est pas fini
         boutonBonus.setVisible(!active && bonusAJouer());
-        actionBonus.setEnabled(bonusGagne());
-        partager.setEnabled(duJourFini());
+        actualiserPartageEtBonus();
         // AVANT le bouton par défaut : montrerChamp retire les boutons de la fenêtre puis les remet, et un bouton
         // retiré cesse d'être le bouton par défaut (JButton.removeNotify)
         montrerChamp(active);
