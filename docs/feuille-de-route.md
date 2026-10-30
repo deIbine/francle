@@ -27,7 +27,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 15 | Les corrections de la revue (changement d'heure, verrou…) | ✅ Fait (PR #55) |
 | 16 | L'esthétique de la fenêtre | ✅ Fait (PR #56 à #58) |
 | 17 | Trois points d'interface | ✅ Fait (PR #59) |
-| 18 | La passe de vérification (minuit, résultats, bulles, accessibilité) | En cours |
+| 18 | La passe de vérification (minuit, résultats, bulles, accessibilité) | ✅ Fait (PR #60) |
 
 ---
 
@@ -1014,7 +1014,7 @@ Hors de cette phase : fermer la fenêtre (Ctrl+Q) perd aussi une partie libre co
 
 ## Phase 18 : la passe de vérification
 
-**Faite le 30 octobre 2026**, en une PR, un commit par point retenu. Sept points ont d'abord été vérifiés sans rien
+**Faite le 30 octobre 2026**, en une PR (deIbine/francle#60), un commit par point retenu. Sept points ont d'abord été vérifiés sans rien
 modifier, avec le code et un harnais qui pilote la vraie fenêtre (horloge factice, dossier temporaire) ; trois
 sont corrigés, un quatrième l'est en partie, les trois autres étaient déjà bons. Les leçons sont dans
 [lecons.md](lecons.md#phase-18--la-passe-de-vérification). 508 tests (505 avant).
