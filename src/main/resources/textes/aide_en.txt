@@ -24,7 +24,9 @@ type its name or its number (with the keyboard: Tab to the map, the arrow keys, 
 Enter). One answer per département (green: found, red: missed), and your score is
 added to your shared result. For a region with a single département, give its number.
 The daily bonus counts from the first answer, even if skipped or interrupted,
-and its average score appears in the statistics.
+and its average score appears in the statistics. Once the bonus is over, the “Map”
+button takes you back to the map of France for the game, and “Bonus” to the
+départements.
 
 Accents, capitals, spaces and hyphens are ignored: “ile de france” is accepted,
 and so are the French names (“Bretagne”). While you type, suggestions appear:

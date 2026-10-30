@@ -24,7 +24,8 @@ la région, puis écrivez son nom ou son numéro (au clavier : Tab jusqu'à la c
 flèches, puis Entrée). Une seule réponse par département (vert : trouvé, rouge : raté),
 et votre score s'ajoute au partage. Pour une région d'un seul département, donnez son
 numéro. Le bonus du jour compte dès la première réponse, même passé ou interrompu,
-et son score moyen apparaît dans les statistiques.
+et son score moyen apparaît dans les statistiques. Le bonus fini, le bouton « Carte »
+ramène à la carte de France de la partie, et « Bonus » à celle des départements.
 
 Les accents, majuscules, espaces et tirets sont ignorés : « ile de france » est accepté,
 tout comme les noms anglais (« Brittany »). Pendant la frappe, des suggestions s'affichent :
