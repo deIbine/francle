@@ -657,9 +657,14 @@ class Fenetre {
                 .map(textes::nom).toList();
     }
 
-    // comme dans la version web, une confirmation d'abord : un clic malheureux ne doit pas coûter la partie du jour
+    // comme dans la version web, une confirmation d'abord : un clic malheureux ne doit pas coûter la partie du jour.
+    // La question est modale, mais le jeu ne s'arrête pas pour autant : les minuteries de Swing sonnent pendant qu'elle
+    // est ouverte. Si minuit passe, la fenêtre change de partie sous la question ; « Oui » abandonnerait alors la partie
+    // du nouveau jour, que le joueur n'a même pas vue. On retient donc la partie visée, et on ne fait rien si ce n'est
+    // plus elle
     private void abandonner() {
-        if (!confirmer(textes.texte("abandon.question"), textes.texte("action.abandonner"))) {
+        Partie visee = partie;
+        if (!confirmer(textes.texte("abandon.question"), textes.texte("action.abandonner")) || partie != visee) {
             return;
         }
         partie.abandonner();
@@ -743,6 +748,9 @@ class Fenetre {
     }
 
     private void montrerStatistiques() {
+        // les résultats en attente (fin du bonus) sont ceux-ci : sans cet arrêt, la minuterie sonnerait pendant que
+        // cette fenêtre est ouverte (« Résultats » cliqué tout de suite), et en ouvrirait une seconde par-dessus
+        avantResultats.stop();
         LocalDate aujourdhui = LocalDate.now(horloge);
         Statistiques stats = Statistiques.de(historique.resultats(), aujourdhui);
         // la partie du jour finie : le compte à rebours jusqu'à la suivante, et un bouton pour partager le résultat
@@ -882,6 +890,8 @@ class Fenetre {
     // y est grisé
     private void montrerListeRegions() {
         JDialog fenetre = new JDialog(frame, textes.texte("action.liste"), true);
+        // la partie dont la liste montre les noms : minuit peut passer pendant qu'elle est ouverte (voir abandonner)
+        Partie listee = partie;
         Set<RegionFr> proposees = partie.proposees();
         boolean finie = !partie.enCours();
         JPanel noms = new JPanel(new GridLayout(0, 2, 6, 0));
@@ -890,6 +900,10 @@ class Fenetre {
             noms.add(nomDeListe(textes.nom(region), dejaProposee, !finie && !dejaProposee, () -> {
                 // la liste se ferme d'abord : si l'essai termine la partie, la suite s'affiche dans la fenêtre du jeu
                 fenetre.dispose();
+                // une autre partie est à l'écran : ce nom a été choisi pour la précédente, il ne compte pas
+                if (partie != listee) {
+                    return;
+                }
                 saisie.setText(textes.nom(region));
                 jouer();
             }));
@@ -903,6 +917,8 @@ class Fenetre {
     // leur réponse sont barrés
     private void montrerListeDepartements() {
         JDialog fenetre = new JDialog(frame, textes.texte("action.listeDepartements"), true);
+        // le bonus dont la liste montre les noms : comme pour la liste des régions, il a pu quitter l'écran entre-temps
+        Bonus bonusListe = bonus;
         Set<Departement> repondus = new HashSet<>(bonus.repondus());
         boolean fini = !bonus.enCours();
         boolean choisi = carte.getChoisi().isPresent();
@@ -913,6 +929,9 @@ class Fenetre {
                 // la liste se ferme d'abord : si c'était la dernière réponse, les résultats s'ouvriront ensuite. Le
                 // focus revient à la fenêtre du jeu, sur la carte, pour choisir le département suivant
                 fenetre.dispose();
+                if (!dansLeBonus || bonus != bonusListe) {
+                    return;
+                }
                 carte.getChoisi().ifPresent(choix -> repondre(bonus.repondre(choix, departement)));
             });
             // un lecteur d'écran ne lit pas le trait du nom barré : il le dit avec des mots
