@@ -115,6 +115,9 @@ class Fenetre {
     // la fenêtre des résultats, rouverte à la demande : les statistiques pour la partie du jour, la fin de la partie
     // pour une partie libre (montrerResultats). Seulement sur un bouton, pas dans le menu
     private final Action resultats = action("resultats", null, this::montrerResultats);
+    // depuis le bonus fini, la carte de France de la fin de partie (montrerCarteDeFin). Seulement sur un bouton : le
+    // chemin inverse est « Bonus », bouton et menu
+    private final Action voirCarte = action("action.carte", null, this::montrerCarteDeFin);
 
     private final JFrame frame = new JFrame("Francle");
     // les trois « cartes » du CardLayout, et leurs noms
@@ -136,10 +139,13 @@ class Fenetre {
     private final JButton boutonAbandonner = new JButton(abandonner);
     // à la fin de la partie, « Partie libre » prend la place d'« Abandonner »
     private final JButton boutonRejouer = new JButton(partieLibre);
-    // « Passer » pendant le bonus (à la place d'« Abandonner ») ; « Bonus » à la fin d'une partie gagnée dont le
-    // bonus a été passé avant toute réponse
+    // « Passer » pendant le bonus (à la place d'« Abandonner ») ; « Bonus » sous la carte de fin d'une partie gagnée,
+    // pour jouer le bonus (passé avant toute réponse) ou revoir sa carte une fois fini
     private final JButton boutonPasser = new JButton(passer);
     private final JButton boutonBonus = new JButton(actionBonus);
+    // « Carte » sous le bonus fini : le chemin inverse. Sans lui, une partie libre gagnée ne montrait jamais sa carte
+    // de fin (le bonus la remplace dès la victoire, et rien n'y ramenait ; la partie du jour, elle, y revient par Ctrl+D)
+    private final JButton boutonCarte = new JButton(voirCarte);
     // les résultats, sans quitter l'écran (comme « Voir les résultats » dans la version web) : pendant le bonus de la
     // partie du jour, et une fois la partie (ou son bonus) finie, du jour ou libre. Une partie libre n'a pas de
     // statistiques : sans ce bouton, sa fenêtre de résultats, une fois fermée, ne se rouvrait plus
@@ -443,6 +449,8 @@ class Fenetre {
         boutons.add(boutonPasser);
         boutons.add(boutonRejouer);
         boutons.add(boutonBonus);
+        boutons.add(boutonCarte);
+        boutonCarte.setVisible(false);
         boutons.add(boutonResultats);
         boutonResultats.setVisible(false);
         ligneSaisie.add(saisie, BorderLayout.CENTER);
@@ -1183,6 +1191,22 @@ class Fenetre {
         resultatsEnFin();
     }
 
+    // le bouton « Carte », sous le bonus fini : la carte de France de la fin de la partie, avec les régions proposées.
+    // La même partie, le même bonus (fini, il ne change plus) : « Bonus » ramène à sa carte. Les résultats en attente
+    // (le bouton cliqué dans les 1,5 s après la dernière réponse) ne sont pas perdus : ils s'ouvrent tout de suite,
+    // au-dessus de la carte de fin, au lieu d'être annulés par quitterBonus
+    private void montrerCarteDeFin() {
+        if (!dansLeBonus || bonus.enCours()) {
+            return;
+        }
+        boolean resultatsEnAttente = avantResultats.isRunning();
+        quitterBonus();
+        terminer();
+        if (resultatsEnAttente) {
+            resultatsEnFin();
+        }
+    }
+
     // le joueur va voir ailleurs (partie libre, partie du jour…) en plein bonus : un bonus commencé compte comme
     // passé, avec les réponses déjà données
     private void quitterBonus() {
@@ -1227,6 +1251,8 @@ class Fenetre {
         boutonResultats.setVisible(duJourAffiche || !enCours);
         boutonRejouer.setVisible(!enCours || !duJourAffiche);
         boutonBonus.setVisible(false);
+        // le bonus fini : de quoi revenir à la carte de fin de la partie
+        boutonCarte.setVisible(!enCours);
         actualiserPartageEtBonus();
         message.setText(enCours ? textes.questionBonus(bonus, choisi) : textes.finBonus(bonus));
         frame.getRootPane().setDefaultButton(ecrire ? valider : enCours ? null : boutonRejouer);
@@ -1276,8 +1302,9 @@ class Fenetre {
         boutonPasser.setVisible(false);
         // la partie finie, de quoi rouvrir ses résultats une fois leur fenêtre fermée
         boutonResultats.setVisible(!active);
-        // à la fin d'une partie gagnée, tant que le bonus n'est pas fini
-        boutonBonus.setVisible(!active && bonusAJouer());
+        // à la fin d'une partie gagnée : pour jouer le bonus, ou, fini, revoir sa carte (le chemin inverse de « Carte »)
+        boutonBonus.setVisible(!active && bonusGagne());
+        boutonCarte.setVisible(false);
         actualiserPartageEtBonus();
         // AVANT le bouton par défaut : montrerChamp retire les boutons de la fenêtre puis les remet, et un bouton
         // retiré cesse d'être le bouton par défaut (JButton.removeNotify)
