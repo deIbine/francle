@@ -13,9 +13,12 @@ import java.awt.Graphics2D;
 import java.awt.GridLayout;
 import java.awt.RenderingHints;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
+import javax.accessibility.AccessibleContext;
+import javax.accessibility.AccessibleRole;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -43,8 +46,13 @@ final class FenetreStatistiques {
         chiffres.add(chiffre(String.valueOf(stats.serieActuelle()), textes.texte("statistiques.serie")));
         chiffres.add(chiffre(String.valueOf(stats.meilleureSerie()), textes.texte("statistiques.meilleureSerie")));
 
+        String titre = textes.texte("statistiques.repartition");
         JComponent barres = new Repartition(stats.repartition(), essaisDuJour - 1);
-        barres.setBorder(BorderFactory.createTitledBorder(textes.texte("statistiques.repartition")));
+        barres.setBorder(BorderFactory.createTitledBorder(titre));
+        // dessinées à la main, les barres ne sont que des pixels : un lecteur d'écran n'y trouverait rien. Leur nom
+        // accessible est le titre du cadre, leur description les dit une à une
+        barres.getAccessibleContext().setAccessibleName(titre);
+        barres.getAccessibleContext().setAccessibleDescription(description(stats.repartition(), essaisDuJour, textes));
 
         // sous les barres : le bonus des départements, puis, sans aucune partie, de quoi commencer
         JPanel bas = new JPanel(new GridLayout(0, 1, 0, 6));
@@ -71,6 +79,15 @@ final class FenetreStatistiques {
             return textes.texte("statistiques.bonus", textes.pourcentage(stats.scoreMoyenBonus()), stats.bonusJoues());
         }
         return textes.texte(stats.victoires() > 0 ? "statistiques.bonus.aucun" : "statistiques.bonus.vide");
+    }
+
+    // les barres en mots, une phrase chacune : « 1 essai : aucune victoire. 2 essais : 5 victoires (la partie du jour). … »
+    static String description(List<Integer> repartition, int essaisDuJour, Textes textes) {
+        List<String> barres = new ArrayList<>();
+        for (int i = 0; i < repartition.size(); i++) {
+            barres.add(textes.barreRepartition(i + 1, repartition.get(i), i + 1 == essaisDuJour) + ".");
+        }
+        return String.join(" ", barres);
     }
 
     /*
@@ -137,6 +154,22 @@ final class FenetreStatistiques {
             this.valeurs = valeurs;
             this.enValeur = enValeur;
             setPreferredSize(new Dimension(320, HAUTEUR_LIGNE * Partie.ESSAIS_MAX + 30));
+        }
+
+        // un JComponent « nu » n'a pas de contexte accessible (getAccessibleContext renvoie null) : c'est le travail de
+        // ses sous-classes (JLabel, JButton…). Celui-ci en crée un à la première demande, le même ensuite. Le rôle
+        // LABEL : un texte à lire, pas un panneau à parcourir
+        @Override
+        public AccessibleContext getAccessibleContext() {
+            if (accessibleContext == null) {
+                accessibleContext = new AccessibleJComponent() {
+                    @Override
+                    public AccessibleRole getAccessibleRole() {
+                        return AccessibleRole.LABEL;
+                    }
+                };
+            }
+            return accessibleContext;
         }
 
         @Override

@@ -303,6 +303,16 @@ final class Textes {
         return texte("bonus.resume", bonus.score(), bonus.total());
     }
 
+    // une barre de la répartition des victoires, en mots, pour un lecteur d'écran : « 2 essais : 5 victoires. », et
+    // pour celle de la victoire du jour, « (la partie du jour) » en plus. Un pluriel par phrase, comme apresEssai
+    String barreRepartition(int essais, int victoires, boolean duJour) {
+        String combien = essais == 1 ? texte("repartition.essais.un") : texte("repartition.essais.plusieurs", essais);
+        String gagnees = victoires == 0 ? texte("repartition.victoires.aucune")
+                : victoires == 1 ? texte("repartition.victoires.une") : texte("repartition.victoires.plusieurs", victoires);
+        String barre = texte("repartition.barre", combien, gagnees);
+        return duJour ? texte("repartition.duJour", barre) : barre;
+    }
+
     // ---- les commandes grisées ----
 
     // pourquoi la liste (des régions ou des départements) ne s'ouvre pas, pour la bulle d'aide de la commande grisée :
