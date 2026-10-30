@@ -28,7 +28,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 16 | L'esthétique de la fenêtre | ✅ Fait (PR #56 à #58) |
 | 17 | Trois points d'interface | ✅ Fait (PR #59) |
 | 18 | La passe de vérification (minuit, résultats, bulles, accessibilité) | ✅ Fait (PR #60) |
-| 19 | La carte de fin après le bonus | ✅ Fait |
+| 19 | La carte de fin après le bonus | ✅ Fait (PR #61) |
 
 ---
 
@@ -1038,7 +1038,7 @@ phase 19.
 
 ## Phase 19 : la carte de fin après le bonus ✅
 
-**Faite le 30 octobre 2026**, en une PR, juste après la phase 18 qui avait relevé le défaut. Les leçons sont dans
+**Faite le 30 octobre 2026**, en une PR (deIbine/francle#61), juste après la phase 18 qui avait relevé le défaut. Les leçons sont dans
 [lecons.md](lecons.md#phase-19--la-carte-de-fin-après-le-bonus). 508 tests (aucun nouveau : tout se passe dans
 `Fenetre`, vérifiée au harnais).
 
