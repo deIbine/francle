@@ -195,6 +195,15 @@ class Fenetre {
     // à minuit, la région du jour change, même si la fenêtre reste ouverte et la partie pas finie (repris de la
     // version web). Un Timer réglé sur le temps qui reste jusqu'à minuit, reprogrammé à chaque fois
     private final Timer minuit = new Timer(0, e -> aMinuit());
+    // le message du partage s'efface après 3 s (finDuPartage) ; au second clic, il disparaît 150 ms avant d'être
+    // réécrit, pour que le joueur voie la copie recommencer. Le texte affiché (habillé par Message), pour savoir s'il
+    // est encore à l'écran, et celui à réécrire
+    private static final int DUREE_PARTAGE = 3000;
+    private static final int DUREE_CLIGNEMENT = 150;
+    private final Timer apresPartage = new Timer(DUREE_PARTAGE, e -> finDuPartage());
+    private final Timer reecrirePartage = new Timer(DUREE_CLIGNEMENT, e -> reecrirePartage());
+    private String messagePartage;
+    private String partageAEcrire;
 
     // l'historique des parties du jour, les réglages, et les fichiers où ils sont enregistrés. Les sauvegardes sont
     // des paramètres, comme l'horloge : la vérification utilise un dossier temporaire, jamais les vrais fichiers du joueur
@@ -232,6 +241,8 @@ class Fenetre {
             Theme.changer(true);
         }
         avantResultats.setRepeats(false);
+        apresPartage.setRepeats(false);
+        reecrirePartage.setRepeats(false);
         valider.addActionListener(e -> jouer());
         // la touche Entrée dans le champ : l'autocomplétion choisit la suggestion surlignée, ou appelle jouer() (et
         // rouvre ses suggestions si la saisie est refusée)
@@ -858,12 +869,57 @@ class Fenetre {
         }
         String texte = Partage.texte(duJour, RegionDuJour.numero(dateDuJour),
                 modesDuJour != null ? modesDuJour : ModesDifficiles.AUCUN, bonusDuJour, textes);
+        String resultat;
         try {
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(texte), null);
-            message.setText(textes.texte("partage.copie"));
+            resultat = textes.texte("partage.copie");
         } catch (IllegalStateException e) {
-            message.setText(textes.texte("partage.erreur"));
+            resultat = textes.texte("partage.erreur");
         }
+        afficherPartage(resultat);
+    }
+
+    // le message du partage (« Résultat copié… », ou l'erreur) ne reste que quelques secondes : ensuite, le message du
+    // jeu revient. Un second clic relance le délai. S'il réécrivait le même texte, rien ne montrerait que la copie a
+    // recommencé : le message disparaît d'abord un court instant
+    private void afficherPartage(String resultat) {
+        reecrirePartage.stop();
+        if (message.getText().equals(messagePartage)) {
+            message.setText("");
+            reecrirePartage.restart();
+        } else {
+            message.setText(resultat);
+            messagePartage = message.getText();
+        }
+        partageAEcrire = resultat;
+        apresPartage.restart();
+    }
+
+    // le message du partage revient après son court effacement, si rien d'autre n'a été écrit entre-temps
+    private void reecrirePartage() {
+        if (message.getText().isBlank()) {
+            message.setText(partageAEcrire);
+            messagePartage = message.getText();
+        }
+    }
+
+    // le délai du partage écoulé : le message du jeu, recalculé (la langue a pu changer entre-temps). Seulement si
+    // le message du partage est encore là : un refus de saisie, une autre partie ou un changement de langue l'ont
+    // peut-être déjà remplacé, et ce message-là ne doit pas être effacé
+    private void finDuPartage() {
+        if (message.getText().equals(messagePartage)) {
+            message.setText(messageDuJeu());
+        }
+        messagePartage = null;
+    }
+
+    // le message du jeu, d'après son état : la question du bonus ou sa fin, sinon le message après le dernier essai
+    // ou celui de la fin de partie
+    private String messageDuJeu() {
+        if (dansLeBonus) {
+            return bonus.enCours() ? textes.questionBonus(bonus, carte.getChoisi().isPresent()) : textes.finBonus(bonus);
+        }
+        return partie.enCours() ? textes.apresEssai(partie) : messageDeFin();
     }
 
     private void terminer() {
@@ -1055,7 +1111,7 @@ class Fenetre {
         if (dansLeBonus) {
             afficherBonus();
         } else {
-            message.setText(partie.enCours() ? textes.apresEssai(partie) : messageDeFin());
+            message.setText(messageDuJeu());
         }
         afficherIndices();
     }
