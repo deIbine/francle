@@ -511,7 +511,13 @@ class Fenetre {
 
     // la partie du jour : créée au premier appel de la journée, puis reprise telle quelle (en cours ou terminée)
     private void jouerDuJour() {
-        if (!quitterPartieLibre(textes.texte("action.duJour"))) {
+        // déjà dans le bonus du jour, en cours (Ctrl+D en plein bonus) : rien à faire, comme Ctrl+B, car le quitter
+        // pour l'écran de fin le passerait. Après minuit, Ctrl+D mène en revanche à la nouvelle région (avec la
+        // question de quitterPartieAffichee si le bonus a une réponse)
+        if (dansLeBonus && partie == duJour && bonus.enCours() && LocalDate.now(horloge).equals(dateDuJour)) {
+            return;
+        }
+        if (!quitterPartieAffichee(textes.texte("action.duJour"))) {
             return;
         }
         LocalDate aujourdhui = LocalDate.now(horloge);
@@ -528,7 +534,7 @@ class Fenetre {
 
     // une partie libre : une nouvelle Partie à chaque fois, avec le mode choisi dans les réglages
     private void jouerLibre() {
-        if (!quitterPartieLibre(textes.texte("action.libre"))) {
+        if (!quitterPartieAffichee(textes.texte("action.libre"))) {
             return;
         }
         ModeRegions mode = reglages.getMode();
@@ -537,10 +543,17 @@ class Fenetre {
     }
 
     // vrai si l'on peut quitter la partie affichée pour une autre (titre : le nom de la commande qui la remplace). Une
-    // partie libre n'est enregistrée nulle part : la quitter la perd, elle et son bonus. Une question d'abord, comme
-    // pour l'abandon, mais seulement s'il y a quelque chose à perdre
-    private boolean quitterPartieLibre(String titre) {
-        return !libreAPerdre() || confirmer(textes.texte("libre.question"), titre);
+    // question d'abord, comme pour l'abandon, mais seulement s'il y a quelque chose à perdre. Une partie libre n'est
+    // enregistrée nulle part : la quitter la perd, elle et son bonus. Le bonus du jour est enregistré, mais le quitter
+    // après une réponse le passe pour de bon : la question de « Passer »
+    private boolean quitterPartieAffichee(String titre) {
+        if (libreAPerdre()) {
+            return confirmer(textes.texte("libre.question"), titre);
+        }
+        if (dansLeBonus && bonus.aPerdre()) {
+            return confirmer(textes.texte("passer.question"), titre);
+        }
+        return true;
     }
 
     // une partie libre en cours avec au moins un essai, ou son bonus en cours avec au moins une réponse. Une partie
@@ -551,7 +564,7 @@ class Fenetre {
             return false;
         }
         boolean partieCommencee = partie.enCours() && !partie.getEssais().isEmpty();
-        boolean bonusCommence = bonus != null && bonus.enCours() && !bonus.getTentatives().isEmpty();
+        boolean bonusCommence = bonus != null && bonus.aPerdre();
         return partieCommencee || bonusCommence;
     }
 
@@ -1177,8 +1190,15 @@ class Fenetre {
     }
 
     // le bouton « Passer » : le bonus s'arrête là, et les résultats s'ouvrent. S'il n'a pas commencé, on revient à la
-    // fin de la partie, et il reste à jouer (bouton « Bonus »)
+    // fin de la partie, et il reste à jouer (bouton « Bonus ») : rien n'est perdu, pas de question. Après une réponse,
+    // le passer le finit pour de bon : une question d'abord, comme pour l'abandon. Le bonus visé est retenu avant la
+    // question, et rien n'est fait s'il a changé entre-temps (les minuteries sonnent sous la question : voir abandonner)
     private void passerBonus() {
+        Bonus vise = bonus;
+        if (vise.aPerdre() && (!confirmer(textes.texte("passer.question"), textes.texte("action.passer"))
+                || bonus != vise || !dansLeBonus || !vise.enCours())) {
+            return;
+        }
         if (bonus.getTentatives().isEmpty()) {
             quitterBonus();
             montrerPartie(partie);
@@ -1212,7 +1232,7 @@ class Fenetre {
     private void quitterBonus() {
         // des résultats en attente seraient ceux de la partie qu'on quitte
         avantResultats.stop();
-        if (dansLeBonus && bonus.enCours() && !bonus.getTentatives().isEmpty()) {
+        if (dansLeBonus && bonus.aPerdre()) {
             bonus.passer();
             // (rien de nouveau à enregistrer : les réponses le sont déjà, et un bonus relu est toujours fini)
         }

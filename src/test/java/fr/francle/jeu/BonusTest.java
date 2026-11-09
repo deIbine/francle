@@ -116,6 +116,27 @@ class BonusTest {
     }
 
     @Test
+    @DisplayName("Passer ne perd quelque chose qu'en cours, après au moins une réponse")
+    void aPerdre() {
+        Bonus neuf = bretagne(Bonus.Question.CARTE);
+        assertFalse(neuf.aPerdre());
+
+        Bonus commence = bretagne(Bonus.Question.CARTE);
+        commence.repondre(departement("22"));
+        assertTrue(commence.aPerdre());
+
+        Bonus fini = bretagne(Bonus.Question.CARTE);
+        fini.getOrdre().forEach(fini::repondre);
+        assertEquals(Bonus.Etat.TERMINE, fini.getEtat());
+        assertFalse(fini.aPerdre());
+
+        Bonus passe = bretagne(Bonus.Question.CARTE);
+        passe.repondre(departement("22"));
+        passe.passer();
+        assertFalse(passe.aPerdre());
+    }
+
+    @Test
     @DisplayName("Mode B : le nom ou le numéro ; une saisie qui n'est pas un département ne coûte rien")
     void modeNom() {
         Bonus bonus = bretagne(Bonus.Question.NOM);
