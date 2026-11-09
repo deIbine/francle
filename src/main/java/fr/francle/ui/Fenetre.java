@@ -255,6 +255,10 @@ class Fenetre {
 
     void afficher() {
         frame.pack();                       // la taille juste nécessaire aux composants
+        // et pas plus petite : plus étroite, le tableau serait coupé (« Pays de la Lo… ») et les boutons du bonus fini
+        // passeraient sur une seconde ligne. La taille d'ouverture a été vérifiée dans tous les états du jeu ;
+        // l'agrandir reste possible
+        frame.setMinimumSize(frame.getSize());
         frame.setLocationRelativeTo(null);  // centrée sur l'écran
         frame.setVisible(true);
         saisie.requestFocusInWindow();
