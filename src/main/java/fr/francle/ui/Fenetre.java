@@ -1088,7 +1088,7 @@ class Fenetre {
     // l'aide dans une zone à défilement de taille fixe : le texte, crédits compris, dépasserait sinon la hauteur d'un
     // écran portable (672 points utilisables)
     private void montrerAide() {
-        JTextArea texte = new JTextArea(textes.aide());
+        JTextArea texte = new JTextArea(textes.aide(reglages.unitesAnglaises()));
         texte.setEditable(false);
         // une ligne trop longue (l'exemple, en anglais surtout) passe à la ligne, entre deux mots
         texte.setLineWrap(true);

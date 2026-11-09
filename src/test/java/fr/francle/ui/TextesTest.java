@@ -319,12 +319,22 @@ class TextesTest {
     @Test
     @DisplayName("Le texte « Comment jouer » existe dans les deux langues et parle de 6 essais")
     void aide() {
-        assertTrue(FR.aide().startsWith("Devinez la région française cachée en 6 essais"));
-        assertTrue(EN.aide().startsWith("Guess the hidden French region in 6 guesses"));
+        assertTrue(FR.aide(false).startsWith("Devinez la région française cachée en 6 essais"));
+        assertTrue(EN.aide(true).startsWith("Guess the hidden French region in 6 guesses"));
         // l'exemple, calculé par les règles, a remplacé sa marque
-        assertFalse(FR.aide().contains("{exemple}"));
-        assertTrue(FR.aide().contains("Par exemple, « Normandie · 251 km · ↙ · 76 % » : Bretagne"), FR.exemple());
-        assertTrue(EN.aide().contains("For example, “Normandy · 251 km · ↙ · 76%”: Brittany"), EN.exemple());
+        assertFalse(FR.aide(false).contains("{exemple}"));
+    }
+
+    @Test
+    @DisplayName("L'exemple de l'aide est dans l'unité du tableau : km ou miles (251,3 km = 156 mi)")
+    void exempleDansLUnite() {
+        assertTrue(FR.aide(false).contains("Par exemple, « Normandie · 251 km · ↙ · 76 % » : Bretagne"),
+                FR.exemple(false));
+        // en anglais, les miles par défaut
+        assertTrue(EN.aide(true).contains("For example, “Normandy · 156 mi · ↙ · 76%”: Brittany"), EN.exemple(true));
+        // les miles choisis en français, les km en anglais
+        assertTrue(FR.exemple(true).contains("Normandie · 156 mi"), FR.exemple(true));
+        assertTrue(EN.exemple(false).contains("Normandy · 251 km"), EN.exemple(false));
     }
 
     @Test
