@@ -29,6 +29,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 17 | Trois points d'interface | ✅ Fait (PR #59) |
 | 18 | La passe de vérification (minuit, résultats, bulles, accessibilité) | ✅ Fait (PR #60) |
 | 19 | La carte de fin après le bonus | ✅ Fait (PR #61) |
+| 20 | Les corrections de la passe du 9 novembre | 📋 À faire |
 
 ---
 
@@ -1048,3 +1049,101 @@ phase 19.
 | — | Cliqué dans les 1,5 s qui suivent la dernière réponse, « Carte » ouvre les résultats tout de suite (`quitterBonus` les aurait annulés). |
 
 « Comment jouer » le dit en une phrase, en français et en anglais.
+
+---
+
+## Phase 20 : les corrections de la passe du 9 novembre
+
+**À faire.** Le 9 novembre 2026, une passe d'analyse a cherché ici les défauts relevés le même jour sur la version web
+(web.7.20). Les constats sont faits ; reste à corriger. Une PR, un commit par point (comme aux phases 17 et 18), puis
+les docs (`lecons.md`, le bilan, le nombre de tests ; 508 au départ).
+
+Déjà bons, rien à faire : le choix de la langue (un sous-menu, nom accessible = texte visible), l'espace sous la saisie
+(la ligne du message sert toujours), le compte à rebours (jamais coupé), la reconnaissance des noms (1350 saisies, les
+101 départements), rien ne dévoile la réponse avant la fin (titre, bulles, noms accessibles, nom de fichier).
+
+### 20.1 Une question avant « Passer »
+
+- **Le défaut** : « Passer » ne demande rien, alors qu'« Abandonner » demande. Après une réponse, le bonus est fini
+  pour de bon : score figé, compté dans les statistiques et le partage. Pendant le bonus **du jour**, Ctrl+D et Ctrl+N
+  le passent aussi sans rien demander (`quitterBonus`, `Fenetre.java:1215`), car `libreAPerdre` ne protège que les
+  parties libres.
+- **La correction** :
+  - `Bonus.aPerdre()` : `enCours() && !tentatives.isEmpty()` (avant toute réponse, passer ne perd rien : le bonus
+    reste à jouer, pas de question) ;
+  - `passerBonus` (`Fenetre.java:1181`) : si `bonus.aPerdre()`, `confirmer(textes.texte("passer.question"),
+    textes.texte("action.passer"))` d'abord. Retenir le bonus visé avant la question et ne rien faire s'il a changé
+    (`bonus != vise || !dansLeBonus`), comme `abandonner` (phase 18 : minuit et la minuterie sonnent sous la question) ;
+  - `jouerDuJour` en plein bonus du jour déjà affiché : ne rien faire, comme Ctrl+B dans `jouerBonus` (sinon il quitte
+    le bonus pour l'écran de fin, et le passe) ;
+  - `jouerLibre` : la question aussi quand le bonus du jour affiché a une réponse. `libreAPerdre()` devient
+    « quelque chose à perdre » : `libreAPerdre() || (dansLeBonus && bonus.aPerdre())`, avec la question du bonus
+    dans ce second cas ;
+  - les textes, dans les deux fichiers (`TextesTest` vérifie que les clés sont les mêmes) : `passer.question` =
+    « Arrêter le bonus ? Les départements sans réponse compteront comme ratés. » / « Stop the bonus? The départements
+    left will count as missed. ».
+- **Les tests** : `BonusTest` pour `aPerdre()` (neuf, une réponse, fini, passé). Le reste au harnais, ou à la main :
+  « Passer » après une réponse (question ; « Non » ne change rien), avant toute réponse (pas de question), Ctrl+D et
+  Ctrl+N en plein bonus du jour.
+
+### 20.2 Le message du partage revient au message du jeu
+
+- **Le défaut** : « Résultat copié… » (`Fenetre.java:850`) remplace pour de bon le message de fin (« Bravo ! Trouvé
+  en 4 essais. Bonus : 1/2. »), qui ne revient qu'avec « Carte », « Bonus » ou la langue. Un second clic réécrit le
+  même texte : rien ne montre qu'il a marché. Même chose pour le message d'erreur.
+- **La correction** :
+  - une minuterie `apresPartage` (3 s, `setRepeats(false)`), relancée par chaque clic (`restart()`) : un second clic
+    relance bien le délai ;
+  - à la fin du délai, le message du jeu revient, recalculé et non mémorisé (il a pu changer, avec la langue par
+    exemple) : une méthode `messageDuJeu()`, la logique de `changerLangue` (`Fenetre.java:1042-1046` : la question ou
+    la fin du bonus, sinon `apresEssai` ou `messageDeFin`), que `changerLangue` utilisera aussi. Seulement si le
+    message affiché est encore celui du partage : un refus de saisie ou une autre partie entre-temps ne doit pas être
+    effacé ;
+  - au second clic, pour que le joueur voie la copie recommencer : vider le message, puis le réécrire dans un
+    `invokeLater` (ou une très courte minuterie).
+- **Les tests** : à la main ou au harnais : deux clics à 1 s d'écart, le message de fin revient 3 s après le
+  second ; un refus tapé pendant le délai reste affiché.
+
+### 20.3 Un focus visible sur la carte du bonus
+
+- **Le défaut** : le département qu'Entrée choisirait est entouré de `Component.focusColor`
+  (`CarteDepartements.java:335-338`), presque de la couleur des départements : 1,06:1 en sombre (#3C628C sur
+  #3F6690), 1,15:1 en clair. La navigation au clavier n'a plus de repère.
+- **La correction** : un anneau double, un trait foncé #1A1A1A large (3,5) puis un trait blanc fin (1,5) par-dessus.
+  L'un des deux fait au moins 3:1 sur chaque couleur de la carte, dans les deux thèmes (le moins bon : 4,56:1 sur le
+  rouge des ratés). Les deux couleurs dans `Palette`, ou en constantes de `CarteDepartements`.
+- **Les tests** : une petite fonction `contraste(Color, Color)` (rapport de luminance WCAG, dans le package `ui`).
+  Dans `CarteDepartementsTest`, pour chaque palette : sur `fond`, `survol`, `demande`, `TROUVE` et `RATE`, l'une des
+  deux couleurs de l'anneau fait au moins 3:1. La même fonction peut remplacer les sommes de composantes de
+  `CaseProximiteTest.contraste` et de `CarteDepartementsTest` (ligne 173), qui ne garantissent pas le 3:1.
+
+### 20.4 L'exemple de l'aide dans l'unité du tableau
+
+- **Le défaut** : en anglais (miles par défaut), le tableau dit « 664 mi » et l'exemple de « Comment jouer »
+  « 251 km » : `Textes.exemple` force les km (`Textes.java:83`).
+- **La correction** : `aide(boolean unitesAnglaises)` et `exemple(boolean unitesAnglaises)` ; `montrerAide`
+  (`Fenetre.java:1022`) passe `reglages.unitesAnglaises()`.
+- **Les tests** : `TextesTest.java:326-327` : « Normandie · 251 km » en français, et en anglais « Normandy · 156 mi »
+  (251,3 km). Un cas en plus : le français avec les miles choisis.
+
+### 20.5 Une taille minimale pour la fenêtre
+
+- **Le défaut** : la fenêtre se redimensionne sans limite (`afficher`, `Fenetre.java:245-249` : `pack()` seulement).
+  À 300 points de large, le tableau est coupé (« Dist… », « Pays de la Lo… »), et les boutons du bonus fini
+  passeraient sur une seconde ligne, coupée.
+- **La correction** : `frame.setMinimumSize(frame.getSize())` juste après `pack()` : la taille d'ouverture
+  (466 × 635 sous Windows), qui a été vérifiée dans tous les états.
+- **Les tests** : à la main : réduire la fenêtre, elle s'arrête à sa taille d'ouverture ; l'agrandir marche toujours.
+
+### Plus tard, si on veut
+
+- **La carte du bonus en sombre** : département / fond 1,78:1, trait 2,41:1, raté 1,56:1, trouvé 2,41:1 (palettes,
+  `CarteDepartements.java:62-67`). À revoir avec la fonction `contraste` de 20.3.
+- **Les cartes et les lecteurs d'écran** : `CarteFin` et `CarteDepartements` n'ont pas de contexte accessible, comme
+  la répartition avant la phase 18. Piège : pendant le bonus, la description ne doit **pas** nommer le département
+  visé (ce serait la réponse) : « département 2 sur 4, sans réponse ».
+- **Le cadre de l'image** : un message de deux lignes lui prend 18 points (220 → 202) ; la silhouette remonte de
+  9 points. Réserver deux lignes au message corrigerait cela, mais laisserait un vide sous la saisie le reste du temps
+  (le défaut relevé sur le web) : à peser.
+- **L'espace insécable dans la saisie** : `RegionFr.simplifier` (`RegionFr.java:317`) : `[\s\p{Z}]` au lieu de `\s`,
+  et les apostrophes ‘ ʼ et les tirets ‑ – avec ’. Un cas de plus dans le test paramétré de `RegionFrTest`.
