@@ -195,6 +195,15 @@ class Fenetre {
     // à minuit, la région du jour change, même si la fenêtre reste ouverte et la partie pas finie (repris de la
     // version web). Un Timer réglé sur le temps qui reste jusqu'à minuit, reprogrammé à chaque fois
     private final Timer minuit = new Timer(0, e -> aMinuit());
+    // le message du partage s'efface après 3 s (finDuPartage) ; au second clic, il disparaît 150 ms avant d'être
+    // réécrit, pour que le joueur voie la copie recommencer. Le texte affiché (habillé par Message), pour savoir s'il
+    // est encore à l'écran, et celui à réécrire
+    private static final int DUREE_PARTAGE = 3000;
+    private static final int DUREE_CLIGNEMENT = 150;
+    private final Timer apresPartage = new Timer(DUREE_PARTAGE, e -> finDuPartage());
+    private final Timer reecrirePartage = new Timer(DUREE_CLIGNEMENT, e -> reecrirePartage());
+    private String messagePartage;
+    private String partageAEcrire;
 
     // l'historique des parties du jour, les réglages, et les fichiers où ils sont enregistrés. Les sauvegardes sont
     // des paramètres, comme l'horloge : la vérification utilise un dossier temporaire, jamais les vrais fichiers du joueur
@@ -232,6 +241,8 @@ class Fenetre {
             Theme.changer(true);
         }
         avantResultats.setRepeats(false);
+        apresPartage.setRepeats(false);
+        reecrirePartage.setRepeats(false);
         valider.addActionListener(e -> jouer());
         // la touche Entrée dans le champ : l'autocomplétion choisit la suggestion surlignée, ou appelle jouer() (et
         // rouvre ses suggestions si la saisie est refusée)
@@ -244,6 +255,10 @@ class Fenetre {
 
     void afficher() {
         frame.pack();                       // la taille juste nécessaire aux composants
+        // et pas plus petite : plus étroite, le tableau serait coupé (« Pays de la Lo… ») et les boutons du bonus fini
+        // passeraient sur une seconde ligne. La taille d'ouverture a été vérifiée dans tous les états du jeu ;
+        // l'agrandir reste possible
+        frame.setMinimumSize(frame.getSize());
         frame.setLocationRelativeTo(null);  // centrée sur l'écran
         frame.setVisible(true);
         saisie.requestFocusInWindow();
@@ -511,7 +526,13 @@ class Fenetre {
 
     // la partie du jour : créée au premier appel de la journée, puis reprise telle quelle (en cours ou terminée)
     private void jouerDuJour() {
-        if (!quitterPartieLibre(textes.texte("action.duJour"))) {
+        // déjà dans le bonus du jour, en cours (Ctrl+D en plein bonus) : rien à faire, comme Ctrl+B, car le quitter
+        // pour l'écran de fin le passerait. Après minuit, Ctrl+D mène en revanche à la nouvelle région (avec la
+        // question de quitterPartieAffichee si le bonus a une réponse)
+        if (dansLeBonus && partie == duJour && bonus.enCours() && LocalDate.now(horloge).equals(dateDuJour)) {
+            return;
+        }
+        if (!quitterPartieAffichee(textes.texte("action.duJour"))) {
             return;
         }
         LocalDate aujourdhui = LocalDate.now(horloge);
@@ -528,7 +549,7 @@ class Fenetre {
 
     // une partie libre : une nouvelle Partie à chaque fois, avec le mode choisi dans les réglages
     private void jouerLibre() {
-        if (!quitterPartieLibre(textes.texte("action.libre"))) {
+        if (!quitterPartieAffichee(textes.texte("action.libre"))) {
             return;
         }
         ModeRegions mode = reglages.getMode();
@@ -537,10 +558,17 @@ class Fenetre {
     }
 
     // vrai si l'on peut quitter la partie affichée pour une autre (titre : le nom de la commande qui la remplace). Une
-    // partie libre n'est enregistrée nulle part : la quitter la perd, elle et son bonus. Une question d'abord, comme
-    // pour l'abandon, mais seulement s'il y a quelque chose à perdre
-    private boolean quitterPartieLibre(String titre) {
-        return !libreAPerdre() || confirmer(textes.texte("libre.question"), titre);
+    // question d'abord, comme pour l'abandon, mais seulement s'il y a quelque chose à perdre. Une partie libre n'est
+    // enregistrée nulle part : la quitter la perd, elle et son bonus. Le bonus du jour est enregistré, mais le quitter
+    // après une réponse le passe pour de bon : la question de « Passer »
+    private boolean quitterPartieAffichee(String titre) {
+        if (libreAPerdre()) {
+            return confirmer(textes.texte("libre.question"), titre);
+        }
+        if (dansLeBonus && bonus.aPerdre()) {
+            return confirmer(textes.texte("passer.question"), titre);
+        }
+        return true;
     }
 
     // une partie libre en cours avec au moins un essai, ou son bonus en cours avec au moins une réponse. Une partie
@@ -551,7 +579,7 @@ class Fenetre {
             return false;
         }
         boolean partieCommencee = partie.enCours() && !partie.getEssais().isEmpty();
-        boolean bonusCommence = bonus != null && bonus.enCours() && !bonus.getTentatives().isEmpty();
+        boolean bonusCommence = bonus != null && bonus.aPerdre();
         return partieCommencee || bonusCommence;
     }
 
@@ -845,12 +873,57 @@ class Fenetre {
         }
         String texte = Partage.texte(duJour, RegionDuJour.numero(dateDuJour),
                 modesDuJour != null ? modesDuJour : ModesDifficiles.AUCUN, bonusDuJour, textes);
+        String resultat;
         try {
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(texte), null);
-            message.setText(textes.texte("partage.copie"));
+            resultat = textes.texte("partage.copie");
         } catch (IllegalStateException e) {
-            message.setText(textes.texte("partage.erreur"));
+            resultat = textes.texte("partage.erreur");
         }
+        afficherPartage(resultat);
+    }
+
+    // le message du partage (« Résultat copié… », ou l'erreur) ne reste que quelques secondes : ensuite, le message du
+    // jeu revient. Un second clic relance le délai. S'il réécrivait le même texte, rien ne montrerait que la copie a
+    // recommencé : le message disparaît d'abord un court instant
+    private void afficherPartage(String resultat) {
+        reecrirePartage.stop();
+        if (message.getText().equals(messagePartage)) {
+            message.setText("");
+            reecrirePartage.restart();
+        } else {
+            message.setText(resultat);
+            messagePartage = message.getText();
+        }
+        partageAEcrire = resultat;
+        apresPartage.restart();
+    }
+
+    // le message du partage revient après son court effacement, si rien d'autre n'a été écrit entre-temps
+    private void reecrirePartage() {
+        if (message.getText().isBlank()) {
+            message.setText(partageAEcrire);
+            messagePartage = message.getText();
+        }
+    }
+
+    // le délai du partage écoulé : le message du jeu, recalculé (la langue a pu changer entre-temps). Seulement si
+    // le message du partage est encore là : un refus de saisie, une autre partie ou un changement de langue l'ont
+    // peut-être déjà remplacé, et ce message-là ne doit pas être effacé
+    private void finDuPartage() {
+        if (message.getText().equals(messagePartage)) {
+            message.setText(messageDuJeu());
+        }
+        messagePartage = null;
+    }
+
+    // le message du jeu, d'après son état : la question du bonus ou sa fin, sinon le message après le dernier essai
+    // ou celui de la fin de partie
+    private String messageDuJeu() {
+        if (dansLeBonus) {
+            return bonus.enCours() ? textes.questionBonus(bonus, carte.getChoisi().isPresent()) : textes.finBonus(bonus);
+        }
+        return partie.enCours() ? textes.apresEssai(partie) : messageDeFin();
     }
 
     private void terminer() {
@@ -1019,7 +1092,7 @@ class Fenetre {
     // l'aide dans une zone à défilement de taille fixe : le texte, crédits compris, dépasserait sinon la hauteur d'un
     // écran portable (672 points utilisables)
     private void montrerAide() {
-        JTextArea texte = new JTextArea(textes.aide());
+        JTextArea texte = new JTextArea(textes.aide(reglages.unitesAnglaises()));
         texte.setEditable(false);
         // une ligne trop longue (l'exemple, en anglais surtout) passe à la ligne, entre deux mots
         texte.setLineWrap(true);
@@ -1042,7 +1115,7 @@ class Fenetre {
         if (dansLeBonus) {
             afficherBonus();
         } else {
-            message.setText(partie.enCours() ? textes.apresEssai(partie) : messageDeFin());
+            message.setText(messageDuJeu());
         }
         afficherIndices();
     }
@@ -1177,8 +1250,15 @@ class Fenetre {
     }
 
     // le bouton « Passer » : le bonus s'arrête là, et les résultats s'ouvrent. S'il n'a pas commencé, on revient à la
-    // fin de la partie, et il reste à jouer (bouton « Bonus »)
+    // fin de la partie, et il reste à jouer (bouton « Bonus ») : rien n'est perdu, pas de question. Après une réponse,
+    // le passer le finit pour de bon : une question d'abord, comme pour l'abandon. Le bonus visé est retenu avant la
+    // question, et rien n'est fait s'il a changé entre-temps (les minuteries sonnent sous la question : voir abandonner)
     private void passerBonus() {
+        Bonus vise = bonus;
+        if (vise.aPerdre() && (!confirmer(textes.texte("passer.question"), textes.texte("action.passer"))
+                || bonus != vise || !dansLeBonus || !vise.enCours())) {
+            return;
+        }
         if (bonus.getTentatives().isEmpty()) {
             quitterBonus();
             montrerPartie(partie);
@@ -1212,7 +1292,7 @@ class Fenetre {
     private void quitterBonus() {
         // des résultats en attente seraient ceux de la partie qu'on quitte
         avantResultats.stop();
-        if (dansLeBonus && bonus.enCours() && !bonus.getTentatives().isEmpty()) {
+        if (dansLeBonus && bonus.aPerdre()) {
             bonus.passer();
             // (rien de nouveau à enregistrer : les réponses le sont déjà, et un bonus relu est toujours fini)
         }

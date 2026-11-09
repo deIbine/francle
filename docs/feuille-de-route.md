@@ -29,7 +29,7 @@ Les leçons à retenir de chaque phase sont rassemblées dans [lecons.md](lecons
 | 17 | Trois points d'interface | ✅ Fait (PR #59) |
 | 18 | La passe de vérification (minuit, résultats, bulles, accessibilité) | ✅ Fait (PR #60) |
 | 19 | La carte de fin après le bonus | ✅ Fait (PR #61) |
-| 20 | Les corrections de la passe du 9 novembre | 📋 À faire |
+| 20 | Les corrections de la passe du 9 novembre | ✅ Fait (PR #63) |
 
 ---
 
@@ -1052,11 +1052,12 @@ phase 19.
 
 ---
 
-## Phase 20 : les corrections de la passe du 9 novembre
+## Phase 20 : les corrections de la passe du 9 novembre ✅
 
-**À faire.** Le 9 novembre 2026, une passe d'analyse a cherché ici les défauts relevés le même jour sur la version web
-(web.7.20). Les constats sont faits ; reste à corriger. Une PR, un commit par point (comme aux phases 17 et 18), puis
-les docs (`lecons.md`, le bilan, le nombre de tests ; 508 au départ).
+**Faite le 9 novembre 2026**, en une PR (deIbine/francle#63), un commit par point. Le même jour, une passe d'analyse
+avait cherché ici les défauts relevés sur la version web (web.7.20) ; le plan ci-dessous a été suivi, avec les écarts
+notés à la fin. Les leçons sont dans [lecons.md](lecons.md#phase-20--les-corrections-de-la-passe-du-9-novembre).
+513 tests (508 avant). Les cinq points vérifiés au harnais, dans la vraie fenêtre.
 
 Déjà bons, rien à faire : le choix de la langue (un sous-menu, nom accessible = texte visible), l'espace sous la saisie
 (la ligne du message sert toujours), le compte à rebours (jamais coupé), la reconnaissance des noms (1350 saisies, les
@@ -1135,10 +1136,25 @@ Déjà bons, rien à faire : le choix de la langue (un sous-menu, nom accessible
   (466 × 635 sous Windows), qui a été vérifiée dans tous les états.
 - **Les tests** : à la main : réduire la fenêtre, elle s'arrête à sa taille d'ouverture ; l'agrandir marche toujours.
 
+### Ce qui a changé en route
+
+- **20.1** : `quitterPartieLibre` devient `quitterPartieAffichee`, puisqu'il protège aussi le bonus du jour. Ctrl+D en
+  plein bonus du jour ne fait rien **le même jour** seulement : après minuit, il mène à la nouvelle région, avec la
+  question si le bonus a une réponse (sinon le joueur ne pourrait plus y aller qu'en passant le bonus).
+- **20.2** : au second clic, le message disparaît 150 ms (une minuterie `reecrirePartage`) plutôt que le temps d'un
+  `invokeLater`, trop court pour se voir.
+- **20.3** : les deux couleurs de l'anneau sont des constantes de `CarteDepartements` (`FOCUS_FONCE`, `FOCUS_CLAIR`) :
+  ce sont les mêmes dans les deux thèmes. La fonction est une petite classe, `Contraste` (`rapport`, `luminance`). En
+  remplaçant les sommes de composantes, elle a montré que le blanc sur le vert des pastilles ne fait que 3,37:1 (voir
+  plus bas).
+
 ### Plus tard, si on veut
 
+- **Le texte des pastilles trouvées** : blanc sur `CarteFin.TROUVEE` (#2EA043), 3,37:1, sous les 4,5:1 d'un texte de
+  taille normale (le texte foncé sur le dégradé fait 4,68:1 au pire). Un vert plus foncé changerait aussi la carte de
+  fin. `CaseProximiteTest.contraste` garde pour l'instant le niveau de 3:1.
 - **La carte du bonus en sombre** : département / fond 1,78:1, trait 2,41:1, raté 1,56:1, trouvé 2,41:1 (palettes,
-  `CarteDepartements.java:62-67`). À revoir avec la fonction `contraste` de 20.3.
+  `CarteDepartements.java:62-67`). À revoir avec `Contraste.rapport` (20.3).
 - **Les cartes et les lecteurs d'écran** : `CarteFin` et `CarteDepartements` n'ont pas de contexte accessible, comme
   la répartition avant la phase 18. Piège : pendant le bonus, la description ne doit **pas** nommer le département
   visé (ce serait la réponse) : « département 2 sur 4, sans réponse ».

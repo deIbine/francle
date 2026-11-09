@@ -247,6 +247,13 @@ public class Bonus {
         etat = Etat.PASSE;
     }
 
+    // vrai si passer le bonus maintenant perdrait quelque chose : il est en cours et a au moins une réponse. Passé
+    // après une réponse, il est fini pour de bon (score figé, compté dans les statistiques et le partage) ; avant, il
+    // reste à jouer, et rien n'est perdu
+    public boolean aPerdre() {
+        return enCours() && !tentatives.isEmpty();
+    }
+
     private void verifierEnCours() {
         if (etat != Etat.EN_COURS) {
             throw new IllegalStateException("Le bonus est terminé : " + etat);

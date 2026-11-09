@@ -2621,6 +2621,59 @@ transparentes, sinon la silhouette paraîtrait plus petite qu'à l'endroit une f
   avec bonus joué jusqu'au bout, « Carte » avec et sans résultats en attente, « Bonus » pour revenir, partie
   abandonnée (ni l'un ni l'autre), partie du jour au bonus passé, en français et en anglais.
 
+## Phase 20 : les corrections de la passe du 9 novembre
+
+### Une même perte, plusieurs portes
+
+- **Pourquoi** : « Abandonner » demandait une confirmation, « Passer » non. Pourtant, après une réponse, passer le
+  bonus le fige pour de bon, comme un abandon. Et le bouton n'était pas le seul chemin : Ctrl+D et Ctrl+N, en plein
+  bonus du jour, le passaient aussi, sans rien demander. `libreAPerdre` ne protégeait que les parties libres.
+- **Comment le faire** : nommer une fois la condition de la perte (`Bonus.aPerdre()` : en cours, avec au moins une
+  réponse), puis chercher **tous** les chemins qui y mènent. Ici, tout ce qui appelle `quitterBonus()` : `passerBonus`,
+  `jouerDuJour`, `jouerLibre` (par `montrerPartie`). Chacun pose la question, ou ne fait rien quand il n'y a rien à
+  faire (Ctrl+D déjà dans le bonus du jour, comme Ctrl+B).
+- **Comment le penser** : on protège une **conséquence**, pas un bouton. La question à se poser : « où, dans le code,
+  cette perte se produit-elle vraiment ? », puis remonter vers chaque commande qui y arrive.
+
+### Un message qui ne dure qu'un temps
+
+- **Pourquoi** : « Résultat copié… » remplaçait le message de fin pour de bon. Et un second clic réécrivait le même
+  texte : rien ne bougeait, le joueur ne savait pas si la copie avait marché.
+- **Comment le faire** : une minuterie (`apresPartage`, 3 s, relancée à chaque clic) remet le message du jeu. Ce
+  message est **recalculé** (`messageDuJeu()`), pas mémorisé, car la langue a pu changer entre-temps. Et il ne revient
+  que si le message affiché est encore celui du partage : un refus de saisie écrit pendant le délai reste à l'écran
+  (vu au harnais). Au second clic, le message s'efface 150 ms avant d'être réécrit : un `invokeLater` aurait été trop
+  court pour se voir.
+- **Comment le penser** : un message temporaire doit savoir s'il est encore à l'écran avant de s'effacer. Sinon, il
+  efface ce que quelqu'un d'autre a écrit après lui.
+
+### Mesurer un contraste plutôt que l'estimer
+
+- **Pourquoi** : les tests comparaient des sommes de composantes (rouge + vert + bleu). L'œil ne les voit pas toutes
+  pareil : le vert compte dix fois plus que le bleu. Ces sommes ne garantissaient donc pas le 3:1 demandé pour un
+  repère. Le focus de la carte du bonus, lui, faisait 1,06:1 en sombre : invisible.
+- **Comment le faire** : la formule des règles d'accessibilité (WCAG 2), dans une petite classe, `Contraste` : la
+  luminance relative (composantes linéarisées, pesées 0,2126 / 0,7152 / 0,0722), puis le rapport (L1 + 0,05) / (L2 +
+  0,05). Un anneau double (foncé large, blanc fin) : quelle que soit la couleur dessous, l'un des deux tranche. Le test
+  vérifie chaque couleur de la carte dans les deux thèmes (4,56:1 au pire).
+- **Comment le penser** : une couleur « qui se voit bien » sur son écran n'est pas une preuve. En remplaçant les sommes
+  par la vraie mesure, un défaut de plus est apparu : le blanc sur le vert des pastilles ne fait que 3,37:1 (noté pour
+  plus tard dans la feuille de route).
+
+## Bilan de la Phase 20
+
+- **Une PR**, un commit par point, puis les docs.
+- **Nouveau pour le joueur** : une question avant de passer un bonus commencé (et avant Ctrl+N en plein bonus du jour) ;
+  Ctrl+D ne passe plus le bonus du jour ; le message du partage revient au message du jeu après 3 s ; un focus visible
+  sur la carte du bonus ; l'exemple de « Comment jouer » en miles quand le tableau l'est ; une taille minimale de la
+  fenêtre (sa taille d'ouverture).
+- **513 tests** (508 avant) : `Bonus.aPerdre`, l'anneau du focus, `Contraste` (deux), l'exemple dans les deux unités.
+  Vérifié au harnais : « Passer » sans réponse (pas de question), après une réponse (« Non » ne change rien, « Oui » le
+  passe), Ctrl+D (rien) et Ctrl+N (la question) en plein bonus du jour ; deux partages à 1 s d'écart (le message
+  s'efface puis revient, le message de fin est de retour 3 s après le second) ; un refus pendant le délai (il reste) ;
+  l'anneau en images, dans les deux thèmes ; l'aide en anglais (« 156 mi ») ; la fenêtre réduite à 300 × 300 (elle
+  reste à 448 × 635), puis agrandie.
+
 ---
 
 ## Aide-mémoire

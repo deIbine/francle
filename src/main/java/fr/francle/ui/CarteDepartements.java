@@ -29,7 +29,6 @@ import java.util.function.Consumer;
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
 import javax.swing.KeyStroke;
-import javax.swing.UIManager;
 
 /*
 La carte des départements du bonus, dessinée à la main (comme les barres des statistiques) : chaque département est
@@ -63,8 +62,12 @@ final class CarteDepartements extends JComponent {
             new Color(0x7F97AD));
     static final Palette SOMBRE = new Palette(new Color(0x3F6690), new Color(0x5A87B8), new Color(0xBFD4FF),
             new Color(0x8FA7C0));
-    private static final Color TROUVE = new Color(0x5CB85C);
-    private static final Color RATE = new Color(0xE05252);
+    static final Color TROUVE = new Color(0x5CB85C);
+    static final Color RATE = new Color(0xE05252);
+    // l'anneau du focus du clavier, le même dans les deux thèmes : le trait foncé se voit sur les couleurs claires, le
+    // blanc sur les foncées
+    static final Color FOCUS_FONCE = new Color(0x1A1A1A);
+    static final Color FOCUS_CLAIR = Color.WHITE;
     private static final int MARGE = 6;
     // la part de la largeur que peut prendre l'encart zoomé
     private static final double PART_ENCART = 0.4;
@@ -331,10 +334,19 @@ final class CarteDepartements extends JComponent {
         if (erreur != null && contours.formes().containsKey(erreur)) {
             entourer(g2, transformation, erreur, RATE);
         }
-        // le focus du clavier : le département qu'Entrée choisirait, entouré de la couleur du focus du thème
+        // le focus du clavier : le département qu'Entrée choisirait, entouré d'un anneau double, un trait foncé large
+        // puis un trait blanc fin par-dessus. La couleur du focus du thème était presque celle des départements
+        // (1,06:1 en sombre) ; des deux traits, l'un fait au moins 3:1 sur chaque couleur de la carte, dans les deux
+        // thèmes (CarteDepartementsTest)
         if (isFocusOwner() && vise != null && cliquable(vise)) {
-            Color focus = UIManager.getColor("Component.focusColor");
-            entourer(g2, transformation, vise, focus != null ? focus : palette().demande());
+            Shape forme = transformation.createTransformedShape(contours.formes().get(vise));
+            g2.setColor(FOCUS_FONCE);
+            g2.setStroke(new BasicStroke(3.5f));
+            g2.draw(forme);
+            g2.setColor(FOCUS_CLAIR);
+            g2.setStroke(new BasicStroke(1.5f));
+            g2.draw(forme);
+            g2.setStroke(new BasicStroke(1f));
         }
     }
 

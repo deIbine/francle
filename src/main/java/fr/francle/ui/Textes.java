@@ -72,16 +72,17 @@ final class Textes {
 
     // l'aide, avec son exemple. Comme dans la version web, l'exemple est un vrai essai, calculé par les règles du jeu
     // plutôt qu'écrit à la main : il reste juste si une règle change (la Normandie proposée pour trouver la Bretagne)
-    String aide() {
-        return aide.replace("{exemple}", exemple());
+    // L'exemple est dans l'unité du tableau (unitesAnglaises : en miles) : en anglais, les miles par défaut, et il ne
+    // faut pas que l'aide dise « 251 km » quand le tableau dit « 664 mi »
+    String aide(boolean unitesAnglaises) {
+        return aide.replace("{exemple}", exemple(unitesAnglaises));
     }
 
-    String exemple() {
+    String exemple(boolean unitesAnglaises) {
         Partie partie = new Partie(RegionFr.BRETAGNE, ModeRegions.NOUVELLES);
         Reponse.Jouee jouee = (Reponse.Jouee) partie.proposer(RegionFr.NORMANDIE.getNom());
         Essai essai = jouee.essai();
-        // en km, quelle que soit l'unité choisie : c'est une explication, pas un essai
-        return texte("aide.exemple", nom(RegionFr.NORMANDIE), distance(essai.distance(), false),
+        return texte("aide.exemple", nom(RegionFr.NORMANDIE), distance(essai.distance(), unitesAnglaises),
                 essai.direction().getSymbole(), pourcentage(essai.pourcentage()), nom(RegionFr.BRETAGNE));
     }
 

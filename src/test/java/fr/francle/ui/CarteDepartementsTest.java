@@ -169,15 +169,27 @@ class CarteDepartementsTest {
     @Test
     @DisplayName("Dans chaque thème, le département à nommer se détache nettement des autres")
     void palettes() {
+        // au moins 3:1, le minimum des règles d'accessibilité pour un repère graphique (4,37 en clair, 4,01 en sombre)
         for (CarteDepartements.Palette palette : List.of(CarteDepartements.CLAIRE, CarteDepartements.SOMBRE)) {
-            int ecart = Math.abs(somme(palette.demande()) - somme(palette.fond()));
-            assertTrue(ecart > 150, palette + " : " + ecart);
+            double rapport = Contraste.rapport(palette.demande(), palette.fond());
+            assertTrue(rapport >= 3, palette + " : " + rapport);
         }
-        // le fond du thème sombre n'éblouit pas : bien plus sombre que celui du thème clair
-        assertTrue(somme(CarteDepartements.SOMBRE.fond()) < somme(CarteDepartements.CLAIRE.fond()) / 2);
+        // le fond du thème sombre n'éblouit pas : bien moins lumineux que celui du thème clair
+        assertTrue(Contraste.luminance(CarteDepartements.SOMBRE.fond())
+                < Contraste.luminance(CarteDepartements.CLAIRE.fond()) / 2);
     }
 
-    private static int somme(Color couleur) {
-        return couleur.getRed() + couleur.getGreen() + couleur.getBlue();
+    @Test
+    @DisplayName("Le focus du clavier se voit sur chaque couleur de la carte, dans les deux thèmes")
+    void anneauDuFocus() {
+        for (CarteDepartements.Palette palette : List.of(CarteDepartements.CLAIRE, CarteDepartements.SOMBRE)) {
+            for (Color dessous : List.of(palette.fond(), palette.survol(), palette.demande(),
+                    CarteDepartements.TROUVE, CarteDepartements.RATE)) {
+                // des deux traits de l'anneau, le mieux contrasté (le moins bon des cas : 4,56:1 sur le rouge des ratés)
+                double rapport = Math.max(Contraste.rapport(CarteDepartements.FOCUS_FONCE, dessous),
+                        Contraste.rapport(CarteDepartements.FOCUS_CLAIR, dessous));
+                assertTrue(rapport >= 3, palette + ", " + dessous + " : " + rapport);
+            }
+        }
     }
 }
